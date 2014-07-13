@@ -1,0 +1,45 @@
+div.aletsch_toolbar {
+    background-color: lightgray;
+    width: 100%;
+    padding: 6px 0px 6px 10px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+div.aletsch_content {
+    height: 100%;
+    width: 100%;
+}
+
+#aletsch_emptylist {
+    width: 100%;
+    top: 50%;
+    text-align: center;
+    color: rgb(136, 136, 136);
+    font-size: 1.5em;
+    font-weight: bold;
+    padding: 50px;
+}
+
+div.west {
+    width: 25%;
+    background-color: white;
+    border: 1px solid gray;
+    display: inline-block;
+    vertical-align: top;
+}
+
+div.center {
+    background-color: white;
+    border: 1px solid gray;
+    text-align: center;
+    display: inline-block;
+}
+
+p.aletsch_title {
+    width: 100%;
+    height: 25px;
+    background-color: lightgray;
+    padding: 2px 0px 2px 20px;
+    font-weight: bold;
+}
