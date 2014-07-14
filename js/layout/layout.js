@@ -1,5 +1,5 @@
 jQuery(function($) {
-    var container = $('#oclife_content');
+    var container = $('#aletsch_content');
 
     function relayout() {
         container.layout({resize: false});
@@ -8,7 +8,7 @@ jQuery(function($) {
 
     $(window).resize(relayout);
 
-    $('#tagscontainer').resizable({
+    $('#navPane').resizable({
         handles: 'e',
         stop: relayout
     });

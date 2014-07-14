@@ -1,0 +1,15 @@
++ Account (retained) [accountid, ocuserid, server, username, password]
+  + Vault (got real time and compared with retained, may be still present or not) [vaultid, accountid, vaultname]
+  | + Inventory (retained, follows vault) [inventoryid, vaultid, inventorydate, inventorydata]
+  | | | File_0 [contained in inventory data as zipped json]
+  | | | File_1
+  | | \ File_2
+  | + Jobs (got real time)
+  |   | Job_1
+  |   | Job_2
+  |   \ Job_3
+  | 
+  + Archive (retained) [archiveid, archivedate, archivedescr, catalog]
+    | File_0 [contained in catalog as zipped json]
+    | File_1
+    \ File_2

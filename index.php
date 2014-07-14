@@ -25,14 +25,16 @@ OCP\App::setActiveNavigationEntry('aletsch');
 \OCP\User::checkLoggedIn();
 \OCP\App::checkAppEnabled('aletsch');
 
-\OCP\Util::addStyle('aletsch', 'layout');
-
 // Following is needed by layout manager
 \OCP\Util::addScript('aletsch', 'layout/jquery.sizes');
 \OCP\Util::addScript('aletsch', 'layout/jlayout.border');
 \OCP\Util::addScript('aletsch', 'layout/jquery.jlayout');
 \OCP\Util::addScript('aletsch', 'layout/layout');
 
+\OCP\Util::addStyle('aletsch', 'layout');
+
+// Load main script
+\OCP\Util::addScript('aletsch', 'mainAletsch');
 
 $serverLocation = OCP\Config::getAppValue('aletsch', 'serverLocation');
 $username = OCP\Config::getAppValue('aletsch', 'username');

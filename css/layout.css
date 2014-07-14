@@ -23,6 +23,7 @@ div.aletsch_content {
 
 div.west {
     width: 25%;
+    height: 100%;
     background-color: white;
     border: 1px solid gray;
     display: inline-block;
@@ -30,14 +31,14 @@ div.west {
 }
 
 div.center {
+    height: 100%;
     background-color: white;
     border: 1px solid gray;
     text-align: center;
     display: inline-block;
 }
 
-p.aletsch_title {
-    width: 100%;
+p.aletsch_title {   
     height: 25px;
     background-color: lightgray;
     padding: 2px 0px 2px 20px;
