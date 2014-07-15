@@ -21,68 +21,23 @@
 OCP\JSON::checkAppEnabled('aletsch');
 OCP\User::checkLoggedIn();
 
-$user = \OCP\User::getUser();
+$OCUserName = \OCP\User::getUser();
 $serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
 $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
 $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
 
+$userAccount = new OCA\aletsch\accountHandler();
+$userAccount->setOCUserName($OCUserName);
+$OCUserAccountID = $userAccount->getAccountID();
 
-if(!is_null($serverLocation)) {
-    $result = OCP\Config::setAppValue('aletsch', 'serverLocation', $serverLocation);
-}
+$serverData = new OCA\aletsch\serverHandler();
+$serverData->setAccountID($OCUserAccountID);
+$serverData->setServerName($serverLocation);
+$serverID = $serverData->getServerID();
 
-if(!is_null($username)) {
-    $result = OCP\Config::setAppValue('aletsch', 'username', $username);
-}
+$credentials = new OCA\aletsch\credentialsHandler();
+$credentials->setServerID($serverID);
+$credentials->setUsername($username);
+$credentials->setPassword($password);
 
-if(!is_null($password)) {
-    $result = OCP\Config::setAppValue('aletsch', 'password', $password);
-}
-
-$tResult = ($result) ? 'OK' : 'KO';
-
-print $tResult;
-
-/*
-<name>*dbprefix*aletsch_accounts</name>
-<field>
-	<name>accountid</name>
-	<type>integer</type>
-	<default>0</default>
-	<notnull>true</notnull>
-	<autoincrement>1</autoincrement>
-	<length>11</length>
-</field>
-
-<field>
-	<name>ocuserid</name>
-	<type>text</type>
-	<default />
-	<notnull>true</notnull>
-	<length>40</length>
-</field>
-
-<field>
-	<name>server</name>
-	<type>text</type>
-	<default />
-	<notnull>true</notnull>
-	<length>10</length>
-</field>
-
-<field>
-	<name>username</name>
-	<type>text</type>
-	<default />
-	<notnull>true</notnull>
-	<length>40</length>
-</field>
-
-<field>
-	<name>password</name>
-	<type>text</type>
-	<default />
-	<notnull>true</notnull>
-	<length>40</length>
-</field>
-*/
+print 'OK';

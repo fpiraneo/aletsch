@@ -25,6 +25,18 @@ OCP\Util::addScript('aletsch', 'savePersonalSettings');
 // Handle translations
 $l = new \OC_L10N('aletsch');
 
+// Retrieve accounts
+$OCUserName = \OCP\User::getUser();
+$userAccounts = OCA\aletsch\accountHandler::getAccountsTree($OCUserName);
+
+
+
+
+
+
+
+
+
 $serverLocation = OCP\Config::getAppValue('aletsch', 'serverLocation');
 $username = OCP\Config::getAppValue('aletsch', 'username');
 $password = OCP\Config::getAppValue('aletsch', 'password');
