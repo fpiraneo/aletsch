@@ -21,6 +21,7 @@
 OCP\JSON::checkAppEnabled('aletsch');
 OCP\User::checkLoggedIn();
 
+$user = \OCP\User::getUser();
 $serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
 $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
 $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
@@ -41,3 +42,47 @@ if(!is_null($password)) {
 $tResult = ($result) ? 'OK' : 'KO';
 
 print $tResult;
+
+/*
+<name>*dbprefix*aletsch_accounts</name>
+<field>
+	<name>accountid</name>
+	<type>integer</type>
+	<default>0</default>
+	<notnull>true</notnull>
+	<autoincrement>1</autoincrement>
+	<length>11</length>
+</field>
+
+<field>
+	<name>ocuserid</name>
+	<type>text</type>
+	<default />
+	<notnull>true</notnull>
+	<length>40</length>
+</field>
+
+<field>
+	<name>server</name>
+	<type>text</type>
+	<default />
+	<notnull>true</notnull>
+	<length>10</length>
+</field>
+
+<field>
+	<name>username</name>
+	<type>text</type>
+	<default />
+	<notnull>true</notnull>
+	<length>40</length>
+</field>
+
+<field>
+	<name>password</name>
+	<type>text</type>
+	<default />
+	<notnull>true</notnull>
+	<length>40</length>
+</field>
+*/

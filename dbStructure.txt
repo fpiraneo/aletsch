@@ -9,7 +9,7 @@
   |   | Job_2
   |   \ Job_3
   | 
-  + Archive (retained) [archiveid, archivedate, archivedescr, catalog]
+  + Archives (retained) [archiveid, archivedate, archivedescr, catalog]
     | File_0 [contained in catalog as zipped json]
     | File_1
     \ File_2
