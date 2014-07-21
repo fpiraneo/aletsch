@@ -25,26 +25,31 @@ OCP\Util::addScript('aletsch', 'savePersonalSettings');
 // Handle translations
 $l = new \OC_L10N('aletsch');
 
-// Retrieve accounts
-$OCUserName = \OCP\User::getUser();
-$userAccounts = OCA\aletsch\accountHandler::getAccountsTree($OCUserName);
-
-
-
-
-
-
-
-
-
-$serverLocation = OCP\Config::getAppValue('aletsch', 'serverLocation');
-$username = OCP\Config::getAppValue('aletsch', 'username');
-$password = OCP\Config::getAppValue('aletsch', 'password');
-
+// Create template object
 $tmpl = new \OCP\Template('aletsch', 'personal-settings');
 
-$tmpl->assign('serverLocation', $serverLocation);
-$tmpl->assign('username', $username);
-$tmpl->assign('password', $password);
+// Retrieve accounts
+$OCUserName = \OCP\User::getUser();
+$userAccounts = OCA\aletsch\accountHandler::getAccountsTable($OCUserName);
+
+if(count($userAccounts) === 0) {
+	// No accounts found
+	$tmpl->assign('serverLocation', '');
+	$tmpl->assign('username', '');
+	$tmpl->assign('password', '');
+} else {
+	// One or more accounts found
+	// NOTE: Just one account supported on this version
+	list($accountID) = array_keys($userAccounts);
+	$accountData = $userAccounts[$accountID];
+
+	$tmpl->assign('accountID', $accountID);
+	$tmpl->assign('serverID', $accountData['serverLocation']['id']);
+	$tmpl->assign('credID', $accountData['username']['id']);
+	
+	$tmpl->assign('serverLocation', $accountData['serverLocation']['value']);
+	$tmpl->assign('username', $accountData['username']['value']);
+	$tmpl->assign('password', $accountData['password']['value']);
+}
 
 return $tmpl->fetchPage();

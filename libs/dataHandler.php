@@ -1,4 +1,23 @@
 <?php
+/*
+ * Copyright 2014 by Francesco PIRANEO G. (fpiraneo@gmail.com)
+ * 
+ * This file is part of aletsch.
+ * 
+ * aletsch is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * aletsch is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
 namespace OCA\aletsch;
 
 class accountsHandler {
@@ -30,18 +49,28 @@ class accountsHandler {
 		return $this->OCUserName;
 	}
 	
+	/**
+	 *  Get account tree for actual user
+	 *  Format:
+	 *  array(
+	 *		serverID => array(
+	 *  		'serverLocation' => serverLocation,
+	 *  		'credentials' => array(
+	 *  			'credID' => array(
+	 *  				'username' => userName,
+	 *  				'password' => password
+	 *  			)
+	 *  		)
+	 *  	)
+	 *  )
+	 */
 	static function getAccountsTree($OCUserName) {
 		// Get basic account data
 		$accountData = new OCA\aletsch\accountsHandler();
 		$accountData->setOCUserName($OCUserName);
 		$accountID = $accountData->getAccountID();
 		
-		$accountTree = array(
-			$accountID => array(
-				'userName' => $OCUserName,
-				'server' => array()
-			)
-		);
+		$accountTree = array();
 		
 		// Get all servers for the account
 		$servers = OCA\aletsch\serverHandler::getServersForAccount($accountID);
@@ -49,11 +78,11 @@ class accountsHandler {
 			// Get server data
 			$serverData = new OCA\aletsch\serverHandler();
 			$serverData->setServerID($serverID);
-			$serverName = $serverData->getServerName();
-			$accountTree[$accountID]['server'][$serverID]['serverName'] = $servername;
+			$serverLocation = $serverData->getServerName();
+			$accountTree[$serverID]['serverLocation'] = $serverLocation;
 			
 			// Get all credentials for the server
-			$accountTree[$accountID]['server'][$serverID]['credentials'] = array();
+			$accountTree[$serverID]['credentials'] = array();
 			
 			$credentials = OCA\aletsch\credentialsHandler::getCredentialsForServerID($serverID);
 			foreach($credentials as $credID) {
@@ -64,15 +93,65 @@ class accountsHandler {
 					'password' => $credData->getPassword()
 				);
 				
-				$accountTree[$accountID]['server'][$serverID]['credentials'][$credid] = $credArray;
+				$accountTree[$serverID]['credentials'][$credid] = $credArray;
 				
 				unset($credData);
 			}
 			
 			unset($serverData);
 		}
+		
+		return $accountTree;
 	}
 	
+	/**
+	 *  Get account table for actual user
+	 *  Format:
+	 *  array(
+	 *  	[accountID] => array(
+	 *  		'serverLocation' => array('id' => serverID, 'value' => serverLocation),
+	 *  		'username' => array('id' => credID, 'value' => username),
+	 *  		'password' => array('id' => credID, 'value' => password)
+	 *  		)
+	 *  	)
+	 */
+	static function getAccountsTable($OCUserName) {
+		// Get basic account data
+		$accountData = new OCA\aletsch\accountsHandler();
+		$accountData->setOCUserName($OCUserName);
+		$accountID = $accountData->getAccountID();
+		
+		$accountTable = array();
+		
+		// Get all servers for the account
+		$servers = OCA\aletsch\serverHandler::getServersForAccount($accountID);
+		foreach($servers as $serverID) {
+			// Get server data
+			$serverData = new OCA\aletsch\serverHandler();
+			$serverData->setServerID($serverID);
+			$serverLocation = $serverData->getServerName();
+			
+			// Get all credentials for the server
+			$credentials = OCA\aletsch\credentialsHandler::getCredentialsForServerID($serverID);
+			foreach($credentials as $credID) {
+				$credData = new OCA\aletsch\credentialsHandler();
+				$credData->setCredID($credID);
+				
+				$accountTable[$accountID] = array(
+					'serverLocation' => array('id' => $serverID, 'value' => $serverLocation),
+					'username' => array('id' => $credID, 'value' => $credData->getUsername()),
+					'password' => array('id' => $credID, 'value' => $credData->getPassword())
+				);
+				
+				unset($credData);
+			}
+			
+			unset($serverData);
+		}
+		
+		return $accountTable;
+	}
+
 	private function save() {
 		if($this->accountID === NULL) {
 			// Insert new server data
