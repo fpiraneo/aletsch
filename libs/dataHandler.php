@@ -21,15 +21,13 @@
 namespace OCA\aletsch;
 
 class accountsHandler {
-	private $accountID;
-	private $OCUserName;
+	private $accountID = NULL;
+	private $OCUserName = NULL;
 
     /**
      * Class constructor
      */
     function __construct() {
-		$this->accountID = NULL;
-		$this->OCUserName = NULL;
     }
 	
 	function setOCUserName($OCUserName) {
@@ -191,16 +189,14 @@ class accountsHandler {
 }
 
 class serverHandler {
-	private $serverID;
-	private $accountID;
-	private $serverName;
+	private $serverID = NULL;
+	private $accountID = NULL;
+	private $serverName = NULL;
 	
     /**
      * Class constructor
      */
     function __construct() {
-		$this->serverID = NULL;
-		$this->accountID = NULL;
     }
 
 	function setServerID($serverID) {
@@ -280,16 +276,15 @@ class serverHandler {
 }
 
 class credentialsHandler {
-	private $credID;
-	private $serverID;
-	private $username;
-	private $password;
+	private $credID = NULL;
+	private $serverID = NULL;
+	private $username = NULL;
+	private $password = NULL;
 	
     /**
      * Class constructor
      */
     function __construct() {
-		$this->credID = NULL;
     }
 	
     function setCredID($credID) {

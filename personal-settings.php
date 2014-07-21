@@ -34,6 +34,10 @@ $userAccounts = OCA\aletsch\accountHandler::getAccountsTable($OCUserName);
 
 if(count($userAccounts) === 0) {
 	// No accounts found
+	$tmpl->assign('accountID', '');
+	$tmpl->assign('serverID', '');
+	$tmpl->assign('credID', '');
+
 	$tmpl->assign('serverLocation', '');
 	$tmpl->assign('username', '');
 	$tmpl->assign('password', '');

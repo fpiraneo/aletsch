@@ -22,6 +22,10 @@ $(function() {
 		var serverLocation = $("#aletsch_serverLocation").val();
 		var username = $("#aletsch_username").val();
 		var password = $("#aletsch_password").val();
+		
+		var accountID = $("#aletsch_serverLocation").attr("data-accountid");
+		var serverID = $("#aletsch_serverLocation").attr("data-serverid");
+		var credID = $("#aletsch_username").attr("data-credid");
 
 		if(serverLocation !== '' && username !== '' && password) {
 			$.ajax({
@@ -30,6 +34,9 @@ $(function() {
 				timeout: 2000,
 
 				data: {
+					accountid: accountID,
+					serverid: serverID,
+					credid: credID,
 					serverLocation: serverLocation,
 					username: username,
 					password: password

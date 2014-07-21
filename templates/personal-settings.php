@@ -3,7 +3,7 @@
     <form id="aletsch_settings">
         <div style="margin-bottom: 5px;">
             <label for="aletsch_serverLocation"><?php p($l->t('Server location')) ?></label>
-            <select id="aletsch_serverLocation" name="serverLocation">
+            <select id="aletsch_serverLocation" name="serverLocation" data-accountid="<?php p($_['accountID']) ?>" data-serverid="<?php p($_['serverID']) ?>">
                 <?php
                 $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 
@@ -19,12 +19,12 @@
         
         <div style="margin-bottom: 5px;">
             <label for="aletsch_username"><?php p($l->t('Username')) ?></label>
-            <input id="aletsch_username" name="username" style="width:500px;" value="<?php p($_['username']) ?>" />
+            <input id="aletsch_username" name="username" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['username']) ?>" />
         </div>
         
         <div style="margin-bottom: 5px;">
             <label for="aletsch_password"><?php p($l->t('Password')) ?></label>
-            <input id="aletsch_password" name="password" style="width:500px;" value="<?php p($_['password']) ?>" />
+            <input id="aletsch_password" name="password" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['password']) ?>" />
         </div>
     </form>
 </fieldset>
