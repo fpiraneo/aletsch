@@ -3,7 +3,9 @@
     <form id="aletsch_settings">
         <div style="margin-bottom: 5px;">
             <label for="aletsch_serverLocation"><?php p($l->t('Server location')) ?></label>
-            <select id="aletsch_serverLocation" name="serverLocation" data-accountid="<?php p($_['accountID']) ?>" data-serverid="<?php p($_['serverID']) ?>">
+            <select id="aletsch_serverLocation" name="serverLocation" data-credid="<?php p($_['credID']) ?>">
+				<option value="" disabled="disabled" ><?php p($l->t('Set server location')) ?></option>
+				
                 <?php
                 $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 

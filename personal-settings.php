@@ -30,30 +30,19 @@ $tmpl = new \OCP\Template('aletsch', 'personal-settings');
 
 // Retrieve accounts
 $OCUserName = \OCP\User::getUser();
-$userAccounts = OCA\aletsch\accountHandler::getAccountsTable($OCUserName);
+$userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
 
-if(count($userAccounts) === 0) {
+if(is_null($userAccount->getCredID())) {
 	// No accounts found
-	$tmpl->assign('accountID', '');
-	$tmpl->assign('serverID', '');
 	$tmpl->assign('credID', '');
-
 	$tmpl->assign('serverLocation', '');
 	$tmpl->assign('username', '');
 	$tmpl->assign('password', '');
 } else {
-	// One or more accounts found
-	// NOTE: Just one account supported on this version
-	list($accountID) = array_keys($userAccounts);
-	$accountData = $userAccounts[$accountID];
-
-	$tmpl->assign('accountID', $accountID);
-	$tmpl->assign('serverID', $accountData['serverLocation']['id']);
-	$tmpl->assign('credID', $accountData['username']['id']);
-	
-	$tmpl->assign('serverLocation', $accountData['serverLocation']['value']);
-	$tmpl->assign('username', $accountData['username']['value']);
-	$tmpl->assign('password', $accountData['password']['value']);
+	$tmpl->assign('credID', $userAccount->getCredID());	
+	$tmpl->assign('serverLocation', $userAccount->getServerLocation());
+	$tmpl->assign('username', $userAccount->getUsername());
+	$tmpl->assign('password', $userAccount->getPassword());
 }
 
 return $tmpl->fetchPage();

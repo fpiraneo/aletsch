@@ -23,27 +23,13 @@ OCP\User::checkLoggedIn();
 
 $OCUserName = \OCP\User::getUser();
 
-$accountID = filter_input(INPUT_POST, 'accountid', FILTER_SANITIZE_NUMBER_INT);
-$serverID = filter_input(INPUT_POST, 'serverid', FILTER_SANITIZE_NUMBER_INT);
 $credID = filter_input(INPUT_POST, 'credid', FILTER_SANITIZE_NUMBER_INT);
-
 $serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
 $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
 $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
 
-$userAccount = new OCA\aletsch\accountHandler();
-$userAccount->setOCUserName($OCUserName);
-$OCUserAccountID = $userAccount->getAccountID();
-
-$serverData = new OCA\aletsch\serverHandler();
-$serverData->setAccountID($OCUserAccountID);
-$serverData->setServerID(($serverID === '') ? NULL : $serverID);
-$serverData->setServerName($serverLocation);
-$serverID = $serverData->getServerID();
-
-$credentials = new OCA\aletsch\credentialsHandler();
-$credentials->setServerID($serverID);
-$credentials->setCredID(($credID === '') ? NULL : $credID);
+$userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
+$serverData->setServerLocation($serverLocation);
 $credentials->setUsername($username);
 $credentials->setPassword($password);
 
