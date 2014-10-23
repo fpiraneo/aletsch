@@ -30,7 +30,7 @@ $tmpl = new \OCP\Template('aletsch', 'personal-settings');
 
 // Retrieve accounts
 $OCUserName = \OCP\User::getUser();
-$userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
+$userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
 
 if(is_null($userAccount->getCredID())) {
 	// No accounts found

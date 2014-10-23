@@ -18,50 +18,54 @@
  */
 
 $(function() {
-    $("#aletsch_serverLocation").change(function() {
-		saveData();
-    });
-
-    $("#aletsch_username").focusout(function() {
-		saveData();
-    });
-
-    $("#aletsch_password").focusout(function() {
-		saveData();
-    });
-
+    $("#aletsch_saveCredentials")
+            .button()
+            .click(function(event) {
+                event.preventDefault();
+                saveData();
+            });
 	
-	function saveData() {
-		var serverLocation = $("#aletsch_serverLocation").val();
-		var username = $("#aletsch_username").val();
-		var password = $("#aletsch_password").val();		
-		var credID = $("#aletsch_username").attr("data-credid");
+    function saveData() {
+        var serverLocation = $("#aletsch_serverLocation").val();
+        var username = $("#aletsch_username").val();
+        var password = $("#aletsch_password").val();		
+        var credID = $("#aletsch_username").attr("data-credid");
 
-		if(serverLocation !== '' && username !== '' && password !== '') {
-			$.ajax({
-				url: OC.filePath('aletsch', 'ajax', 'savePersonalSettings.php'),
-				async: false,
-				timeout: 2000,
+        if(serverLocation !== '' && username !== '' && password !== '') {
+            $.ajax({
+                url: OC.filePath('aletsch', 'ajax', 'savePersonalSettings.php'),
+                async: false,
+                timeout: 2000,
 
-				data: {
-					credid: credID,
-					serverLocation: serverLocation,
-					username: username,
-					password: password
-				},
+                data: {
+                    credid: credID,
+                    serverLocation: serverLocation,
+                    username: username,
+                    password: password
+                },
 
-				type: "POST",
+                type: "POST",
 
-				success: function(result) {
-					if(result !== 'OK') {
-						window.alert(t('aletsch', 'Settings not saved! Data base error!'))
-					}
-				},
+                success: function(result) {
+                    if(result === 'OK') {
+                        updateStatusBar(t('aletsch', 'Settings saved correctly.'));
+                    } else {
+                        updateStatusBar(t('aletsch', 'Settings not saved! Data base error!'));
+                    }
+                },
 
-				error: function(xhr, status) {
-					window.alert(t('aletsch', 'Settings not saved! Communication error!'))
-				}                            
-			});
-		}
-	}
+                error: function(xhr, status) {
+                    updateStatusBar(t('aletsch', 'Settings not saved! Communication error!'));
+                }
+            });
+        }
+    }
+    
+    function updateStatusBar(t) {
+        $('#notification').html(t);
+        $('#notification').slideDown();
+        window.setTimeout(function(){
+            $('#notification').slideUp();
+        }, 5000);
+    }
 });

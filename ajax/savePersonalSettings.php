@@ -29,8 +29,8 @@ $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
 $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
 
 $userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
-$serverData->setServerLocation($serverLocation);
-$credentials->setUsername($username);
-$credentials->setPassword($password);
+$userAccount->setServerLocation($serverLocation);
+$userAccount->setUsername($username);
+$userAccount->setPassword($password);
 
 print 'OK';

@@ -44,3 +44,31 @@ p.aletsch_title {
     padding: 2px 0px 2px 20px;
     font-weight: bold;
 }
+
+div.aletsch_center {
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 2px solid gray;
+    border-radius: 10px;
+    width: 640px;
+    background-color: lightgray;
+}
+
+div.aletsch_errTitle {
+    border-radius: 9px 9px 0px 0px;
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 1px solid red;
+    width: 100%;
+    background-color: red;
+    color: white;
+}
+
+div.aletsch_errCode {
+    padding: 5px
+}
+
+div.aletsch_errMessage {
+    padding: 5px;
+}

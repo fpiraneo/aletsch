@@ -19,3 +19,4 @@
  */
 
 OC::$CLASSPATH['OCA\aletsch\aletsch'] = 'aletsch/libs/aletsch.php';
+OC::$CLASSPATH['OCA\aletsch\credentialsHandler'] = 'aletsch/libs/dataHandler.php';

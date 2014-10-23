@@ -36,14 +36,42 @@ OCP\App::setActiveNavigationEntry('aletsch');
 // Load main script
 \OCP\Util::addScript('aletsch', 'mainAletsch');
 
-$serverLocation = OCP\Config::getAppValue('aletsch', 'serverLocation');
-$username = OCP\Config::getAppValue('aletsch', 'username');
-$password = OCP\Config::getAppValue('aletsch', 'password');
+// Retrieve accounts data
+$OCUserName = \OCP\User::getUser();
+$userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
+
+$serverLocation = $userAccount->getServerLocation();
+$username = $userAccount->getUsername();
+$password = $userAccount->getPassword();
 
 $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 
-$tpl = new OCP\Template("aletsch", "main", "user");
+// Create instance to glacier
+$glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
 
-$tpl->assign('serverLocation', $serverAvailableLocations[$serverLocation]);
+// Retrieve vaults list
+try {
+    $vaults = $glacier->vaultList();
+}
+catch(Aws\Glacier\Exception\GlacierException $ex) {
+    $exCode = $ex->getExceptionCode();
+    $exMessage = $ex->getMessage();
+    $errStatus = TRUE;
+}
+
+
+// In case of error, assign the message to the template's variables
+if($errStatus) {
+    $tpl = new OCP\Template("aletsch", "svcerr", "user");
+
+    $tpl->assign('errCode', $exCode);
+    $tpl->assign('errMessage', $exMessage);
+} else {
+    $tpl = new OCP\Template("aletsch", "main", "user");
+
+    $tpl->assign('credID', $userAccount->getCredID());
+    $tpl->assign('serverLocation', $serverLocation);
+    $tpl->assign('serverTextLocation', $serverAvailableLocations[$serverLocation]);
+}
 
 $tpl->printPage();

@@ -5,8 +5,10 @@ $l = new \OC_L10N('aletsch');
 
 <div id="notification" style="display:none;"></div>
 
+
+
 <div class='aletsch_toolbar'>
-    <?php p($l->t('Actual vaults on ')); p($_['serverLocation']); ?>
+    <?php p($l->t('Actual vaults on ')); p($_['serverTextLocation']); ?>
 </div>
 
 <div data-layout='{"type": "border", "hgap": 5, "vgap": 3}' class="aletsch_content" id="aletsch_content">

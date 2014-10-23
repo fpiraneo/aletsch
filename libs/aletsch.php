@@ -11,40 +11,40 @@ use Aws\Glacier\Model\MultipartUpload\UploadPartGenerator;
  * Code partly inspired to http://blogs.aws.amazon.com/php/post/Tx7PFHT4OJRJ42/Uploading-Archives-to-Amazon-Glacier-from-PHP
  */
 class aletsch {
-	// Constant value of 1Mbytes in bytes
-	// this is a Megabyte - Better a Mebibyte
-	private $megaByte = 1048576;
-	private $maxReelSize;
-	private $fileCopyBlockSize = 16;
-	
-	// Block size is 4Mb
-	private $blockSize;
-	private $uploadPartSize;
-	
-	private $glacierClient;
-	
-	private $multipartUploadId;
-	private $multiParts;
-	
-	private $archiver;
-	private $lastCatalog;
-	
-	private $offline = TRUE;
-	
-	/**
-	 * Class constructor
-	 */
-	function __construct($region, $key, $secret) {
-		$this->glacierClient = GlacierClient::factory(array(
-			'region' => $region,
-			'key'    => $key,
-			'secret' => $secret
-		));
-		
-		$this->maxReelSize = (1024 * $this->megaByte) * 2;
-		$this->blockSize = $this->megaByte * 4;
-		$this->uploadPartSize = 4 * $this->megaByte;
-	}
+    // Constant value of 1Mbytes in bytes
+    // this is a Megabyte - Better a Mebibyte
+    private $megaByte = 1048576;
+    private $maxReelSize;
+    private $fileCopyBlockSize = 16;
+
+    // Block size is 4Mb
+    private $blockSize;
+    private $uploadPartSize;
+
+    private $glacierClient;
+
+    private $multipartUploadId;
+    private $multiParts;
+
+    private $archiver;
+    private $lastCatalog;
+
+    private $offline = TRUE;
+
+    /**
+     * Class constructor
+     */
+    function __construct($region, $key, $secret) {
+        $this->glacierClient = GlacierClient::factory(array(
+            'region' => $region,
+            'key'    => $key,
+            'secret' => $secret
+        ));
+
+        $this->maxReelSize = (1024 * $this->megaByte) * 2;
+        $this->blockSize = $this->megaByte * 4;
+        $this->uploadPartSize = 4 * $this->megaByte;
+    }
 	
 	/**
 	 * Set the reel maximum size
@@ -217,20 +217,20 @@ class aletsch {
 		return $result;
 	}
 	
-	/**
-	 * Get the vaults list
-	 */
-	function vaultList() {
-		$answer = $this->glacierClient->listVaults(array(
-			'accountId' => '-'
-		));
+    /**
+     * Get the vaults list
+     */
+    function vaultList() {
+        $answer = $this->glacierClient->listVaults(array(
+            'accountId' => '-'
+        ));
 
-		$data = $answer->getAll();
+        $data = $answer->getAll();
 
-		$vaultList = $data['VaultList'];
-		
-		return $vaultList;
-	}
+        $vaultList = $data['VaultList'];
+
+        return $vaultList;
+    }
 	
 	/**
 	 * Begin getting of the inventory of the indicated vault

@@ -103,8 +103,6 @@
 			<field>
 				<name>inventorydate</name>
 				<type>timestamp</type>
-				<default>0</default>
-				<notnull>true</notnull>
 			</field>
 
 			<field>
@@ -140,8 +138,6 @@
 			<field>
 				<name>archivedate</name>
 				<type>timestamp</type>
-				<default>0</default>
-				<notnull>true</notnull>
 			</field>
 
 			<field>
