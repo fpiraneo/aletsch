@@ -59,6 +59,10 @@ catch(Aws\Glacier\Exception\GlacierException $ex) {
     $errStatus = TRUE;
 }
 
+// Update stored vault data
+$userCredID = $userAccount->getCredID();
+$vaultHandler = new \OCA\aletsch\vaultHandler($userCredID);
+$vaultHandler->update($vaults);
 
 // In case of error, assign the message to the template's variables
 if($errStatus) {
@@ -72,6 +76,8 @@ if($errStatus) {
     $tpl->assign('credID', $userAccount->getCredID());
     $tpl->assign('serverLocation', $serverLocation);
     $tpl->assign('serverTextLocation', $serverAvailableLocations[$serverLocation]);
+    $tpl->assign('actVaults', $vaultHandler->getVaults());
+    $tpl->assign('allVaultsSize', $vaultHandler->getAllVaultSize());
 }
 
 $tpl->printPage();

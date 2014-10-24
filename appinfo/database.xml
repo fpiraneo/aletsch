@@ -62,20 +62,39 @@
 				<length>11</length>
 				<autoincrement>1</autoincrement>
 			</field>
-			
 			<field>
-				<name>accountid</name>
+				<name>credid</name>
 				<type>integer</type>
 				<default>0</default>
 				<notnull>true</notnull>
 				<length>11</length>
-			</field>
-			
+			</field>			
 			<field>
-				<name>vaultname</name>
+				<name>vaultarn</name>
 				<type>text</type>
 				<notnull>true</notnull>
-				<length>80</length>
+				<length>255</length>
+			</field>                
+			<field>
+				<name>creationdate</name>
+				<type>datetime</type>
+			</field>                
+			<field>
+				<name>lastinventory</name>
+				<type>datetime</type>
+			</field>                
+			<field>
+				<name>numberofarchives</name>
+				<type>integer</type>
+                                <notnull>true</notnull>
+                                <default>0</default>
+			</field>                
+			<field>
+				<name>sizeinbytes</name>
+				<type>integer</type>
+                                <notnull>true</notnull>
+                                <length>11</length>
+                                <default>0</default>
 			</field>                
 		</declaration>
 	</table>
