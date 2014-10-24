@@ -17,6 +17,12 @@ $l = new \OC_L10N('aletsch');
 
 <div data-layout='{"type": "border", "hgap": 5, "vgap": 3}' class="aletsch_content" id="aletsch_content">
     <div class="west" id="navPane">
+        <div style="padding-left: 5px; background-color: lightgray;">
+            <button id="btnNewVault"><?php p($l->t('New vault')) ?></button>
+            <button id="btnDeleteVault"><?php p($l->t('Delete vault')) ?></button>
+            <button id="btnRefrInventory"><?php p($l->t('Refresh inventory')) ?></button>
+        </div>
+        
         <div id="aletsch_vaults">
         <?php
             foreach($_['actVaults'] as $vaultarn => $vault) {
@@ -37,8 +43,31 @@ $l = new \OC_L10N('aletsch');
     </div>
 
     <div class="center" id="resPane" style="border: 1px dotted red;">
-        <p class="aletsch_title"><?php p($l->t('Associated files')) ?></p>        
-        <div id="aletsch_fileList"></div>
-        <div id="aletsch_emptylist"><?php p($l->t('Select one or more tags to view the associated files.')) ?></div>
+        <div id="aletsch_tabs" data-actualarn="<?php p($_['actualArn']); ?>">
+            <ul>
+                <li><a href="#tabInventory"><?php p($l->t('Inventory')) ?></a></li>
+                <li><a href="#tabJobList"><?php p($l->t('Jobs list')) ?></a></li>
+            </ul>
+
+            <div id="tabInventory">
+                <div style="text-align: left; padding-left: 5px; background-color: lightgray;">
+                    <button id="btnUploadArchive"><?php p($l->t('Upload archive')) ?></button>
+                    <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
+                    <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
+                </div>
+
+                <div id="aletsch_emptylist"><?php p($l->t('No inventory - Click on "Refresh inventory" to refresh.')) ?></div>
+            </div>
+
+            <div id="tabJobList">
+                <?php
+                    if(count($_['jobs']) === 0) {
+                        printf("<div id=\"aletsch_emptylist\">%s</div>", $l->t('No running or completed jobs on this vault.'));
+                    } else {
+                        print_r($_['jobs']);
+                    }
+                ?>
+            </div>
+        </div>        
     </div>
 </div>

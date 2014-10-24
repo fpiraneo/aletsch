@@ -136,6 +136,7 @@ class aletsch {
 
     /**
      * Get all files ID of the indicated user
+     * NOTE: TO BE PATCHED FOR OC7!!!
      * @param string $user Username
      * @param string $path Path to get the content
      * @param boolean $onlyID Get only the ID of files
@@ -192,29 +193,29 @@ class aletsch {
 	 * Get all files starting from indicated directory
 	 */
 	public static function getFSFileList($path = '/', $includeHidden = FALSE) {
-		if(substr($path, -1, 1) == '/' && strlen($path) > 1) {
-			$path = substr($path, 0, strlen($path) - 1);
-		}
-		
-		$result = array();
-		
-		$currentDir = dir($path);
-		
-		while($entry = $currentDir->read()) {
-			if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
-				$workPath = $path . '/' . $entry;
-				
-				if(is_dir($workPath)) {
-					$result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
-				} else {
-					$result[] = $workPath;
-				}
-			}
-		}
-		
-		$currentDir->close();
+            if(substr($path, -1, 1) == '/' && strlen($path) > 1) {
+                    $path = substr($path, 0, strlen($path) - 1);
+            }
 
-		return $result;
+            $result = array();
+
+            $currentDir = dir($path);
+
+            while($entry = $currentDir->read()) {
+                    if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
+                            $workPath = $path . '/' . $entry;
+
+                            if(is_dir($workPath)) {
+                                    $result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
+                            } else {
+                                    $result[] = $workPath;
+                            }
+                    }
+            }
+
+            $currentDir->close();
+
+            return $result;
 	}
 	
     /**
@@ -247,32 +248,32 @@ class aletsch {
 		return $data;
 	}
 	
-	/**
-	 * Get the list of all the jobs for the indicated vault
-	 */
-	function listJobs($vaultName) {
-		$answer = $this->glacierClient->listJobs(array(
-			'accountId' => '-',
-			'vaultName' => $vaultName
-		));
+    /**
+     * Get the list of all the jobs for the indicated vault
+     */
+    function listJobs($vaultName) {
+        $answer = $this->glacierClient->listJobs(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName
+        ));
 
         $data = $answer->getAll();
         return $data['JobList'];	
-	}
+    }
 	
-	/**
-	 * Get the details of the indicated job
-	 */
-	function describeJob($vaultName, $jobID) {
-		$answer = $this->glacierClient->describeJob(array(
-			'accountId' => '-',
-			'vaultName' => $vaultName,
-			'jobId' => $jobID
-		));
+    /**
+     * Get the details of the indicated job
+     */
+    function describeJob($vaultName, $jobID) {
+        $answer = $this->glacierClient->describeJob(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName,
+                'jobId' => $jobID
+        ));
 
         $data = $answer->getAll();
         return $data;	
-	}
+    }
 	
 	/**
 	 * Get the job's results and store on the indicated path
