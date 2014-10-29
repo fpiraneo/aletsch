@@ -132,6 +132,47 @@ class aletsch {
 
         return $serverAvailableLocations;
     }
+    
+    /**
+     * Explode ARN on it's component
+     * Associative array contains:
+     * - stringType
+     * - provider
+     * - serviceName
+     * - serverLocation
+     * - code
+     * - vaultPath
+     * - vaultName
+     * @param string $arn ARN to be exploded
+     * @param boolean $onlyVaultName If TRUE return only the vault name
+     * @return array The exploded ARN on array
+     */
+    public static function explodeARN($arn, $onlyVaultName = FALSE) {
+        $explodedArn = explode(':', $arn);
+        
+        if(count($explodedArn) !== 6) {
+            return FALSE;
+        }
+        
+        // Just the vault name
+        $vaultName = substr($explodedArn[5], 7);
+        
+        if($onlyVaultName) {
+            return $vaultName;
+        } else {
+            $vaultData = array(
+                'stringType' => $explodedArn[0],
+                'provider' => $explodedArn[1],
+                'serviceName' => $explodedArn[2],
+                'serverLocation' => $explodedArn[3],
+                'code' => $explodedArn[4],
+                'vaultPath' => $explodedArn[5],
+                'vaultName' => $vaultName,
+            );
+            
+            return $vaultData;
+        }
+    }
 
 
     /**
@@ -314,7 +355,7 @@ class aletsch {
 			'vaultName' => $vaultName
 		));
 		
-        $result = $answer->getAll();
+                $result = $answer->getAll();
 		
 		return $result['location'];
 	}
@@ -415,31 +456,31 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchiveMultipart($vaultName, $filePath, $description) {
-		$this->prepareMultipartUpload($filePath);
-		
-		// Initiate multipart upload
-		$this->initiateMultipartUpload($vaultName);
-		
-		// Upload each part individually using data from the part generator
-		$archiveData = fopen($filePath, 'rb');
-		foreach ($parts as $part) {
-			fseek($archiveData, $part->getOffset());
+            $this->prepareMultipartUpload($filePath);
 
-			$this->glacierClient->uploadMultipartPart(array(
-					'vaultName'     => $vaultName,
-					'uploadId'      => $this->multipartUploadId,
-					'body'          => fread($archiveData, $part->getSize()),
-					'range'         => $this->multiParts->getFormattedRange(),
-					'checksum'      => $this->multiParts->getChecksum(),
-					'ContentSHA256' => $this->multiParts->getContentHash()
-				));
-		}
-		fclose($archiveData);
- 
-		// Complete the upload
-		$archiveId = $this->closeMultipartUpload($vaultName, $this->multipartUploadId);
-		
-		return $archiveId;
+            // Initiate multipart upload
+            $this->initiateMultipartUpload($vaultName);
+
+            // Upload each part individually using data from the part generator
+            $archiveData = fopen($filePath, 'rb');
+            foreach ($parts as $part) {
+                    fseek($archiveData, $part->getOffset());
+
+                    $this->glacierClient->uploadMultipartPart(array(
+                                    'vaultName'     => $vaultName,
+                                    'uploadId'      => $this->multipartUploadId,
+                                    'body'          => fread($archiveData, $part->getSize()),
+                                    'range'         => $this->multiParts->getFormattedRange(),
+                                    'checksum'      => $this->multiParts->getChecksum(),
+                                    'ContentSHA256' => $this->multiParts->getContentHash()
+                            ));
+            }
+            fclose($archiveData);
+
+            // Complete the upload
+            $archiveId = $this->closeMultipartUpload($vaultName, $this->multipartUploadId);
+
+            return $archiveId;
 	}
 	
 	/**

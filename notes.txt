@@ -1,0 +1,38 @@
+arn:aws:glacier:eu-west-1:000000000000:vaults/VaultName
+
+Array (
+    [0] => Array (
+        [Action] => InventoryRetrieval
+        [ArchiveId] =>
+        [ArchiveSHA256TreeHash] =>
+        [ArchiveSizeInBytes] =>
+        [Completed] =>
+        [CompletionDate] =>
+        [CreationDate] => 2014-10-29T13:46:07.973Z
+        [InventoryRetrievalParameters] => Array (
+            [EndDate] =>
+            [Format] => JSON
+            [Limit] =>
+            [Marker] =>
+            [StartDate] =>
+        )
+        [InventorySizeInBytes] =>
+        [JobDescription] =>
+        [JobId] => C8Vvy4HseP2KBGZwCCajikQSbwUXZ-B2p7x5CydnX9DtThdyEffSY3YWf641ZXHDw5UduZSm2cUvgvGJezxHmrHvnrK1
+        [RetrievalByteRange] =>
+        [SHA256TreeHash] =>
+        [SNSTopic] =>
+        [StatusCode] => InProgress
+        [StatusMessage] =>
+        [VaultARN] => arn:aws:glacier:eu-west-1:000000000000:vaults/VaultName
+    )
+) 
+
+[Action] => InventoryRetrieval
+[Completed] =>
+[CompletionDate] =>
+[CreationDate] => 2014-10-29T13:46:07.973Z
+[JobId] => C8Vvy4HseP2KBGZwCCajikQSbwUXZ-B2p7M5CydnX9DtThdyEffSY3YWf641ZXHDw5UduZSm2cUvgvGJezxHmrHvnrK1
+[StatusCode] => InProgress
+[StatusMessage] =>
+[VaultARN] => arn:aws:glacier:eu-west-1:000000000000:vaults/VaultName

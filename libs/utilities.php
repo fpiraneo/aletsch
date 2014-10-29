@@ -43,4 +43,51 @@ class utilities {
 
         return $result;
     }
+    
+    /**
+     * Prepare the job list for a vault
+     * @param Array $jobList
+     * @return string
+     */
+    public static function prepareJobList($jobList = array()) {
+        // Handle translations
+        $l = new \OC_L10N('aletsch');
+
+        if(count($jobList) === 0) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No running or completed jobs on this vault.') . '</div>';
+        } else {
+            $result = '<table class=\'aletsch_resultTable\'>';
+            $result .= '<tr>';
+            $result .= '<th>' . $l->t('Action') . '</th>';
+            $result .= '<th>' . $l->t('Creation date') . '</th>';
+            $result .= '<th>' . $l->t('Completed?') . '</th>';
+            $result .= '<th>' . $l->t('Completion date') . '</th>';
+            $result .= '<th>' . $l->t('Status code') . '</th>';
+            $result .= '<th>' . $l->t('Status message') . '</th>';
+            $result .= '</tr>';
+
+            foreach($jobList as $job) {
+                /*
+                    [Action] => InventoryRetrieval
+                    [Completed] =>
+                    [CompletionDate] =>
+                    [CreationDate] => 2014-10-29T13:46:07.973Z
+                    [JobId] => C8Vvy4HseP2KBGZwCCajikQSbwUXZ-B2p7M5CydnX9DtThdyEffSY3YWf641ZXHDw5UduZSm2cUvgvGJezxHmrHvnrK1
+                    [StatusCode] => InProgress
+                    [StatusMessage] =>
+                    [VaultARN] => arn:aws:glacier:eu-west-1:000000000000:vaults/VaultName
+                 */
+
+                $creationDate = trim($job['CreationDate']) === '' ? 'N.A.' : $job['CreationDate'];
+                $completed = trim($job['Completed']) === '' ? 'NO' : $job['Completed'];
+                $completionDate = trim($job['CompletionDate']) === '' ? 'N.A.' : $job['CompletionDate'];
+                
+                $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage']);
+            }
+            
+            $result .= '</table>';
+        }        
+
+        return $result;
+    }
 }

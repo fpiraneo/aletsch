@@ -72,3 +72,20 @@ div.aletsch_errCode {
 div.aletsch_errMessage {
     padding: 5px;
 }
+
+table.aletsch_resultTable {
+    
+}
+
+.aletsch_resultTable th {
+    background-color: lightgray;
+    color: black;
+    border: 1px solid darkgray;
+    text-align: center;
+    padding: 5px;
+}
+.aletsch_resultTable td {
+    border: 1px solid darkgray;
+    padding: 5px;
+    text-align: center;
+}

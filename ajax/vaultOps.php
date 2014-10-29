@@ -21,9 +21,96 @@
 OCP\JSON::checkAppEnabled('aletsch');
 OCP\User::checkLoggedIn();
 
-$OCUserName = \OCP\User::getUser();
-
 $op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
-$vault = filter_input(INPUT_POST, 'vault', FILTER_SANITIZE_STRING);
+$vaultARN = filter_input(INPUT_POST, 'vault', FILTER_SANITIZE_URL);
 
-print 'OK';
+// Prepare result structure
+$result = array(
+    'opResult' => 'KO',
+    'opData' => array(),
+    'errData' => array(
+        'exCode' => '',
+        'exMessage' => ''
+    )
+);
+
+// If vault is not set, forfait
+if(!isset($vaultARN)) {
+    $result['opResult'] = 'KO';
+    $result['errData']['exCode'] = 'AletschParamError';
+    $result['errData']['exMessage'] = 'Vault is not set';
+    
+    die(json_encode($result));
+}
+
+$vaultName = \OCA\aletsch\aletsch::explodeARN($vaultARN, TRUE);
+
+// Open glacier's instance and select right operation
+// Retrieve accounts data
+$OCUserName = \OCP\User::getUser();
+$userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
+
+$serverLocation = $userAccount->getServerLocation();
+$username = $userAccount->getUsername();
+$password = $userAccount->getPassword();
+
+$serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
+
+// Create instance to glacier
+$glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
+
+switch($op) {
+    // Refresh inventory
+    case 'refreshInventory': {
+        try {
+            $inventoryOpRes = $glacier->getInventory($vaultName);
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            die(json_encode($result));
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $inventoryOpRes;
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    case 'getJobsList': {
+        try {
+            $jobs = $glacier->listJobs($vaultName);
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            die(json_encode($result));
+        }
+        
+        $jobsTable = \OCA\aletsch\utilities::prepareJobList($jobs);
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $jobsTable;
+
+        die(json_encode($result));
+        break;
+    }
+    
+    // Unrecognised operation fallback
+    default: {
+        $result['opResult'] = 'KO';
+        $result['errData']['exCode'] = 'AletschParamError';
+        $result['errData']['exMessage'] = 'Unrecognized operation';
+
+        die(json_encode($result));
+
+        break;
+    }
+}
+

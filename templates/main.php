@@ -26,8 +26,7 @@ $l = new \OC_L10N('aletsch');
         <div id="aletsch_vaults">
         <?php
             foreach($_['actVaults'] as $vaultarn => $vault) {
-                $explodedArn = explode(':', $vaultarn);
-                $vaultName = substr($explodedArn[5], 7);
+                $vaultName = \OCA\aletsch\aletsch::explodeARN($vaultarn, TRUE);
                 
                 printf("<h3 data-vaultarn=\"%s\">%s</h3>\n", $vaultarn, $vaultName);
                 print("<div>\n");
@@ -61,11 +60,7 @@ $l = new \OC_L10N('aletsch');
 
             <div id="tabJobList">
                 <?php
-                    if(count($_['jobs']) === 0) {
-                        printf("<div id=\"aletsch_emptylist\">%s</div>", $l->t('No running or completed jobs on this vault.'));
-                    } else {
-                        print_r($_['jobs']);
-                    }
+                    print \OCA\aletsch\utilities::prepareJobList($_['jobs']);
                 ?>
             </div>
         </div>        

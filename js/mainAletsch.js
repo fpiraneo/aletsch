@@ -3,6 +3,30 @@ $('document').ready(function() {
         activate: function(event, ui) {
             var selected = ui.newHeader.attr("data-vaultarn");
             $("#aletsch_tabs").attr("data-actualarn", selected);
+            
+            $.ajax({
+                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+                data: {
+                    op: 'getJobsList',
+                    vault: selected
+                },
+
+                type: "POST",
+
+                success: function(result) {
+                    var resultData = jQuery.parseJSON(result);
+
+                    if(resultData.opResult === 'OK') {
+                        $('#tabJobList').html(resultData.opData);
+                    } else {
+                        updateStatusBar(t('aletsch', 'Unable to get jobs list!'));
+                    }
+                },
+                error: function( xhr, status ) {
+                    updateStatusBar(t('aletsch', 'Unable to get jobs list! Ajax error!'));
+                }
+            });            
         }
     });
     
@@ -26,7 +50,7 @@ $('document').ready(function() {
                 success: function(result) {
                     var resultData = jQuery.parseJSON(result);
 
-                    if(resultData.result === 'OK') {
+                    if(resultData.opResult === 'OK') {
                         updateStatusBar(t('aletsch', 'Job begun!'));
                     } else {
                         updateStatusBar(t('aletsch', 'Job not begun!'));
