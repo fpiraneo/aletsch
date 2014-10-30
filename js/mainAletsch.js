@@ -26,7 +26,33 @@ $('document').ready(function() {
                 error: function( xhr, status ) {
                     updateStatusBar(t('aletsch', 'Unable to get jobs list! Ajax error!'));
                 }
-            });            
+            });
+            
+            $.ajax({
+                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+                data: {
+                    op: 'getInventory',
+                    vault: selected
+                },
+
+                type: "POST",
+
+                success: function(result) {
+                    var resultData = jQuery.parseJSON(result);
+
+                    if(resultData.opResult === 'OK') {
+                        var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
+                        $('#aletsch_inventoryDate').html(date);
+                        $('#aletsch_archives').html(resultData.opData.archiveList);
+                    } else {
+                        updateStatusBar(t('aletsch', 'Unable to get inventory!'));
+                    }
+                },
+                error: function( xhr, status ) {
+                    updateStatusBar(t('aletsch', 'Unable to get inventory! Ajax error!'));
+                }
+            });
         }
     });
     
@@ -62,38 +88,46 @@ $('document').ready(function() {
             });            
         });
 
-    $(".getInventory")
-        .button()
-        .click(function(event, ui) {
-            var actVault = $("#aletsch_tabs").attr("data-actualarn");
-            var jobID = $(this).data('jobid');
-            
-            $.ajax({
-                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+    $("#tabJobList").on("click", ".getInventory", function() {
+        var actVault = $("#aletsch_tabs").attr("data-actualarn");
+        var jobID = $(this).data('jobid');
 
-                data: {
-                    op: 'getInventory',
-                    vault: actVault,
-                    jobid: jobID
-                },
+        $.ajax({
+            url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
 
-                type: "POST",
+            data: {
+                op: 'getInventoryResult',
+                vault: actVault,
+                jobid: jobID
+            },
 
-                success: function(result) {
-                    var resultData = jQuery.parseJSON(result);
+            type: "POST",
 
-                    if(resultData.opResult === 'OK') {
-                        $('#tabInventory').html(resultData.opData);
-                        updateStatusBar(t('aletsch', 'Got inventory!'));
-                    } else {
-                        updateStatusBar(t('aletsch', 'Inventory not get!'));
-                    }
-                },
-                error: function( xhr, status ) {
-                    updateStatusBar(t('aletsch', 'Inventory not get! Ajax error!'));
+            success: function(result) {
+                var resultData = jQuery.parseJSON(result);
+
+                if(resultData.opResult === 'OK') {
+                    $('#aletsch_inventoryDate').html(resultData.opData.date);
+                    $('#aletsch_archives').html(resultData.opData.archiveList);
+
+                    updateStatusBar(t('aletsch', 'Got inventory!'));
+                } else {
+                    updateStatusBar(t('aletsch', 'Inventory not get!'));
                 }
-            });            
+            },
+            error: function( xhr, status ) {
+                updateStatusBar(t('aletsch', 'Inventory not get! Ajax error!'));
+            }
+        });            
+    });
+    
+    $("#aletsch_archives").on("click", "#aletsch_selectAllArchives", function(eventData) {
+        var selected = eventData.target.checked;
+        
+        $(".archiveSelection").each(function() {
+            $(this).prop("checked", selected);
         });
+    });
 });
 
 function updateStatusBar(t) {

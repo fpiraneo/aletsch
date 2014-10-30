@@ -119,29 +119,30 @@ class utilities {
     
     /**
      * Prepare the archives list for a vault
-     * @param Array $archiveList
+     * @param Array $archivesList List of archives as array of objects
      * @param Boolean $insertCheckBoxes Insert archive's checkbox to select an archive
      * @return string html code
      */
-    public static function prepareArchivesList($archiveList = array(), $insertCheckBoxes = FALSE) {
+    public static function prepareArchivesList($archivesList = array(), $insertCheckBoxes = FALSE) {
         // Handle translations
         $l = new \OC_L10N('aletsch');
 
-        if(count($jobList) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No running or completed jobs on this vault.') . '</div>';
+        if(is_null($archivesList)) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No inventory - Click on "Refresh inventory" to refresh.') . '</div>'; 
+        } else if(count($archivesList) === 0) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No archives on this vault.') . '</div>';
         } else {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
-            $result .= '<th>' . $l->t('Action') . '</th>';
+            if($insertCheckBoxes) {
+                $result .= '<th><input type=\'checkbox\' id=\'aletsch_selectAllArchives\' /></th>';
+            }
+            $result .= '<th>' . $l->t('Description') . '</th>';
             $result .= '<th>' . $l->t('Creation date') . '</th>';
-            $result .= '<th>' . $l->t('Completed?') . '</th>';
-            $result .= '<th>' . $l->t('Completion date') . '</th>';
-            $result .= '<th>' . $l->t('Status code') . '</th>';
-            $result .= '<th>' . $l->t('Status message') . '</th>';
-            $result .= '<th>&nbsp;</th>';
+            $result .= '<th>' . $l->t('Size') . '</th>';
             $result .= '</tr>';
 
-            foreach($jobList as $job) {
+            foreach($archivesList as $entry) {
                 /*
                     [ArchiveId]
                     [ArchiveDescription]
@@ -150,19 +151,14 @@ class utilities {
                     [SHA256TreeHash]
                  */
 
-                $creationDate = trim($job['CreationDate']) === '' ? 'N.A.' : $job['CreationDate'];
-                
-                if(trim($job['Completed']) === '') {
-                    $completed = $l->t('No');
-                } else if (trim($job['Completed']) === '1') {
-                    $completed = $l->t('Yes');
+                if($insertCheckBoxes) {
+                    $action = sprintf("<td><input type='checkbox' id='%s' class='archiveSelection' data-archiveid='%s' /></td>", uniqid("aletsch_"), $entry->ArchiveId);
                 } else {
-                    $completed = trim($job['Completed']);
+                    $action = '';
                 }
-                
-                $completionDate = trim($job['CompletionDate']) === '' ? 'N.A.' : $job['CompletionDate'];
-                
-                $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage'], $action);
+                $size = \OCA\aletsch\utilities::formatBytes($entry->Size);
+                                
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td></tr>", $action, $entry->ArchiveDescription, $entry->CreationDate, $size);
             }
             
             $result .= '</table>';

@@ -49,13 +49,20 @@ $l = new \OC_L10N('aletsch');
             </ul>
 
             <div id="tabInventory">
-                <div style="text-align: left; padding-left: 5px; background-color: lightgray;">
+                <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px;">
                     <button id="btnUploadArchive"><?php p($l->t('Upload archive')) ?></button>
                     <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
                     <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
+                    <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Last updated on')) ?>: 
+                        <span id="aletsch_inventoryDate"><?php p(($_['inventoryDate'] === '') ? $l->t('Not available') : $_['inventoryDate']); ?></span>
+                    </div>
                 </div>
 
-                <div id="aletsch_emptylist"><?php p($l->t('No inventory - Click on "Refresh inventory" to refresh.')) ?></div>
+                <div id="aletsch_archives">
+                    <?php
+                        print \OCA\aletsch\utilities::prepareArchivesList($_['inventoryArchives'], TRUE);
+                    ?>
+                </div>
             </div>
 
             <div id="tabJobList">

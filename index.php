@@ -78,10 +78,26 @@ if(!$errStatus) {
         $exMessage = $ex->getMessage();
         $errStatus = TRUE;
     }
+} else {
+    $jobs = array();
 }
 
 // Get inventory from DB
-
+if(!$errStatus) {
+    $inventory = new \OCA\aletsch\inventoryHandler();
+    $inventoryID = $inventory->loadFromDB($actualArn);
+    
+    if($inventoryID === FALSE) {
+        $inventoryArchives = NULL;
+        $inventoryDate = NULL;
+    } else {
+        $inventoryArchives = $inventory->getArchives();
+        $inventoryDate = $inventory->getInventoryDate();
+    }
+} else {
+    $inventoryArchives = array();
+    $inventoryDate = '';
+}
 
 // In case of error, assign the message to the template's variables
 if($errStatus) {
@@ -99,6 +115,8 @@ if($errStatus) {
     $tpl->assign('allVaultsSize', $vaultHandler->getAllVaultSize());
     $tpl->assign('actualArn', $actualArn);
     $tpl->assign('jobs', $jobs);
+    $tpl->assign('inventoryDate', $inventoryDate);
+    $tpl->assign('inventoryArchives', $inventoryArchives);
 }
 
 $tpl->printPage();

@@ -230,7 +230,7 @@ class inventoryHandler {
     private $vaultArn = NULL;
     private $archives = array();
     
-    function __construct($inventoryData) {
+    function setDataFromInventory($inventoryData) {
         // Set the date
         $this->inventoryDate = $inventoryData->InventoryDate;
         
@@ -314,8 +314,8 @@ class inventoryHandler {
         // Clear old data
         $this->inventoryDate = NULL;
         $this->vaultArn = NULL;
-        $this->archives = array();
-        $inventoryID = FALSE;
+        $this->archives = NULL;
+        $inventoryID = NULL;
         
         // Get stored data
         $sql = "SELECT inventoryid, inventorydate, inventorydata FROM *PREFIX*aletsch_inventories WHERE vaultarn=?";

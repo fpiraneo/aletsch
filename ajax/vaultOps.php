@@ -103,6 +103,23 @@ switch($op) {
     }
     
     case 'getInventory': {
+        // Get inventory from DB
+        $inventory = new \OCA\aletsch\inventoryHandler();
+        $inventoryID = $inventory->loadFromDB($vaultARN);
+        $inventoryDetails = array(
+            'date' => $inventory->getInventoryDate(),
+            'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
+        );            
+
+        $result['opResult'] = 'OK';
+        $result['opData'] = $inventoryDetails;
+
+        die(json_encode($result));
+
+        break;
+    }
+    
+    case 'getInventoryResult': {
         $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
 
         // If vault is not set, forfait
@@ -133,16 +150,17 @@ switch($op) {
         $credID = $credentials->getCredID();
         
         // Save this inventory on DB
-        $inventory = new \OCA\aletsch\inventoryHandler($inventoryData);
+        $inventory = new \OCA\aletsch\inventoryHandler();
+        $inventory->setDataFromInventory($inventoryData);
         $inventory->saveOnDB($credID);
         
         $inventoryDetails = array(
             'date' => $inventory->getInventoryDate(),
-            'archives' => $inventory->getArchives()
+            'archives' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
         );
 
         $result['opResult'] = 'OK';
-        $result['opData'] = json_encode($inventoryDetails);
+        $result['opData'] = $inventoryDetails;
 
         die(json_encode($result));
     }
