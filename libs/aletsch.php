@@ -548,11 +548,11 @@ class aletsch {
 		$fileID = $this->getIDFromPath($filePath);
 		
 		$this->archiver[$fileID] = array(
-			'filePath'		=> $filePath,
-			'owner'			=> fileowner($filePath),
-			'group'			=> filegroup($filePath),
+			'filePath'	=> $filePath,
+			'owner'		=> fileowner($filePath),
+			'group'		=> filegroup($filePath),
 			'permissions'	=> fileperms($filePath),
-			'fileSize'		=> filesize($filePath)
+			'fileSize'	=> filesize($filePath)
 		);
 		
 		return $fileID;
@@ -612,12 +612,12 @@ class aletsch {
 		
 		// Keeps track of working parameters
 		$progress = array(
-			'pid'				=> getmypid(),
-			'offline'			=> $this->offline,
+			'pid'			=> getmypid(),
+			'offline'		=> $this->offline,
 			'totalRead' 		=> 0,
 			'totalWritten'		=> 0,
 			'processedFiles'	=> 0,
-			'fileRead'			=> 0,
+			'fileRead'		=> 0,
 			'totalFiles'		=> count($this->archiver),
 			'thisFilePath'		=> '',
 			'thisFilePerc'		=> ''

@@ -45,7 +45,7 @@ class utilities {
     }
     
     /**
-     * Prepare the job list for a vault
+     * Prepare the html job list for a vault
      * @param Array $jobList
      * @return string
      */
@@ -64,6 +64,7 @@ class utilities {
             $result .= '<th>' . $l->t('Completion date') . '</th>';
             $result .= '<th>' . $l->t('Status code') . '</th>';
             $result .= '<th>' . $l->t('Status message') . '</th>';
+            $result .= '<th>&nbsp;</th>';
             $result .= '</tr>';
 
             foreach($jobList as $job) {
@@ -79,15 +80,94 @@ class utilities {
                  */
 
                 $creationDate = trim($job['CreationDate']) === '' ? 'N.A.' : $job['CreationDate'];
-                $completed = trim($job['Completed']) === '' ? 'NO' : $job['Completed'];
+                
+                if(trim($job['Completed']) === '') {
+                    $completed = $l->t('No');
+                } else if (trim($job['Completed']) === '1') {
+                    $completed = $l->t('Yes');
+                } else {
+                    $completed = trim($job['Completed']);
+                }
+                
                 $completionDate = trim($job['CompletionDate']) === '' ? 'N.A.' : $job['CompletionDate'];
                 
-                $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage']);
+                // Action button for the job
+                if(trim($job['Completed']) === '1' && trim($job['StatusCode']) === 'Succeeded') {
+                    switch(trim($job['Action'])) {
+                        case 'InventoryRetrieval': {
+                            $action = sprintf("<button id='%s' class='getInventory' data-jobid='%s'>%s</button>", uniqid('aletsh_'), trim($job['JobId']), $l->t('Get inventory'));
+                            break;
+                        }
+                        
+                        default: {
+                            $action = $l->t('Unsupported action');
+                            break;
+                        }
+                    }
+                } else {
+                    $action = '&nbsp;';
+                }
+                
+                $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage'], $action);
             }
             
             $result .= '</table>';
-        }        
+        }
 
+        return $result;
+    }
+    
+    /**
+     * Prepare the archives list for a vault
+     * @param Array $archiveList
+     * @param Boolean $insertCheckBoxes Insert archive's checkbox to select an archive
+     * @return string html code
+     */
+    public static function prepareArchivesList($archiveList = array(), $insertCheckBoxes = FALSE) {
+        // Handle translations
+        $l = new \OC_L10N('aletsch');
+
+        if(count($jobList) === 0) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No running or completed jobs on this vault.') . '</div>';
+        } else {
+            $result = '<table class=\'aletsch_resultTable\'>';
+            $result .= '<tr>';
+            $result .= '<th>' . $l->t('Action') . '</th>';
+            $result .= '<th>' . $l->t('Creation date') . '</th>';
+            $result .= '<th>' . $l->t('Completed?') . '</th>';
+            $result .= '<th>' . $l->t('Completion date') . '</th>';
+            $result .= '<th>' . $l->t('Status code') . '</th>';
+            $result .= '<th>' . $l->t('Status message') . '</th>';
+            $result .= '<th>&nbsp;</th>';
+            $result .= '</tr>';
+
+            foreach($jobList as $job) {
+                /*
+                    [ArchiveId]
+                    [ArchiveDescription]
+                    [CreationDate] => 2014-10-29T13:46:07.973Z
+                    [Size]
+                    [SHA256TreeHash]
+                 */
+
+                $creationDate = trim($job['CreationDate']) === '' ? 'N.A.' : $job['CreationDate'];
+                
+                if(trim($job['Completed']) === '') {
+                    $completed = $l->t('No');
+                } else if (trim($job['Completed']) === '1') {
+                    $completed = $l->t('Yes');
+                } else {
+                    $completed = trim($job['Completed']);
+                }
+                
+                $completionDate = trim($job['CompletionDate']) === '' ? 'N.A.' : $job['CompletionDate'];
+                
+                $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage'], $action);
+            }
+            
+            $result .= '</table>';
+        }
+        
         return $result;
     }
 }

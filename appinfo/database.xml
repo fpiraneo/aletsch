@@ -112,16 +112,23 @@
 			</field>
 			
 			<field>
-				<name>vaultid</name>
+				<name>credid</name>
 				<type>integer</type>
 				<default>0</default>
 				<notnull>true</notnull>
-				<length>8</length>
+				<length>11</length>
+			</field>			
+
+                        <field>
+				<name>vaultarn</name>
+				<type>text</type>
+				<notnull>true</notnull>
+				<length>255</length>
 			</field>
 
 			<field>
 				<name>inventorydate</name>
-				<type>timestamp</type>
+				<type>datetime</type>
 			</field>
 
 			<field>

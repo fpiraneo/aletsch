@@ -102,6 +102,51 @@ switch($op) {
         break;
     }
     
+    case 'getInventory': {
+        $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
+
+        // If vault is not set, forfait
+        if(!isset($jobID)) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = 'AletschParamError';
+            $result['errData']['exMessage'] = 'Job ID is not set';
+
+            die(json_encode($result));
+        }        
+        
+        try {
+            $tmpFilePath = tempnam(sys_get_temp_dir(), uniqid("aletsch_"));
+            $inventoryData = $glacier->getInventoryResult($vaultName, $jobID, $tmpFilePath);
+        }
+        catch (Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            die(json_encode($result));
+        }
+        
+        // Get credentials ID of this user
+        $OCUserName = \OCP\User::getUser();
+        $credentials = new \OCA\aletsch\credentialsHandler($OCUserName);
+        $credentials->load();
+        $credID = $credentials->getCredID();
+        
+        // Save this inventory on DB
+        $inventory = new \OCA\aletsch\inventoryHandler($inventoryData);
+        $inventory->saveOnDB($credID);
+        
+        $inventoryDetails = array(
+            'date' => $inventory->getInventoryDate(),
+            'archives' => $inventory->getArchives()
+        );
+
+        $result['opResult'] = 'OK';
+        $result['opData'] = json_encode($inventoryDetails);
+
+        die(json_encode($result));
+    }
+    
     // Unrecognised operation fallback
     default: {
         $result['opResult'] = 'KO';

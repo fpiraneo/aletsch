@@ -99,7 +99,7 @@ class credentialsHandler {
                 $resRsrc = $query->execute($args);
 
                 // Get inserted index
-                $this->credID = \OCP\DB::insertid();		
+                $this->credID = \OCP\DB::insertid();
             } else {
                 $sql = 'UPDATE *PREFIX*aletsch_credentials SET serverLocation=?, username=?, password=? WHERE credid=?';
                 $args = array($this->serverLocation, $this->username, $this->password, $this->credID);
@@ -222,5 +222,121 @@ class vaultHandler {
         
         // End
         return TRUE;
+    }
+}
+
+class inventoryHandler {
+    private $inventoryDate = NULL;
+    private $vaultArn = NULL;
+    private $archives = array();
+    
+    function __construct($inventoryData) {
+        // Set the date
+        $this->inventoryDate = $inventoryData->InventoryDate;
+        
+        // Save vault's ARN
+        $this->vaultArn = $inventoryData->VaultARN;
+        
+        // Set archives data
+        $this->archives = $inventoryData->ArchiveList;
+    }
+
+    /**
+     * Get actual inventory date
+     * @return String
+     */
+    function getInventoryDate() {
+        return $this->inventoryDate;
+    }
+
+    /**
+     * Get actual inventory
+     * @return Array
+     */
+    function getArchives() {
+        return $this->archives;
+    }
+    
+    /**
+     * Get actual vault's ARN
+     * @return String
+     */
+    function getVaultArn() {
+        return $this->vaultArn;
+    }
+    
+    /**
+     * Save actual inventory on DB
+     * @param Integer $credID Credentials under to store the actual inventory
+     */
+    function saveOnDB($credID=NULL) {
+        // If credential is not provided, forfait
+        if(is_null($credID)) {
+            return FALSE;
+        }
+        
+        // Build and compress archives data
+        $archives = json_encode($this->archives);
+        $comprArchives = gzcompress($archives);
+        
+        // Remove old data
+        $sql = "DELETE FROM *PREFIX*aletsch_inventories WHERE credid=? AND vaultarn=?";
+        $args = array($credID, $this->vaultArn);
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);                
+        
+        // Insert new inventory
+        $sql = "INSERT INTO *PREFIX*aletsch_inventories (credid, vaultarn, inventorydate, inventorydata) VALUES (?,?,?,?)";
+        $args = array(
+            $credID,
+            $this->vaultArn,
+            $this->inventoryDate,
+            $comprArchives
+        );
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);
+        
+        // Return last inserted inventory ID
+        return \OCP\DB::insertid();
+    }
+    
+    /**
+     * Load last saved inventory from DB
+     * @param String $vaultARN
+     */
+    function loadFromDB($vaultARN) {
+        // If provided vault ARN not valid forfait
+        if(trim($vaultARN) === '' || is_null($vaultARN)) {
+            return FALSE;
+        }
+        
+        // Clear old data
+        $this->inventoryDate = NULL;
+        $this->vaultArn = NULL;
+        $this->archives = array();
+        $inventoryID = FALSE;
+        
+        // Get stored data
+        $sql = "SELECT inventoryid, inventorydate, inventorydata FROM *PREFIX*aletsch_inventories WHERE vaultarn=?";
+        $args = array(
+            $vaultARN
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);
+        
+        while($row = $resRsrc->fetchRow()) {
+            $this->inventoryDate = $row['inventorydate'];
+            $this->vaultArn = $vaultARN;
+
+            $jsonArchives = gzuncompress($row['inventorydata']);
+            $this->archives = json_decode($jsonArchives);
+            
+            $inventoryID = $row['inventoryid'];
+        }
+        
+        // Return reverted inventory ID
+        return $inventoryID;
     }
 }
