@@ -23,6 +23,7 @@ OCP\User::checkLoggedIn();
 
 $op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
 $vaultARN = filter_input(INPUT_POST, 'vault', FILTER_SANITIZE_URL);
+$newVaultName = filter_input(INPUT_POST, 'newVaultName', FILTER_SANITIZE_STRING);
 
 // Prepare result structure
 $result = array(
@@ -35,10 +36,11 @@ $result = array(
 );
 
 // If vault is not set, forfait
-if(!isset($vaultARN)) {
+if(!isset($vaultARN) && !isset($newVaultName)) {
     $result['opResult'] = 'KO';
     $result['errData']['exCode'] = 'AletschParamError';
     $result['errData']['exMessage'] = 'Vault is not set';
+    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
     
     die(json_encode($result));
 }
@@ -60,6 +62,76 @@ $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 $glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
 
 switch($op) {
+    // Get vaults list
+    case 'vaultList': {
+        // Retrieve vaults list
+        try {
+            $vaults = $glacier->vaultList();
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
+            die(json_encode($result));
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $vaults;
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Create new vault
+    case 'createVault': {
+        try {
+            $createNew = $glacier->createVault($newVaultName);
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
+            die(json_encode($result));
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $createNew;
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Create new vault
+    case 'deleteVault': {
+        try {
+            $deleteResult = $glacier->deleteVault($vaultName);
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
+            die(json_encode($result));
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $deleteResult;
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
     // Refresh inventory
     case 'refreshInventory': {
         try {
@@ -70,6 +142,8 @@ switch($op) {
             $result['errData']['exCode'] = $ex->getExceptionCode();
             $result['errData']['exMessage'] = $ex->getMessage();
 
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
             die(json_encode($result));
         }
         
@@ -81,6 +155,7 @@ switch($op) {
         break;
     }
     
+    // Get actual job list
     case 'getJobsList': {
         try {
             $jobs = $glacier->listJobs($vaultName);
@@ -90,6 +165,8 @@ switch($op) {
             $result['errData']['exCode'] = $ex->getExceptionCode();
             $result['errData']['exMessage'] = $ex->getMessage();
 
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
             die(json_encode($result));
         }
         
@@ -102,8 +179,8 @@ switch($op) {
         break;
     }
     
+    // Get inventory from DB
     case 'getInventory': {
-        // Get inventory from DB
         $inventory = new \OCA\aletsch\inventoryHandler();
         $inventoryID = $inventory->loadFromDB($vaultARN);
         $inventoryDetails = array(
@@ -119,6 +196,7 @@ switch($op) {
         break;
     }
     
+    // Get inventory from glacier
     case 'getInventoryResult': {
         $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
 
@@ -140,6 +218,8 @@ switch($op) {
             $result['errData']['exCode'] = $ex->getExceptionCode();
             $result['errData']['exMessage'] = $ex->getMessage();
 
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
             die(json_encode($result));
         }
         
@@ -171,6 +251,8 @@ switch($op) {
         $result['errData']['exCode'] = 'AletschParamError';
         $result['errData']['exMessage'] = 'Unrecognized operation';
 
+        \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
         die(json_encode($result));
 
         break;

@@ -107,7 +107,8 @@ $('document').ready(function() {
                 var resultData = jQuery.parseJSON(result);
 
                 if(resultData.opResult === 'OK') {
-                    $('#aletsch_inventoryDate').html(resultData.opData.date);
+                    var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
+                    $('#aletsch_inventoryDate').html(date);
                     $('#aletsch_archives').html(resultData.opData.archiveList);
 
                     updateStatusBar(t('aletsch', 'Got inventory!'));
@@ -128,7 +129,114 @@ $('document').ready(function() {
             $(this).prop("checked", selected);
         });
     });
+    
+    $("#btnNewVault")
+        .button()
+        .click(function(){
+            newVaultDlog.dialog("open");
+        });
+
+    var newVaultDlog = $("#aletsch_newVaultDlog").dialog({
+        autoOpen: false,
+        height: 150,
+        width: 350,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                var newVaultName = $("#aletsch_vaultName").val();
+                createVault(newVaultName);
+                newVaultDlog.dialog("close");
+            },
+            Cancel: function() {
+                newVaultDlog.dialog("close");
+            }
+        },
+        close: function() {
+            $("#aletsch_vaultName").val("");
+        }
+    });
+    
+    $("#btnDeleteVault")
+        .button()
+        .click(function(){
+            var delVaultName = $("#aletsch_tabs").attr("data-actualarn").split("/");
+            $("#vaultNameToDelete").html(delVaultName[1]);
+            delVaultDlog.dialog("open");
+        });
+
+    var delVaultDlog = $("#aletsch_deleteVaultDlog").dialog({
+        autoOpen: false,
+        resizable: false,
+        height: 200,
+        width: 350,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                var delVaultName = $("#aletsch_tabs").attr("data-actualarn");
+                $("#vaultNameToDelete").val("");
+                deleteVault(delVaultName)
+                $(this).dialog("close");
+            },
+            Cancel: function() {
+                $(this).dialog("close");
+            }
+        }
+    });
 });
+
+function createVault(vaultName) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'createVault',
+            newVaultName: vaultName
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Vault created!'));
+                location.reload(true);
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to create vault!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to create vault! Ajax error!'));
+        }
+    });
+}
+
+function deleteVault(vaultName) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'deleteVault',
+            vault: vaultName
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Vault deleted!'));
+                location.reload(true);
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to delete vault!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to delete vault! Ajax error!'));
+        }
+    });
+}
 
 function updateStatusBar(t) {
     $('#notification').html(t);

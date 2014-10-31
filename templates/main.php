@@ -5,8 +5,6 @@ $l = new \OC_L10N('aletsch');
 
 <div id="notification" style="display:none;"></div>
 
-
-
 <div class='aletsch_toolbar'>
     <?php
         p($l->t('Actual vaults on '));
@@ -20,24 +18,13 @@ $l = new \OC_L10N('aletsch');
         <div style="padding-left: 5px; background-color: lightgray;">
             <button id="btnNewVault"><?php p($l->t('New vault')) ?></button>
             <button id="btnDeleteVault"><?php p($l->t('Delete vault')) ?></button>
-            <button id="btnRefrInventory"><?php p($l->t('Refresh inventory')) ?></button>
+            <button id="btnRefrInventory"><?php p($l->t('Inventory')) ?></button>
         </div>
         
         <div id="aletsch_vaults">
-        <?php
-            foreach($_['actVaults'] as $vaultarn => $vault) {
-                $vaultName = \OCA\aletsch\aletsch::explodeARN($vaultarn, TRUE);
-                
-                printf("<h3 data-vaultarn=\"%s\">%s</h3>\n", $vaultarn, $vaultName);
-                print("<div>\n");
-                printf("<p><strong>ARN:</strong> %s</p>\n", $vaultarn);
-                printf("<p><strong>Creation date:</strong> %s UTC</p>\n", $vault['creationdate']);
-                printf("<p><strong>Last inventory:</strong> %s UTC</p>\n", $vault['lastinventory']);
-                printf("<p><strong>Number of archives:</strong> %s</p>\n", $vault['numberofarchives']);
-                printf("<p><strong>Size:</strong> %s bytes</p>\n", \OCA\aletsch\utilities::formatBytes($vault['sizeinbytes'], 2, FALSE));
-                print("</div>\n");
-            }
-        ?>
+            <?php
+                print \OCA\aletsch\utilities::prepareVaultsList($_['actVaults']);
+            ?>
         </div>
     </div>
 
@@ -72,4 +59,16 @@ $l = new \OC_L10N('aletsch');
             </div>
         </div>        
     </div>
+</div>
+
+<!-- New vault dialog -->
+<div id="aletsch_newVaultDlog" title="<?php p($l->t('Enter the new vault name')) ?>">
+    <input type="text" name="aletsch_vaultName" id="aletsch_vaultName" style="width:95%">        
+</div>
+
+<!-- Delete vault dialog -->
+<div id="aletsch_deleteVaultDlog" title="<?php p($l->t('Delete a vault')) ?>">
+    <p><?php p($l->t('The following vault will be removed; are you sure?')) ?></p>
+    <p id="vaultNameToDelete" style="font-weight: bold; width: 100%; text-align: center; padding: 5px 0px 5px 0px;">&nbsp;</p>
+    <p style="font-size: 0.85em;"><?php p($l->t('Non-empty vaults cannot be removed and you\'ll get a failure!')) ?></p>
 </div>

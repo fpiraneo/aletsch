@@ -45,6 +45,37 @@ class utilities {
     }
     
     /**
+     * Prepare the vault accordion list
+     * @param Array $vaultData Vaults data
+     */
+    public static function prepareVaultsList($vaultData = array()) {
+        // Handle translations
+        $l = new \OC_L10N('aletsch');
+
+        if(count($vaultData) === 0) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No vaults.') . '</div>';
+        } else {
+            $result = '';
+            
+            foreach($vaultData as $vaultarn => $vault) {
+                $vaultName = \OCA\aletsch\aletsch::explodeARN($vaultarn, TRUE);
+                $lastInventory = trim($vault['lastinventory']) === '' ? $l->t('Never') : $vault['lastinventory'] . ' UTC';
+
+                $result .= '<h3 data-vaultarn="' . $vaultarn . '">' . $vaultName . '</h3>';
+                $result .= '<div>';
+                $result .= '<p><strong>ARN:</strong>' . $vaultarn . '</p>';
+                $result .= '<p><strong>' . $l->t('Creation date') . ':</strong> ' . $vault['creationdate'] . ' UTC</p>';
+                $result .= '<p><strong>' . $l->t('Last inventory') . ':</strong> ' . $lastInventory . '</p>';
+                $result .= '<p><strong>' . $l->t('Number of archives') . ':</strong> ' . $vault['numberofarchives'] . '</p>';
+                $result .= '<p><strong>' . $l->t('Size') . ':</strong> ' . \OCA\aletsch\utilities::formatBytes($vault['sizeinbytes'], 2, FALSE) . '</p>';
+                $result .= '</div>';
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
      * Prepare the html job list for a vault
      * @param Array $jobList
      * @return string
@@ -105,7 +136,7 @@ class utilities {
                         }
                     }
                 } else {
-                    $action = '&nbsp;';
+                    $action = $l->t('No actions');
                 }
                 
                 $result .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $job['Action'], $creationDate, $completed, $completionDate, $job['StatusCode'], $job['StatusMessage'], $action);

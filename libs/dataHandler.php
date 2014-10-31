@@ -181,11 +181,10 @@ class vaultHandler {
                 // Update just `lastinventory`, `numberofarchives` and `sizeinbytes`
                 $sql = 'UPDATE *PREFIX*aletsch_vaults SET lastinventory=?, numberofarchives=?, sizeinbytes=? WHERE vaultid=?';
                 $args = array(
-                    $this->credID,
-                    $vault['LastInventoryDate'],
+                    isset($vault['LastInventoryDate']) ? $vault['LastInventoryDate'] : NULL,
                     $vault['NumberOfArchives'],
                     $vault['SizeInBytes'],
-                    $this->vaults[$vault['vaultarn']]['vaultid']
+                    $this->vaults[$vault['VaultARN']]['vaultid']
                 );
                 $query = \OCP\DB::prepare($sql);
                 $resRsrc = $query->execute($args);                
@@ -205,20 +204,24 @@ class vaultHandler {
             }      
         }
         
-        // Refresh local structure
-        $this->load();
-        
         // Remove from DB vaults that no longer exists
         $remoteARN = array_column($vaults, 'VaultARN');
-        foreach($this->vaults as $vault) {
-            if(!isset($remoteARN[$vault['VaultARN']])) {
+        foreach($this->vaults as $arn => $vault) {
+            if(in_array($arn, $remoteARN) === FALSE) {
+                // Delete entry on vaults table
                 $sql = "DELETE FROM *PREFIX*aletsch_vaults WHERE vaultid=?";
                 $args = array($vault['vaultid']);
 
                 $query = \OCP\DB::prepare($sql);
-                $resRsrc = $query->execute($args);                
+                $resRsrc = $query->execute($args);
+                
+                // Delete all stored inventories
+                \OCA\aletsch\inventoryHandler::removeInventories($arn);
             }
         }
+        
+        // Refresh local structure
+        $this->load();
         
         // End
         return TRUE;
@@ -338,5 +341,20 @@ class inventoryHandler {
         
         // Return reverted inventory ID
         return $inventoryID;
+    }
+    
+    /**
+     * Delete all inventories belonging to a vault
+     * @param String $VaultARN Vault ARN to remove the inventories
+     * @return boolean TRUE on success
+     */
+    public static function removeInventories($VaultARN) {
+        $query = 'DELETE FROM oc_aletsch_inventories WHERE vaultarn=?';
+        $args = array($credID, $this->vaultArn);
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);                
+        
+        return TRUE;
     }
 }

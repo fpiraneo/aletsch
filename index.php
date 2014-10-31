@@ -48,6 +48,7 @@ $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 
 // Create instance to glacier
 $glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
+$errStatus = FALSE;
 
 // Retrieve vaults list
 try {
@@ -57,6 +58,8 @@ catch(Aws\Glacier\Exception\GlacierException $ex) {
     $exCode = $ex->getExceptionCode();
     $exMessage = $ex->getMessage();
     $errStatus = TRUE;
+    
+    \OCP\Util::writeLog('aletsch', $exCode . ' - ' . $exMessage, 0);
 }
 
 // Update stored vault data
@@ -77,6 +80,8 @@ if(!$errStatus) {
         $exCode = $ex->getExceptionCode();
         $exMessage = $ex->getMessage();
         $errStatus = TRUE;
+    
+        \OCP\Util::writeLog('aletsch', $exCode . ' - ' . $exMessage, 0);
     }
 } else {
     $jobs = array();
