@@ -72,3 +72,8 @@ $l = new \OC_L10N('aletsch');
     <p id="vaultNameToDelete" style="font-weight: bold; width: 100%; text-align: center; padding: 5px 0px 5px 0px;">&nbsp;</p>
     <p style="font-size: 0.85em;"><?php p($l->t('Non-empty vaults cannot be removed and you\'ll get a failure!')) ?></p>
 </div>
+
+<!-- Delete selected archives -->
+<div id="aletsch_deleteArchivesDlog" title="<?php p($l->t('Delete archives')) ?>">
+    <p><?php p($l->t('The selected archives will be removed; are you sure?')) ?></p>
+</div>

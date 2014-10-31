@@ -1,4 +1,6 @@
 $('document').ready(function() {
+    var selectedArchives = [];
+
     $("#aletsch_vaults").accordion({
         activate: function(event, ui) {
             var selected = ui.newHeader.attr("data-vaultarn");
@@ -182,6 +184,38 @@ $('document').ready(function() {
             }
         }
     });
+    
+    $("#btnDeleteArchive")
+    .button()
+    .click(function() {
+        $(".archiveSelection").each(function() {
+            if($(this).prop("checked")) {
+                selectedArchives[selectedArchives.length] = $(this).data('archiveid');
+            }
+        });
+
+        if(selectedArchives.length > 0) {
+            delArchivesDlog.dialog("open");
+        }
+    });
+    
+    var delArchivesDlog = $("#aletsch_deleteArchivesDlog").dialog({
+        autoOpen: false,
+        resizable: false,
+        height: 150,
+        width: 350,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                var actVaultARN = $("#aletsch_tabs").attr("data-actualarn");
+                removeArchives(actVaultARN, selectedArchives);
+                $(this).dialog("close");
+            },
+            Cancel: function() {
+                $(this).dialog("close");
+            }
+        }
+    });
 });
 
 function createVault(vaultName) {
@@ -234,6 +268,34 @@ function deleteVault(vaultName) {
         },
         error: function( xhr, status ) {
             updateStatusBar(t('aletsch', 'Unable to delete vault! Ajax error!'));
+        }
+    });
+}
+
+function removeArchives(vaultARN, archivesID) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'deleteArchives',
+            vault: vaultARN,
+            archives: JSON.stringify(archivesID)
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Archives deleted!'));
+                location.reload(true);
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to delete archives!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to delete archives! Ajax error!'));
         }
     });
 }

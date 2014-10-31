@@ -245,6 +245,22 @@ switch($op) {
         die(json_encode($result));
     }
     
+    // Delete archives
+    case 'deleteArchives': {
+        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+        
+        foreach($archives as $archiveID) {
+            $result = $glacier->deleteArchive($vaultName, $archiveID);
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+
+        break;
+    }
+    
     // Unrecognised operation fallback
     default: {
         $result['opResult'] = 'KO';
