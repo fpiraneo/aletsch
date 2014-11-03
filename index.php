@@ -98,6 +98,7 @@ if(!$errStatus) {
     } else {
         $inventoryArchives = $inventory->getArchives();
         $inventoryDate = $inventory->getInventoryDate();
+        $inventoryOutdated = ($inventoryDate !== $vaultHandler->getLastInventory($actualArn));
     }
 } else {
     $inventoryArchives = array();
@@ -122,6 +123,7 @@ if($errStatus) {
     $tpl->assign('jobs', $jobs);
     $tpl->assign('inventoryDate', $inventoryDate);
     $tpl->assign('inventoryArchives', $inventoryArchives);
+    $tpl->assign('inventoryOutdated', $inventoryOutdated);
 }
 
 $tpl->printPage();

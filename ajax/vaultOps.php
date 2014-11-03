@@ -61,6 +61,28 @@ $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 // Create instance to glacier
 $glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
 
+// Retrieve vaults list
+try {
+    $vaults = $glacier->vaultList();
+}
+catch(Aws\Glacier\Exception\GlacierException $ex) {
+    $result['opResult'] = 'KO';
+    $result['errData']['exCode'] = $ex->getExceptionCode();
+    $result['errData']['exMessage'] = $ex->getMessage();
+    
+    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+    die(json_encode($result));
+}
+
+// Update stored vault data
+$userCredID = $userAccount->getCredID();
+$vaultHandler = new \OCA\aletsch\vaultHandler($userCredID);
+$vaultHandler->update($vaults);
+
+//
+// Action switcher
+//
 switch($op) {
     // Get vaults list
     case 'vaultList': {
@@ -185,6 +207,7 @@ switch($op) {
         $inventoryID = $inventory->loadFromDB($vaultARN);
         $inventoryDetails = array(
             'date' => $inventory->getInventoryDate(),
+            'outdated' => ($inventory->getInventoryDate() !== $vaultHandler->getLastInventory($actualArn)),
             'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
         );            
 

@@ -40,8 +40,9 @@ $l = new \OC_L10N('aletsch');
                     <button id="btnUploadArchive"><?php p($l->t('Upload archive')) ?></button>
                     <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
                     <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
-                    <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Last updated on')) ?>: 
+                    <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Updated on')) ?>: 
                         <span id="aletsch_inventoryDate"><?php p(($_['inventoryDate'] === '') ? $l->t('Not available') : $_['inventoryDate']); ?></span>
+                        <span id="aletsch_inventoryOutdated"><?php p(($_['inventoryOutdated'] === '') ? $l->t('Outdated') : ''); ?></span>
                     </div>
                 </div>
 

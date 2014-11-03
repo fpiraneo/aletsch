@@ -45,7 +45,9 @@ $('document').ready(function() {
 
                     if(resultData.opResult === 'OK') {
                         var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
+                        var outdated = (resultData.opData.outdated === null) ? t('aletsch', 'Outdated') : '';
                         $('#aletsch_inventoryDate').html(date);
+                        $('#aletsch_inventoryOutdated').html(outdated);
                         $('#aletsch_archives').html(resultData.opData.archiveList);
                     } else {
                         updateStatusBar(t('aletsch', 'Unable to get inventory!'));
@@ -289,7 +291,6 @@ function removeArchives(vaultARN, archivesID) {
 
             if(resultData.opResult === 'OK') {
                 updateStatusBar(t('aletsch', 'Archives deleted!'));
-                location.reload(true);
             } else {
                 updateStatusBar(t('aletsch', 'Unable to delete archives!'));
             }

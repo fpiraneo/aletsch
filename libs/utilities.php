@@ -159,7 +159,7 @@ class utilities {
         $l = new \OC_L10N('aletsch');
 
         if(is_null($archivesList)) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No inventory - Click on "Refresh inventory" to refresh.') . '</div>'; 
+            $result = '<div id="aletsch_emptylist">' . $l->t('No inventory - Click on "Inventory" to refresh.') . '</div>'; 
         } else if(count($archivesList) === 0) {
             $result = '<div id="aletsch_emptylist">' . $l->t('No archives on this vault.') . '</div>';
         } else {

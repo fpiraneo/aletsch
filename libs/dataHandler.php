@@ -137,6 +137,21 @@ class vaultHandler {
     }
     
     /**
+     * Get last inventory date on provided vault
+     * @param String $vaultARN Vault ARN to get data to
+     * @return String Last inventory date or FALSE if not ARN provided
+     */
+    function getLastInventory($vaultARN) {
+        // No valid data provided
+        if(trim($vaultARN) === '') {
+            return FALSE;
+        }
+        
+        // Return vault last updated (if found)
+        return $this->vaults[$vaultARN]['lastinventory'];
+    }
+    
+    /**
      * Load vaults stored on DB
      */
     function load() {

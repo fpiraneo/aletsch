@@ -3,8 +3,6 @@ namespace OCA\aletsch;
 
 include __DIR__ . '/aws.phar';
 use Aws\Glacier\GlacierClient;
-use Aws\Glacier\Model\MultipartUpload\UploadBuilder;
-use Aws\Common\Hash\TreeHash;
 use Aws\Glacier\Model\MultipartUpload\UploadPartGenerator;
 
 /**
@@ -22,9 +20,6 @@ class aletsch {
     private $uploadPartSize;
 
     private $glacierClient;
-
-    private $multipartUploadId;
-    private $multiParts;
 
     private $archiver;
     private $lastCatalog;
@@ -52,37 +47,37 @@ class aletsch {
 	 * Minimum allowed 4Mb, maximum allowed: 4Gb
 	 */
 	function setReelSize($reelSize) {
-		$minAccept = $this->megaByte * 4;			// 4Mb
-		$maxAccept = ($this->megaByte * 1024) * 4;	// 4Gb
-		
-		$ucReelSize = trim(strtoupper($reelSize));
-		$umMB = strpos($ucReelSize, 'MB');
-		$umGB = strpos($ucReelSize, 'GB');
-		
-		// Accepts only megabyte or gigabyte
-		if(!$umMB && !$umGB) {
-			return false;
-		}
-		
-		// Sets measure unit
-		$value = trim(substr($ucReelSize, 0, strlen($ucReelSize) - 2));
-		
-		if($umMB) {
-			$multiplier = $this->megaByte;
-		} else if($umGB) {
-			$multiplier = $this->megaByte * 1024;
-		} else {
-			$multiplier = 0;
-		}
-		
-		$setValue = $multiplier * $value;
-		
-		if($setValue >= $minAccept && $setValue <= $maxAccept) {
-			$this->maxReelSize = $setValue;
-			return TRUE;
-		} else {
-			return FALSE;
-		}
+            $minAccept = $this->megaByte * 4;			// 4Mb
+            $maxAccept = ($this->megaByte * 1024) * 4;	// 4Gb
+
+            $ucReelSize = trim(strtoupper($reelSize));
+            $umMB = strpos($ucReelSize, 'MB');
+            $umGB = strpos($ucReelSize, 'GB');
+
+            // Accepts only megabyte or gigabyte
+            if(!$umMB && !$umGB) {
+                return false;
+            }
+
+            // Sets measure unit
+            $value = trim(substr($ucReelSize, 0, strlen($ucReelSize) - 2));
+
+            if($umMB) {
+                $multiplier = $this->megaByte;
+            } else if($umGB) {
+                $multiplier = $this->megaByte * 1024;
+            } else {
+                $multiplier = 0;
+            }
+
+            $setValue = $multiplier * $value;
+
+            if($setValue >= $minAccept && $setValue <= $maxAccept) {
+                $this->maxReelSize = $setValue;
+                return TRUE;
+            } else {
+                return FALSE;
+            }
 	}
 	
 	/**
@@ -90,29 +85,29 @@ class aletsch {
 	 * Results in bytes - Always
 	 */
 	function getReelSize() {
-		return $this->maxReelSize;
+            return $this->maxReelSize;
 	}
 	
 	/**
 	 * Set catalog from json
 	 */
 	function setCatalogFromJson($catalog) {
-		$this->lastCatalog = json_decode($catalog, TRUE);
+            $this->lastCatalog = json_decode($catalog, TRUE);
 	}
 	
 	/**
 	 * Get catalog entries number
 	 */
-	function getCatalogEntries($catalog) {
-		return count($this->lastCatalog);
+	function getCatalogEntries() {
+            return count($this->lastCatalog);
 	}
 	
 	/**
 	 * Get catalog item
 	 */
 	function getCatalogItem($itemNum) {
-		$keys = array_keys($this->lastCatalog);
-		return $this->lastCatalog[$keys[$itemNum]];
+            $keys = array_keys($this->lastCatalog);
+            return $this->lastCatalog[$keys[$itemNum]];
 	}
 
     /**
@@ -235,7 +230,7 @@ class aletsch {
 	 */
 	public static function getFSFileList($path = '/', $includeHidden = FALSE) {
             if(substr($path, -1, 1) == '/' && strlen($path) > 1) {
-                    $path = substr($path, 0, strlen($path) - 1);
+                $path = substr($path, 0, strlen($path) - 1);
             }
 
             $result = array();
@@ -243,15 +238,15 @@ class aletsch {
             $currentDir = dir($path);
 
             while($entry = $currentDir->read()) {
-                    if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
-                            $workPath = $path . '/' . $entry;
+                if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
+                    $workPath = $path . '/' . $entry;
 
-                            if(is_dir($workPath)) {
-                                    $result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
-                            } else {
-                                    $result[] = $workPath;
-                            }
+                    if(is_dir($workPath)) {
+                        $result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
+                    } else {
+                        $result[] = $workPath;
                     }
+                }
             }
 
             $currentDir->close();
@@ -336,55 +331,55 @@ class aletsch {
 	 * Get the result of an inventory
 	 */
 	function getInventoryResult($vaultName, $jobID, $tmpFilePath) {
-		$this->getJobData($vaultName, $jobID, $tmpFilePath);
-		
-		// Read JSON data
-		$inventoryJSON = file_get_contents($tmpFilePath);
-		$inventory = json_decode($inventoryJSON);
-		unlink($tmpFilePath);
-		
-		return $inventory;
+            $this->getJobData($vaultName, $jobID, $tmpFilePath);
+
+            // Read JSON data
+            $inventoryJSON = file_get_contents($tmpFilePath);
+            $inventory = json_decode($inventoryJSON);
+            unlink($tmpFilePath);
+
+            return $inventory;
 	}
 	
 	/**
 	 * Create a new vault
 	 */
 	function createVault($vaultName) {
-		$answer = $this->glacierClient->createVault(array(
-			'accountId' => '-',
-			'vaultName' => $vaultName
-		));
-		
-                $result = $answer->getAll();
-		
-		return $result['location'];
+            $answer = $this->glacierClient->createVault(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName
+            ));
+
+            $result = $answer->getAll();
+
+            return $result['location'];
 	}
 	
 	/**
 	 * Delete a vault
 	 */
 	function deleteVault($vaultName) {
-		$answer = $this->glacierClient->deleteVault(array(
-		'accountId' => '-',
-		'vaultName' => $vaultName
-		));
+            $answer = $this->glacierClient->deleteVault(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName
+            ));
 		
-        $result = $answer->getAll();
-		
-		return 'done';
+            $result = $answer->getAll();
+
+            return $result;
 	}
 	
 	/**
 	 * Delete an archive
 	 */
 	function deleteArchive($vaultName, $archiveID) {
-		$answer = $this->glacierClient->deleteArchive(array(
-			'accountId' => '-',
-			'vaultName' => $vaultName,
-			'archiveId' => $archiveID
-		));
-		
-		return $answer->getAll();
+            $answer = $this->glacierClient->deleteArchive(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName,
+                'archiveId' => $archiveID
+            ));
+
+            return $answer->getAll();
 	}
 
 	/**
@@ -392,12 +387,12 @@ class aletsch {
 	 * Return TRUE if present, an array with registered algorithm otherwise
 	 */
 	function checkAlgos() {
-		$algos = hash_algos();
-		if(array_search('sha256', $algos) === FALSE) {
-			return $algos;
-		} else {
-			return TRUE;
-		}
+            $algos = hash_algos();
+            if(array_search('sha256', $algos) === FALSE) {
+                return $algos;
+            } else {
+                return TRUE;
+            }
 	}
 	
 	/**
@@ -407,24 +402,24 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchive($vaultName, $filePath, $description = NULL) {
-		if(is_null($description)) {
-			$pathParts = pathinfo($filePath);
-			$description = $pathParts['basename'];
-		}
-			
-		$size = filesize($filePath);
-		
-		if($size === FALSE) {
-			return FALSE;
-		}
-		
-		if($size < (10 * $this->megaByte)) {
-			$archiveID = $this->uploadArchiveSingle($vaultName, $filePath, $description);
-		} else {
-			$archiveID = $this->uploadArchiveMultipart($vaultName, $filePath, $description);
-		}
-	
-		return $archiveID;
+            if(is_null($description)) {
+                $pathParts = pathinfo($filePath);
+                $description = $pathParts['basename'];
+            }
+
+            $size = filesize($filePath);
+
+            if($size === FALSE) {
+                return FALSE;
+            }
+
+            if($size < (10 * $this->megaByte)) {
+                $archiveID = $this->uploadArchiveSingle($vaultName, $filePath, $description);
+            } else {
+                $archiveID = $this->uploadArchiveMultipart($vaultName, $filePath, $description);
+            }
+
+            return $archiveID;
 	}
 	
 	/**
@@ -433,21 +428,21 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchiveSingle($vaultName, $filePath, $description) {
-		$archiveData = fopen($filePath, 'rb');
+            $archiveData = fopen($filePath, 'rb');
 
-		if($archiveData === FALSE) {
-			return FALSE;
-		}
-		
-		$result = $this->glacierClient->uploadArchive(array(
-			'vaultName' => $vaultName,
-			'archiveDescription' => $description,
-			'body'      => $archiveData
-		));
-		
-		$archiveID = $result->get('archiveId');
-		
-		return $archiveID;
+            if($archiveData === FALSE) {
+                return FALSE;
+            }
+
+            $result = $this->glacierClient->uploadArchive(array(
+                'vaultName' => $vaultName,
+                'archiveDescription' => $description,
+                'body' => $archiveData
+            ));
+
+            $archiveID = $result->get('archiveId');
+
+            return $archiveID;
 	}
 	
 	/**
@@ -456,106 +451,86 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchiveMultipart($vaultName, $filePath, $description) {
-            $this->prepareMultipartUpload($filePath);
+            $archiveRSRC = fopen($filePath, 'rb');
+            $multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
 
             // Initiate multipart upload
-            $this->initiateMultipartUpload($vaultName);
+            $result = $this->glacierClient->initiateMultipartUpload(array(
+                'vaultName' => $vaultName,
+                'archiveDescription' => $description,
+                'partSize'  => $this->uploadPartSize,
+            ));
+
+            $multipartUploadId = $result->get('uploadId');
 
             // Upload each part individually using data from the part generator
             $archiveData = fopen($filePath, 'rb');
-            foreach ($parts as $part) {
-                    fseek($archiveData, $part->getOffset());
+            foreach ($multiParts as $part) {
+                fseek($archiveData, $part->getOffset());
 
-                    $this->glacierClient->uploadMultipartPart(array(
-                                    'vaultName'     => $vaultName,
-                                    'uploadId'      => $this->multipartUploadId,
-                                    'body'          => fread($archiveData, $part->getSize()),
-                                    'range'         => $this->multiParts->getFormattedRange(),
-                                    'checksum'      => $this->multiParts->getChecksum(),
-                                    'ContentSHA256' => $this->multiParts->getContentHash()
-                            ));
+                $this->glacierClient->uploadMultipartPart(array(
+                    'vaultName'     => $vaultName,
+                    'uploadId'      => $multipartUploadId,
+                    'body'          => fread($archiveData, $part->getSize()),
+                    'range'         => $multiParts->getFormattedRange(),
+                    'checksum'      => $multiParts->getChecksum(),
+                    'ContentSHA256' => $multiParts->getContentHash()
+                ));
             }
             fclose($archiveData);
 
             // Complete the upload
-            $archiveId = $this->closeMultipartUpload($vaultName, $this->multipartUploadId);
+            $result = $this->glacierClient->completeMultipartUpload(array(
+                'vaultName'   => $vaultName,
+                'uploadId'    => $multipartUploadId,
+                'archiveSize' => $multiParts->getArchiveSize(),
+                'checksum'    => $multiParts->getRootChecksum()
+            ));
+
+            unset($multipartUploadId);
+            unset($multiParts);
+
+            $archiveId = $result->get('archiveId');
 
             return $archiveId;
 	}
-	
-	/**
-	 * Initiate a multipart upload - Upload ID stored as property
-	 */
-	function initiateMultipartUpload($vaultName) {
-		$result = $this->glacierClient->initiateMultipartUpload(array(
-			'vaultName' => $vaultName,
-			'partSize'  => $this->uploadPartSize,
-		));
 		
-		$this->multipartUploadId = $result->get('uploadId');
-	}
-	
-	/**
-	 * Close a multipart upload - Returns an upload ID
-	 */
-	function closeMultipartUpload($vaultName) {
-		$result = $this->glacierClient->completeMultipartUpload(array(
-			'vaultName'   => $vaultName,
-			'uploadId'    => $this->multipartUploadId,
-			'archiveSize' => $this->multiParts->getArchiveSize(),
-			'checksum'    => $this->multiParts->getRootChecksum()
-		));
-		
-		unset($this->multipartUploadId);
-		unset($this->multiParts);
-		
-		return $result->get('archiveId');
-	}
-
-	/**
-	 * Prepare a multipart upload and store all the data as object property
-	 */
-	function prepareMultipartUpload($filePath) {
-		$archiveRSRC = fopen($filePath, 'rb');
-		$this->multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
-	}
-	
 	/**
 	 * Cleanup and init the archiver
 	 */
 	function cleanupArchiver() {
-		$this->archiver = array();
-		unset($this->archiver);
+            $this->archiver = array();
+            unset($this->archiver);
 	}
 	
 	/**
 	 * Get file's id from it's path
 	 */
 	function getIDFromPath($filePath) {
-		return hash('sha256', $filePath);
+            return hash('sha256', $filePath);
 	}
 	
 	/**
 	 * Add a file path to the current archiver
 	 */
 	function addFileToArchiver($filePath) {
-		// If file not accessible, forfait and return false
-		if(!is_file($filePath)) {
-			return FALSE;
-		}
-		
-		// Add file to the file's list to compress
-		$fileID = $this->getIDFromPath($filePath);
-		
-		$this->archiver[$fileID] = array(
-			'filePath'	=> $filePath,
-			'owner'		=> fileowner($filePath),
-			'group'		=> filegroup($filePath),
-			'permissions'	=> fileperms($filePath),
-			'fileSize'	=> filesize($filePath)
-		);
-		
-		return $fileID;
+            // If file not accessible, forfait and return false
+            if(!is_file($filePath)) {
+                return FALSE;
+            }
+
+            // Add file to the file's list to compress
+            $fileID = $this->getIDFromPath($filePath);
+
+            $this->archiver[$fileID] = array(
+                'filePath'	=> $filePath,
+                'owner'		=> fileowner($filePath),
+                'group'		=> filegroup($filePath),
+                'permissions'	=> fileperms($filePath),
+                'fileSize'	=> filesize($filePath)
+            );
+
+            return $fileID;
 	}
 	
 	/**
@@ -574,21 +549,21 @@ class aletsch {
 	 * List current archiver
 	 */
 	function listArchiver() {
-		$totLen = 0;
-		
-		foreach($this->archiver as $inFileID => $inFileData) {
-			$totLen += $inFileData['fileSize'];
-		}
-		
-		$summary = array(
-			'totLen'	=> $totLen,
-			'totFiles'	=> count($this->archiver)
-		);
-		
-		$result = $this->archiver;
-		$result['summary'] = $summary;
-		
-		return $result;
+            $totLen = 0;
+
+            foreach($this->archiver as $inFileData) {
+                $totLen += $inFileData['fileSize'];
+            }
+
+            $summary = array(
+                'totLen'	=> $totLen,
+                'totFiles'	=> count($this->archiver)
+            );
+
+            $result = $this->archiver;
+            $result['summary'] = $summary;
+
+            return $result;
 	}
 	
 	/**
@@ -612,15 +587,15 @@ class aletsch {
 		
 		// Keeps track of working parameters
 		$progress = array(
-			'pid'			=> getmypid(),
-			'offline'		=> $this->offline,
-			'totalRead' 		=> 0,
-			'totalWritten'		=> 0,
-			'processedFiles'	=> 0,
-			'fileRead'		=> 0,
-			'totalFiles'		=> count($this->archiver),
-			'thisFilePath'		=> '',
-			'thisFilePerc'		=> ''
+                    'pid'		=> getmypid(),
+                    'offline'		=> $this->offline,
+                    'totalRead' 	=> 0,
+                    'totalWritten'	=> 0,
+                    'processedFiles'	=> 0,
+                    'fileRead'		=> 0,
+                    'totalFiles'	=> count($this->archiver),
+                    'thisFilePath'	=> '',
+                    'thisFilePerc'	=> ''
 		);
 		
 		// Actual chunk output
@@ -639,8 +614,8 @@ class aletsch {
 			$blocksLen = 0;		// Lenght of compressed file in blocks
 
 			$catalog[$inFileID] = array(
-				'filePos'		=> $reelWritten,	// The beginning of this file!
-				'fileData'		=> $inFileData
+                            'filePos'	=> $reelWritten,	// The beginning of this file!
+                            'fileData'	=> $inFileData
 			);
 			
 			// Update file list on current reel
@@ -696,8 +671,8 @@ class aletsch {
 					$ctrlData = sprintf("reel=%d,block=%d,len=%d\n", $reelNo, $blockNo, $bufOutSize);
 				}
 				
-				$wresult1 = fwrite($tempFile, $ctrlData);
-				$wresult2 = fwrite($tempFile, $bufout);
+				fwrite($tempFile, $ctrlData);
+				fwrite($tempFile, $bufout);
 				
 				// Increment read data counters
 				$blockRead = strlen($buff);
@@ -752,11 +727,11 @@ class aletsch {
 		// Save on glacier the full catalog
 		$catalog2upload = gzcompress(json_encode($catalog));
 		if($this->offline) {
-			$catalogID = $tempDir . '/' . $archiveName . '.catalog';
-			file_put_contents($catalogID, $catalog2upload);
+                    $catalogID = $tempDir . '/' . $archiveName . '.catalog';
+                    file_put_contents($catalogID, $catalog2upload);
 		} else {
-			file_put_contents($tempFileName, $catalog2upload);
-			$catalogID = $this->uploadArchive($vaultName, $tempFileName, $archiveName . '.catalog');
+                    file_put_contents($tempFileName, $catalog2upload);
+                    $catalogID = $this->uploadArchive($vaultName, $tempFileName, $archiveName . '.catalog');
 		}
 
 		// Cleanup temp file
@@ -764,22 +739,22 @@ class aletsch {
 		
 		// Return operation's data
 		$summary = array(
-			'reels'			=> ($reelNo + 1),
-			'files'			=> $progress['processedFiles'],
-			'totTime'		=> time() - $timeBegin,
-			'totalRead'		=> $progress['totalRead'],
-			'totalWritten'	=> $progress['totalWritten']
+                    'reels'         => ($reelNo + 1),
+                    'files'         => $progress['processedFiles'],
+                    'totTime'       => time() - $timeBegin,
+                    'totalRead'     => $progress['totalRead'],
+                    'totalWritten'  => $progress['totalWritten']
 		);
 		
 		$result = array(
-			'catalogID' => $catalogID,
-			'summary'	=> $summary,
-			'catalog'	=> $catalog
+                    'catalogID' => $catalogID,
+                    'summary'   => $summary,
+                    'catalog'   => $catalog
 		);
 		
 		if($this->offline) {
-			$summaryID = $tempDir . '/' . $archiveName . '.summary';
-			file_put_contents($summaryID, json_encode($result));
+                    $summaryID = $tempDir . '/' . $archiveName . '.summary';
+                    file_put_contents($summaryID, json_encode($result));
 		}
 		
 		return $result;
@@ -789,22 +764,22 @@ class aletsch {
 	 * Retrieve catalog from glacier
 	 */
 	function startCatalogRetrieve($vaultName, $fileID) {
-		if($this->offline) {
-			$retrJobID = $fileID;
-		} else {
-			$result = $this->glacierClient->initiateJob(array(
-				'accountId' => '-',
-				'vaultName' => $vaultName,
-				'Format' => 'JSON',
-				'Type' => 'archive-retrieval',
-				'ArchiveId' => $fileID,
-				'Description' => "Retrieve catalog from vault '$vaultName'"
-			));
-			
-			$retrJobID = $answer->getAll();
-		}
-		
-		return $retrJobID;	
+            if($this->offline) {
+                $retrJobID = $fileID;
+            } else {
+                $result = $this->glacierClient->initiateJob(array(
+                    'accountId' => '-',
+                    'vaultName' => $vaultName,
+                    'Format' => 'JSON',
+                    'Type' => 'archive-retrieval',
+                    'ArchiveId' => $fileID,
+                    'Description' => "Retrieve catalog from vault '$vaultName'"
+                ));
+
+                $retrJobID = $result->getAll();
+            }
+
+            return $retrJobID;
 	}
 	
 	/**
@@ -812,131 +787,131 @@ class aletsch {
 	 * Returns the job's ID
 	 */
 	function startUnarchive($vaultName, $fileID) {
-		// Get file data from catalog
-		$fileInfo = $this->lastCatalog[$fileID];
-		if(!is_array($fileInfo)) {
-			return false;	// File data not found
-		}
-		
-		/* At this point the $fileInfo should be:
-			$fileInfo = array(
-				'filePos'		=> $reelWritten,		// The beginning of the file!
-				'endPos'		=> $reelWritten - 1;	// End of the file
-				'fileData'		=> array(
-										'filePath'		=> $filePath,
-										'owner'			=> fileowner($filePath),
-										'group'			=> filegroup($filePath),
-										'permissions'	=> fileperms($filePath),
-										'fileSize'		=> filesize($filePath)
-									),
-				'reelID'		=> array(reelIDs),
-				'fileLen' 		=> $fileLen,
-				'blocksLen' 	=> ($blocksLen - 1)
-			);
-		*/
+            // Get file data from catalog
+            $fileInfo = $this->lastCatalog[$fileID];
+            if(!is_array($fileInfo)) {
+                return false;	// File data not found
+            }
 
-		// Compute reel 
-		$reelBegin = $fileInfo['reelID'][0];
-		$lastReelIndex = count($fileInfo['reelID']) - 1;
-		$reelEnd = $fileInfo['reelID'][$lastReelIndex];
+            /* At this point the $fileInfo should be:
+                $fileInfo = array(
+                    'filePos'	=> $reelWritten,	// The beginning of the file!
+                    'endPos'	=> $reelWritten - 1;	// End of the file
+                    'fileData'	=> array(
+                                            'filePath'      => $filePath,
+                                            'owner'         => fileowner($filePath),
+                                            'group'         => filegroup($filePath),
+                                            'permissions'   => fileperms($filePath),
+                                            'fileSize'      => filesize($filePath)
+                                        ),
+                    'reelID'	=> array(reelIDs),
+                    'fileLen' 	=> $fileLen,
+                    'blocksLen' => ($blocksLen - 1)
+                );
+            */
 
-		// Compute range to be retrieved - megabyte aligned
-		$fileBegin = $fileInfo['filePos'] - ($fileInfo['filePos'] % $this->megaByte);
-		
-		$remainder = ($fileInfo['endPos'] + 1) % $this->megaByte;
-		$endOffset = ($remainder == 0) ? 0 : ($this->megaByte - $remainder);
-		$fileEnd = $fileInfo['endPos'] + $endOffset + 1;
-		
-		// Compute new start / end position 
-		$fileInfo['filePos'] = $fileInfo['filePos'] - $fileBegin;
-		if(count($fileInfo['reelID']) == 1) {
-			$fileInfo['endPos'] = $fileInfo['endPos'] - $fileBegin;
-		}
-		
-		// Start retrieval jobs
-		$retrJobID = array();
-		
-		for($reelIndex = 0; $reelIndex <= $lastReelIndex; $reelIndex++) {
-			if($reelIndex == 0) {
-				// First reel
-				$retrieveAll = FALSE;
-				$retrBegin = $fileBegin;
-				$retrEnd = $this->maxReelSize;
-			} else if($reelIndex == $lastReelIndex) {
-				// Last reel
-				$retrieveAll = FALSE;
-				$retrBegin = 0;
-				$retrEnd = $fileEnd;
-			} else {
-				// Intermediate reel(s)
-				$retrieveAll = TRUE;
-				$retrBegin = 0;
-				$retrEnd = $this->maxReelSize;
-			}
-		
-			if($this->offline) {
-				// Prepare some "chunk file" that conform to what glacier will return
-				$tempDir = sys_get_temp_dir();
-				$chunkFileName = $tempDir . '/aletsch_chunk_' . uniqid();
+            // Compute reel 
+            $reelBegin = $fileInfo['reelID'][0];
+            $lastReelIndex = count($fileInfo['reelID']) - 1;
+            $reelEnd = $fileInfo['reelID'][$lastReelIndex];
 
-				$retrJobID[] =
-					array(
-						'vaultName' => $vaultName,
-						'ArchiveId' => $chunkFileName,
-						'Description' => 'Retrieve reel #' . $reelIndex . " from vault '$vaultName'",
-						'RetrievalByteRange' => sprintf("%d-%d %s", $retrBegin, $retrEnd, (($retrieveAll) ? '(ALL)':''))
-				);
-				
-				$chunkRsrc = fopen($chunkFileName, 'wb');
-				$inRsrc = fopen($fileInfo['reelID'][$reelIndex], 'rb');
-				fseek($inRsrc, $retrBegin);
-				
-				if($reelIndex == 0) {
-					// First reel
-					$toRead = $this->maxReelSize - $retrBegin;
-				} else if($reelIndex == $lastReelIndex) {
-					// Last reel
-					$toRead = $fileEnd;
-				} else {
-					// Intermediate reel(s)
-					$toRead = $this->maxReelSize;
-				}
+            // Compute range to be retrieved - megabyte aligned
+            $fileBegin = $fileInfo['filePos'] - ($fileInfo['filePos'] % $this->megaByte);
 
-				do {
-					$buffer = fread($inRsrc, ($this->megaByte * $this->fileCopyBlockSize));
-					fwrite($chunkRsrc, $buffer);
-					
-					$toRead -= strlen($buffer);
-				} while(!feof($inRsrc) && $toRead > 0 );
-				
-				fclose($chunkRsrc);
-				fclose($inRsrc);
-			} else {
-				$retrivealParameters = array(
-					'accountId' => '-',
-					'vaultName' => $vaultName,
-					'Format' => 'JSON',
-					'Type' => 'archive-retrieval',
-					'ArchiveId' => $fileInfo['reelID'][$reelIndex],
-					'Description' => 'Retrieve reel #' . $reelIndex . " from vault '$vaultName'"
-				);
-				
-				if(!$retrieveAll) {
-					$retrivealParameters['RetrievalByteRange'] = sprintf("%d-%d", $retrBegin, $retrEnd);
-				}
-				
-				$result = $this->glacierClient->initiateJob($retrivealParameters);
-				
-				$retrJobID[] = $answer->getAll();
-			}
-		}
+            $remainder = ($fileInfo['endPos'] + 1) % $this->megaByte;
+            $endOffset = ($remainder == 0) ? 0 : ($this->megaByte - $remainder);
+            $fileEnd = $fileInfo['endPos'] + $endOffset + 1;
+
+            // Compute new start / end position 
+            $fileInfo['filePos'] = $fileInfo['filePos'] - $fileBegin;
+            if(count($fileInfo['reelID']) == 1) {
+                $fileInfo['endPos'] = $fileInfo['endPos'] - $fileBegin;
+            }
 		
-		$retrieveData = array(
-			'fileInfo' => $fileInfo,
-			'jobIDs' => $retrJobID
-		);
-		
-		return $retrieveData;
+            // Start retrieval jobs
+            $retrJobID = array();
+
+            for($reelIndex = 0; $reelIndex <= $lastReelIndex; $reelIndex++) {
+                if($reelIndex == 0) {
+                    // First reel
+                    $retrieveAll = FALSE;
+                    $retrBegin = $fileBegin;
+                    $retrEnd = $this->maxReelSize;
+                } else if($reelIndex == $lastReelIndex) {
+                    // Last reel
+                    $retrieveAll = FALSE;
+                    $retrBegin = 0;
+                    $retrEnd = $fileEnd;
+                } else {
+                    // Intermediate reel(s)
+                    $retrieveAll = TRUE;
+                    $retrBegin = 0;
+                    $retrEnd = $this->maxReelSize;
+                }
+
+                if($this->offline) {
+                    // Prepare some "chunk file" that conform to what glacier will return
+                    $tempDir = sys_get_temp_dir();
+                    $chunkFileName = $tempDir . '/aletsch_chunk_' . uniqid();
+
+                    $retrJobID[] =
+                        array(
+                            'vaultName' => $vaultName,
+                            'ArchiveId' => $chunkFileName,
+                            'Description' => 'Retrieve reel #' . $reelIndex . " from vault '$vaultName'",
+                            'RetrievalByteRange' => sprintf("%d-%d %s", $retrBegin, $retrEnd, (($retrieveAll) ? '(ALL)':''))
+                    );
+
+                    $chunkRsrc = fopen($chunkFileName, 'wb');
+                    $inRsrc = fopen($fileInfo['reelID'][$reelIndex], 'rb');
+                    fseek($inRsrc, $retrBegin);
+
+                    if($reelIndex == 0) {
+                        // First reel
+                        $toRead = $this->maxReelSize - $retrBegin;
+                    } else if($reelIndex == $lastReelIndex) {
+                        // Last reel
+                        $toRead = $fileEnd;
+                    } else {
+                        // Intermediate reel(s)
+                        $toRead = $this->maxReelSize;
+                    }
+
+                    do {
+                        $buffer = fread($inRsrc, ($this->megaByte * $this->fileCopyBlockSize));
+                        fwrite($chunkRsrc, $buffer);
+
+                        $toRead -= strlen($buffer);
+                    } while(!feof($inRsrc) && $toRead > 0 );
+
+                    fclose($chunkRsrc);
+                    fclose($inRsrc);
+                } else {
+                    $retrivealParameters = array(
+                        'accountId' => '-',
+                        'vaultName' => $vaultName,
+                        'Format' => 'JSON',
+                        'Type' => 'archive-retrieval',
+                        'ArchiveId' => $fileInfo['reelID'][$reelIndex],
+                        'Description' => 'Retrieve reel #' . $reelIndex . " from vault '$vaultName'"
+                    );
+
+                    if(!$retrieveAll) {
+                        $retrivealParameters['RetrievalByteRange'] = sprintf("%d-%d", $retrBegin, $retrEnd);
+                    }
+
+                    $result = $this->glacierClient->initiateJob($retrivealParameters);
+
+                    $retrJobID[] = $result->getAll();
+                }
+            }
+
+            $retrieveData = array(
+                'fileInfo' => $fileInfo,
+                'jobIDs' => $retrJobID
+            );
+
+            return $retrieveData;
 	}
 	
 	/**
@@ -944,27 +919,27 @@ class aletsch {
 	 * Returns the uncompressed catalog in JSON
 	 */
 	function retrieveCatalogContent($vaultName, $jobID) {
-		if($this->offline) {
-			$tempFileName = $jobID;
-		} else {
-			$tempDir = sys_get_temp_dir();
-			$tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
-		
-			$result = $this->glacierClient->getJobOutput(array(
-				'accountId' => '-',
-				'vaultName' => $vaultName,
-				'jobId' => $jobID,
-				'saveAs' => $tempFileName
-			));
+            if($this->offline) {
+                $tempFileName = $jobID;
+            } else {
+                $tempDir = sys_get_temp_dir();
+                $tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
 
-	        $data = $result->getAll();
-		}
-		
-		$result = file_get_contents($tempFileName);
-		$catalog = gzuncompress($result);
-		unlink($tempFileName);
-		
-		return $catalog;
+                $result = $this->glacierClient->getJobOutput(array(
+                    'accountId' => '-',
+                    'vaultName' => $vaultName,
+                    'jobId' => $jobID,
+                    'saveAs' => $tempFileName
+                ));
+
+                $data = $result->getAll();
+            }
+
+            $result = file_get_contents($tempFileName);
+            $catalog = gzuncompress($result);
+            unlink($tempFileName);
+
+            return $catalog;
 	}
 
 	/**
@@ -972,114 +947,114 @@ class aletsch {
 	 * Returns the temp filename with the file content
 	 */
 	function retrieveArchiveContent($vaultName, $retrieveData, $outFileName = NULL, $progressFile = NULL) {
-		// Prepare destination pathname
-		if(is_null($outFileName)) {
-			$outPath = $retrieveData['fileInfo']['fileData']['filePath'];
-		} else if($outFileName == '.') {
-			$outPath = '.' . $retrieveData['fileInfo']['fileData']['filePath'];
-		} else {
-			$outPath = $outFileName;
-		}
+            // Prepare destination pathname
+            if(is_null($outFileName)) {
+                $outPath = $retrieveData['fileInfo']['fileData']['filePath'];
+            } else if($outFileName == '.') {
+                $outPath = '.' . $retrieveData['fileInfo']['fileData']['filePath'];
+            } else {
+                $outPath = $outFileName;
+            }
 
-		// Keeps track of working parameters
-		$progress = array(
-			'pid'				=> getmypid(),
-			'offline'			=> $this->offline,
-			'totalBlocks'		=> $retrieveData['fileInfo']['blocksLen'],
-			'thisFilePath'		=> $outPath,
-			'step'				=> 'NOTHING',
-			'descr1'			=> '',
-			'descr2'			=> '',
-			'totalRead' 		=> 0,
-			'totalWritten'		=> 0,
-			'blocksProcessed'	=> 0,
-			'thisFilePerc'		=> ''
-		);
+            // Keeps track of working parameters
+            $progress = array(
+                    'pid'		=> getmypid(),
+                    'offline'		=> $this->offline,
+                    'totalBlocks'	=> $retrieveData['fileInfo']['blocksLen'],
+                    'thisFilePath'	=> $outPath,
+                    'step'		=> 'NOTHING',
+                    'descr1'		=> '',
+                    'descr2'		=> '',
+                    'totalRead' 	=> 0,
+                    'totalWritten'	=> 0,
+                    'blocksProcessed'	=> 0,
+                    'thisFilePerc'	=> ''
+            );
 
-		if(!is_null($progressFile)) {
-			file_put_contents($progressFile, json_encode($progress));					
-		}
+            if(!is_null($progressFile)) {
+                file_put_contents($progressFile, json_encode($progress));					
+            }
 
-		// Start file processing
-		$tempDir = sys_get_temp_dir();
-		$retrieveFileName = $tempDir . '/aletsch_retrieve_' . uniqid();
-		$destRsrc = fopen($retrieveFileName, 'wb');
+            // Start file processing
+            $tempDir = sys_get_temp_dir();
+            $retrieveFileName = $tempDir . '/aletsch_retrieve_' . uniqid();
+            $destRsrc = fopen($retrieveFileName, 'wb');
 
-		$nbOfReels = count($retrieveData['jobIDs']);
+            $nbOfReels = count($retrieveData['jobIDs']);
 		
-		for($index = 0; $index < $nbOfReels; $index++) {
-			$partRetrieveFileName = $tempDir . '/aletsch_part_' . uniqid();
-			$retrieveJobID = $retrieveData['jobIDs'][$index]['ArchiveId'];
-			
-			if($this->offline) {
-				$partRetrieveFileName = $retrieveJobID;
-			} else {
-				$progress['step'] = 'DOWNLOADING';
-				$progress['descr1'] = $retrieveJobID;
+            for($index = 0; $index < $nbOfReels; $index++) {
+                $partRetrieveFileName = $tempDir . '/aletsch_part_' . uniqid();
+                $retrieveJobID = $retrieveData['jobIDs'][$index]['ArchiveId'];
 
-				if(!is_null($progressFile)) {
-					file_put_contents($progressFile, json_encode($progress));					
-				}
-			
-				$result = $this->glacierClient->getJobOutput(array(
-					'accountId' => '-',
-					'vaultName' => $vaultName,
-					'jobId' => $retrieveJobID,
-					'range' => sprintf("%d-%d", $retrieveData['fileInfo']['filePos'], $retrieveData['fileInfo']['endPos']),
-					'saveAs' => $partRetrieveFileName
-				));
-				
-		        $data = $result->getAll();
-			}
-			
-			$resID = fopen($partRetrieveFileName, 'rb');
-			if(!$resID) {
-				printf("Unable to open %s.", $partRetrieveFileName);
-				return FALSE;
-			}
-			
-			// Seek on first reel
-			if($index == 0) {
-				fseek($resID, $retrieveData['fileInfo']['filePos']);
-				/*printf("\nSeek to: %d\n", $retrieveData['fileInfo']['filePos']); */
-			}
-			
-			// Compute how many data to read
-			// - Intermediate reel -> until EOF
-			// - Last reel -> until endPos
-			if($index == ($nbOfReels - 1)) {
-				$toRead = $retrieveData['fileInfo']['endPos'];
-				/*printf("\nProcessing final reel %s: %d\n", $retrieveJobID, $toRead); */
-			} else {
-				$toRead = filesize($retrieveJobID);
-				/*printf("\nProcessing intermediate reel %s: %d bytes\n", $retrieveJobID, $toRead); */
-			}
-			
-			$progress['totalRead'] = $toRead;
-			$progress['totalWritten'] = 0;
-			$progress['step'] = 'COPYING';
-			
-			do {
-				$buffer = fread($resID, ($this->megaByte * $this->fileCopyBlockSize));
-				fwrite($destRsrc, $buffer);
-				
-				$toRead -= strlen($buffer);
-				
-				$progress['totalWritten'] += strlen($buffer);
-				$progress['thisFilePerc'] = sprintf("%6.2f", ($progress['totalWritten'] / $progress['totalRead']) * 100);
+                if($this->offline) {
+                    $partRetrieveFileName = $retrieveJobID;
+                } else {
+                    $progress['step'] = 'DOWNLOADING';
+                    $progress['descr1'] = $retrieveJobID;
 
-				if(!is_null($progressFile)) {
-					file_put_contents($progressFile, json_encode($progress));					
-				}				
-			} while(!feof($resID) && $toRead > 0 );
+                    if(!is_null($progressFile)) {
+                            file_put_contents($progressFile, json_encode($progress));					
+                    }
 
-			fwrite($destRsrc, "\n");
-			
-			fclose($resID);
-			
-			// Delete part retrieve file
-			unlink($partRetrieveFileName);
-		}
+                    $result = $this->glacierClient->getJobOutput(array(
+                            'accountId' => '-',
+                            'vaultName' => $vaultName,
+                            'jobId' => $retrieveJobID,
+                            'range' => sprintf("%d-%d", $retrieveData['fileInfo']['filePos'], $retrieveData['fileInfo']['endPos']),
+                            'saveAs' => $partRetrieveFileName
+                    ));
+
+                    $data = $result->getAll();
+                }
+
+                $resID = fopen($partRetrieveFileName, 'rb');
+                if(!$resID) {
+                    printf("Unable to open %s.", $partRetrieveFileName);
+                    return FALSE;
+                }
+
+                // Seek on first reel
+                if($index == 0) {
+                    fseek($resID, $retrieveData['fileInfo']['filePos']);
+                    /*printf("\nSeek to: %d\n", $retrieveData['fileInfo']['filePos']); */
+                }
+
+                // Compute how many data to read
+                // - Intermediate reel -> until EOF
+                // - Last reel -> until endPos
+                if($index == ($nbOfReels - 1)) {
+                    $toRead = $retrieveData['fileInfo']['endPos'];
+                    /*printf("\nProcessing final reel %s: %d\n", $retrieveJobID, $toRead); */
+                } else {
+                    $toRead = filesize($retrieveJobID);
+                    /*printf("\nProcessing intermediate reel %s: %d bytes\n", $retrieveJobID, $toRead); */
+                }
+
+                $progress['totalRead'] = $toRead;
+                $progress['totalWritten'] = 0;
+                $progress['step'] = 'COPYING';
+
+                do {
+                    $buffer = fread($resID, ($this->megaByte * $this->fileCopyBlockSize));
+                    fwrite($destRsrc, $buffer);
+
+                    $toRead -= strlen($buffer);
+
+                    $progress['totalWritten'] += strlen($buffer);
+                    $progress['thisFilePerc'] = sprintf("%6.2f", ($progress['totalWritten'] / $progress['totalRead']) * 100);
+
+                    if(!is_null($progressFile)) {
+                        file_put_contents($progressFile, json_encode($progress));					
+                    }
+                } while(!feof($resID) && $toRead > 0 );
+
+                fwrite($destRsrc, "\n");
+
+                fclose($resID);
+
+                // Delete part retrieve file
+                unlink($partRetrieveFileName);
+            }
 		
 		// Close output file
 		fclose($destRsrc);
