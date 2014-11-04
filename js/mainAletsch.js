@@ -45,7 +45,7 @@ $('document').ready(function() {
 
                     if(resultData.opResult === 'OK') {
                         var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
-                        var outdated = (resultData.opData.outdated === null) ? t('aletsch', 'Outdated') : '';
+                        var outdated = (resultData.opData.outdated === true) ? t('aletsch', 'Outdated') : '';
                         $('#aletsch_inventoryDate').html(date);
                         $('#aletsch_inventoryOutdated').html(outdated);
                         $('#aletsch_archives').html(resultData.opData.archiveList);

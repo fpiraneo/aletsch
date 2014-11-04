@@ -302,7 +302,7 @@ class inventoryHandler {
         $args = array($credID, $this->vaultArn);
 
         $query = \OCP\DB::prepare($sql);
-        $resRsrc = $query->execute($args);                
+        $query->execute($args);                
         
         // Insert new inventory
         $sql = "INSERT INTO *PREFIX*aletsch_inventories (credid, vaultarn, inventorydate, inventorydata) VALUES (?,?,?,?)";
@@ -313,7 +313,7 @@ class inventoryHandler {
             $comprArchives
         );
         $query = \OCP\DB::prepare($sql);
-        $resRsrc = $query->execute($args);
+        $query->execute($args);
         
         // Return last inserted inventory ID
         return \OCP\DB::insertid();
@@ -360,16 +360,262 @@ class inventoryHandler {
     
     /**
      * Delete all inventories belonging to a vault
+     * @param Integer $credID Credentials ID
      * @param String $VaultARN Vault ARN to remove the inventories
      * @return boolean TRUE on success
      */
-    public static function removeInventories($VaultARN) {
-        $query = 'DELETE FROM oc_aletsch_inventories WHERE vaultarn=?';
-        $args = array($credID, $this->vaultArn);
+    public static function removeInventories($credID, $VaultARN) {
+        $sql = 'DELETE FROM oc_aletsch_inventories WHERE vaultarn=?';
+        $args = array($credID, $VaultARN);
 
         $query = \OCP\DB::prepare($sql);
-        $resRsrc = $query->execute($args);                
+        $query->execute($args);                
         
         return TRUE;
+    }
+}
+
+class spoolerHandler {
+    private $OCUserName = NULL;
+    private $operations = array();
+    private $jobtype = array('fileUpload');
+    private $jobStatus = array('hold', 'waiting', 'running', 'completed', 'error');
+
+    function __construct($OCUserName) {
+        $this->OCUserName = $OCUserName;
+        $this->load();
+    }
+    
+    /**
+     * Get allowed jobs type
+     * @return Array
+     */
+    function getJobtype() {
+        return $this->jobtype;
+    }
+    
+    /**
+     * Return jobs in spoolers
+     * @return array
+     */
+    function getOperations() {
+        return $this->operations;
+    }
+        
+    /**
+     * Loads all operations currently spooled on DB for indicated user
+     */
+    function load() {
+        // Reset actual content of spooler data
+        $this->operations = array();
+        
+        // Get spooled operations
+        $sql = 'SELECT * FROM *PREFIX*aletsch_spool WHERE ocusername=?';
+        $args = array(
+            $this->OCUserName
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);
+        
+        while($row = $resRsrc->fetchRow()) {
+            $spoolEntry = array(
+                'vaultarn' => $row['vaultarn'],
+                'jobtype' => $row['jobtype'],
+                'jobstatus' => $row['jobstatus'],
+                'jobdata' => $row['jobdata'],
+                'jobdiagnostic' => $row['jobdiagnostic']
+            );
+            
+            $this->operations[$row['jobid']] = $spoolEntry;
+        }
+    }
+    
+    /**
+     * Enter new job in spool
+     * @param string $jobtype
+     * @return Integer New job id, FALSE if no job has been created
+     */
+    function newJob($jobtype) {
+        // Check for correct job type
+        if(array_find($jobtype, $this->jobtype) === FALSE) {
+            return FALSE;
+        }
+        
+        // Enter new job in spool
+        $sql = 'INSERT INTO *PREFIX*aletsch_spool (ocusername, jobtype, jobstatus) VALUES(?,?,?)';
+        $args = array(
+            $this->OCUserName,
+            $jobtype,
+            'hold'
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $query->execute($args);
+        
+        // Get last inserted id
+        $newID = \OCP\DB::insertid();
+        
+        // Reload data from DB
+        $this->load();
+        
+        // Return last insterted ID
+        return $newID;
+    }
+    
+    /**
+     * Set vault ARN for given job ID
+     * @param Integer $jobid
+     * @param String $vaultARN
+     * @return boolean TRUE if job id is valid, false otherwise
+     */
+    function setVaultARN($jobid, $vaultARN) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set ARN
+        $this->updateFieldData($jobid, 'vaultarn', $vaultARN);
+        
+        return TRUE;
+    }
+    
+    /**
+     * Return job type for given jobid
+     * @param Integer $jobid
+     * @return String Job type, FALSE if jobid is not set
+     */
+    function getJobType($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid['jobtype']];        
+    }
+    
+    /**
+     * Return job status for given jobid
+     * @param Integer $jobid
+     * @return String Job type, FALSE if jobid is not set
+     */
+    function getJobStatus($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job status
+        return $this->operations[$jobid]['jobstatus'];
+    }
+
+    /**
+     * Set job status for given jobid
+     * @param Integer $jobid
+     * @return String Job type, FALSE if jobid is not set
+     */
+    function setJobStatus($jobid, $jobstatus) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Check for correct job status
+        if(array_search($jobstatus, $this->jobStatus) === FALSE) {
+            return FALSE;
+        }
+        
+        // Set job status
+        $this->updateFieldData($jobid, 'jobstatus', $jobstatus);
+        
+        return TRUE;
+    }
+
+    /**
+     * Return job diagnostic for given jobid
+     * @param Integer $jobid
+     * @return String Job type, FALSE if jobid is not set
+     */
+    function getJobDiagnostic($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid]['jobdiagnostic'];
+    }
+
+    /**
+     * Set job diagnostic for given jobid
+     * @param Integer $jobid
+     * @return String Job diagnostic, FALSE if jobid is not set
+     */
+    function setJobDiagnostic($jobid, $jobdiagnostic) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set job diagnostic
+        $this->updateFieldData($jobid, 'jobdiagnostic', $jobdiagnostic);
+        
+        return TRUE;
+    }
+
+    /**
+     * Return job data for given jobid
+     * @param Integer $jobid
+     * @return String Job data, FALSE if job data is not set
+     */
+    function getJobData($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid]['jobdata'];
+    }
+
+    /**
+     * Set job data for given jobid
+     * @param Integer $jobid
+     * @return String Job data, FALSE if job data is not set
+     */
+    function setJobData($jobid, $jobdata) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set job data
+        $this->updateFieldData($jobid, 'jobdata', $jobdata);
+        
+        return TRUE;
+    }
+    
+    /**
+     * Update stored data on local and on DB
+     * @param Integer $jobID
+     * @param String $fieldName
+     * @param String $data
+     */
+    private function updateFieldData($jobID, $fieldName, $data) {
+        // Update locally
+        $this->operations[$jobID][$fieldName] = $data;
+        
+        // Update on DB
+        $sql = 'UPDATE *PREFIX*aletsch_spool SET (?) VALUES (?) WHERE jobid = ?';
+        $args = array(
+            $fieldName,
+            $data,
+            $jobID
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $query->execute($args);
     }
 }

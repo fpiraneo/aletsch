@@ -290,7 +290,7 @@ switch($op) {
         $result['errData']['exCode'] = 'AletschParamError';
         $result['errData']['exMessage'] = 'Unrecognized operation';
 
-        \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+        \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'] . ': ' . $op, 0);
     
         die(json_encode($result));
 

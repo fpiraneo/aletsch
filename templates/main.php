@@ -33,16 +33,16 @@ $l = new \OC_L10N('aletsch');
             <ul>
                 <li><a href="#tabInventory"><?php p($l->t('Inventory')) ?></a></li>
                 <li><a href="#tabJobList"><?php p($l->t('Jobs list')) ?></a></li>
+                <li><a href="#tabSpooler"><?php p($l->t('Spooler')) ?></a></li>
             </ul>
 
             <div id="tabInventory">
                 <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px;">
-                    <button id="btnUploadArchive"><?php p($l->t('Upload archive')) ?></button>
                     <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
                     <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
                     <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Updated on')) ?>: 
                         <span id="aletsch_inventoryDate"><?php p(($_['inventoryDate'] === '') ? $l->t('Not available') : $_['inventoryDate']); ?></span>
-                        <span id="aletsch_inventoryOutdated"><?php p(($_['inventoryOutdated'] === '') ? $l->t('Outdated') : ''); ?></span>
+                        <span id="aletsch_inventoryOutdated" style="font-weight: bold; color: red;"><?php p(($_['inventoryOutdated'] === '') ? $l->t('Outdated') : ''); ?></span>
                     </div>
                 </div>
 
@@ -58,6 +58,8 @@ $l = new \OC_L10N('aletsch');
                     print \OCA\aletsch\utilities::prepareJobList($_['jobs']);
                 ?>
             </div>
+            
+            <div id="tabSpooler">&nbsp;</div>
         </div>        
     </div>
 </div>
