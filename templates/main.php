@@ -59,7 +59,10 @@ $l = new \OC_L10N('aletsch');
                 ?>
             </div>
             
-            <div id="tabSpooler">&nbsp;</div>
+            <div id="tabSpooler">
+                <div id="spoolerContent">&nbsp;</div>
+                <p style="font-size: 0.85em;"><strong><?php p($l->t('Note:')) ?></strong> <?php p($l->t('Spooler content is common to all vaults.')) ?></p>
+            </div>
         </div>        
     </div>
 </div>

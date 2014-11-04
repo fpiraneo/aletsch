@@ -205,9 +205,11 @@ switch($op) {
     case 'getInventory': {
         $inventory = new \OCA\aletsch\inventoryHandler();
         $inventoryID = $inventory->loadFromDB($vaultARN);
+        $lastGlacierInventoryDate = $vaultHandler->getLastInventory($vaultARN);
+        $lastDBInventoryDate = $inventory->getInventoryDate();
         $inventoryDetails = array(
             'date' => $inventory->getInventoryDate(),
-            'outdated' => ($inventory->getInventoryDate() !== $vaultHandler->getLastInventory($actualArn)),
+            'outdated' => ($lastGlacierInventoryDate !== $lastDBInventoryDate),
             'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
         );            
 

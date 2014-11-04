@@ -1,6 +1,30 @@
 $('document').ready(function() {
     var selectedArchives = [];
 
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+        data: {
+            op: 'getOps',
+            ashtml: 1
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                $('#spoolerContent').html(resultData.opData);
+            } else {
+                $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content!'));
+            }
+        },
+        error: function( xhr, status ) {
+            $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content! Ajax error'));
+        }
+    });        
+
     $("#aletsch_vaults").accordion({
         activate: function(event, ui) {
             var selected = ui.newHeader.attr("data-vaultarn");

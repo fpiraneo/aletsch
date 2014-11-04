@@ -390,7 +390,7 @@ class spoolerHandler {
      * Get allowed jobs type
      * @return Array
      */
-    function getJobtype() {
+    function getJobValidTypes() {
         return $this->jobtype;
     }
     

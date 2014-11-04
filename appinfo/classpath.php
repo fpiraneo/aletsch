@@ -20,4 +20,7 @@
 
 OC::$CLASSPATH['OCA\aletsch\aletsch'] = 'aletsch/libs/aletsch.php';
 OC::$CLASSPATH['OCA\aletsch\credentialsHandler'] = 'aletsch/libs/dataHandler.php';
+OC::$CLASSPATH['OCA\aletsch\inventoryHandler'] = 'aletsch/libs/dataHandler.php';
+OC::$CLASSPATH['OCA\aletsch\spoolerHandler'] = 'aletsch/libs/dataHandler.php';
+OC::$CLASSPATH['OCA\aletsch\vaultHandler'] = 'aletsch/libs/dataHandler.php';
 OC::$CLASSPATH['OCA\aletsch\utilities'] = 'aletsch/libs/utilities.php';

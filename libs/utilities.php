@@ -208,39 +208,34 @@ class utilities {
         // Handle translations
         $l = new \OC_L10N('aletsch');
 
-        if(is_null($archivesList)) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No inventory - Click on "Inventory" to refresh.') . '</div>'; 
-        } else if(count($archivesList) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No archives on this vault.') . '</div>';
+        if(count($spooler) === 0) {
+            $result = '<div id="aletsch_emptylist">' . $l->t('No jobs on your spooler.') . '</div>';
         } else {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
             if($insertCheckBoxes) {
-                $result .= '<th><input type=\'checkbox\' id=\'aletsch_selectAllArchives\' /></th>';
+                $result .= '<th><input type=\'checkbox\' id=\'aletsch_selectAllSpoolJobs\' /></th>';
             }
-            $result .= '<th>' . $l->t('Description') . '</th>';
-            $result .= '<th>' . $l->t('Creation date') . '</th>';
-            $result .= '<th>' . $l->t('Size') . '</th>';
+            $result .= '<th>' . $l->t('Vault') . '</th>';
+            $result .= '<th>' . $l->t('Type') . '</th>';
+            $result .= '<th>' . $l->t('Status') . '</th>';
+            $result .= '<th>' . $l->t('Data') . '</th>';
+            $result .= '<th>' . $l->t('Diagnostic') . '</th>';
             $result .= '</tr>';
 
-            foreach($archivesList as $entry) {
+            foreach($spooler as $entry) {
                 /*
                     [jobid]
                     [vaultarn]
-                    [jobtype] => 2014-10-29T13:46:07.973Z
+                    [jobtype]
                     [jobstatus]
                     [jobdata]
                     [jobdiagnostic]
                  */
 
-                if($insertCheckBoxes) {
-                    $action = sprintf("<td><input type='checkbox' id='%s' class='archiveSelection' data-archiveid='%s' /></td>", uniqid("aletsch_"), $entry->ArchiveId);
-                } else {
-                    $action = '';
-                }
-                $size = \OCA\aletsch\utilities::formatBytes($entry->Size);
-                                
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td></tr>", $action, $entry->ArchiveDescription, $entry->CreationDate, $size);
+                $action = ($insertCheckBoxes) ? sprintf("<td><input type='checkbox' id='%s' class='spoolJobSelection' data-spooljobid='%s' /></td>", uniqid("aletsch_"), $entry['jobid']) : '';
+                $vaultName = \OCA\aletsch\aletsch::explodeARN($entry['vaultarn'], TRUE);
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultName, $entry['jobtype'], $entry['jobstatus'], $entry['jobdata'], $entry['jobdiagnostic']);
             }
             
             $result .= '</table>';

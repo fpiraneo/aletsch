@@ -23,6 +23,7 @@ OCP\User::checkLoggedIn();
 
 $OCUserName = \OCP\User::getUser();
 $op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
+$asHtml = filter_input(INPUT_POST, 'ashtml', FILTER_SANITIZE_NUMBER_INT);
 
 // Prepare result structure
 $result = array(
@@ -60,7 +61,7 @@ switch($op) {
         $spool = $spoolerHandler->getOperations();
         
         $result['opResult'] = 'OK';
-        $result['opData'] = $spool;
+        $result['opData'] = ($asHtml) ? \OCA\aletsch\utilities::prepareSpoolerList($spool, TRUE) : $spool;
 
         die(json_encode($result));
         
