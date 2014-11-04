@@ -24,6 +24,7 @@ OCP\User::checkLoggedIn();
 $OCUserName = \OCP\User::getUser();
 $op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
 $asHtml = filter_input(INPUT_POST, 'ashtml', FILTER_SANITIZE_NUMBER_INT);
+$filePath = filter_input(INPUT_POST, 'filePath', FILTER_SANITIZE_URL);
 
 // Prepare result structure
 $result = array(
@@ -62,6 +63,35 @@ switch($op) {
         
         $result['opResult'] = 'OK';
         $result['opData'] = ($asHtml) ? \OCA\aletsch\utilities::prepareSpoolerList($spool, TRUE) : $spool;
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Get spool contents for given user
+    case 'addUploadOp': {
+        if(!isset($filePath)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'File path not set'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die($result);
+        }
+        
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        $jobID = $spoolerHandler->newJob('fileUpload');
+        $spoolerHandler->setJobData($jobID, $filePath);
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
 
         die(json_encode($result));
         

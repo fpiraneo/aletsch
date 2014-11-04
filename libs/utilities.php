@@ -235,7 +235,7 @@ class utilities {
 
                 $action = ($insertCheckBoxes) ? sprintf("<td><input type='checkbox' id='%s' class='spoolJobSelection' data-spooljobid='%s' /></td>", uniqid("aletsch_"), $entry['jobid']) : '';
                 $vaultName = \OCA\aletsch\aletsch::explodeARN($entry['vaultarn'], TRUE);
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultName, $entry['jobtype'], $entry['jobstatus'], $entry['jobdata'], $entry['jobdiagnostic']);
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultName, $entry['jobtype'], $entry['jobstatus'], $entry['jobdata'], $entry['jobdiagnostic']);
             }
             
             $result .= '</table>';

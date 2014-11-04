@@ -40,3 +40,5 @@
 ));
 
 \OCP\App::registerPersonal('aletsch', 'personal-settings');
+\OCP\Util::addScript('aletsch', 'sendCloudFile');
+\OCP\Util::addStyle('aletsch','upload');

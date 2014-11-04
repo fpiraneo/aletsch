@@ -438,7 +438,7 @@ class spoolerHandler {
      */
     function newJob($jobtype) {
         // Check for correct job type
-        if(array_find($jobtype, $this->jobtype) === FALSE) {
+        if(array_search($jobtype, $this->jobtype) === FALSE) {
             return FALSE;
         }
         
@@ -608,9 +608,8 @@ class spoolerHandler {
         $this->operations[$jobID][$fieldName] = $data;
         
         // Update on DB
-        $sql = 'UPDATE *PREFIX*aletsch_spool SET (?) VALUES (?) WHERE jobid = ?';
+        $sql = 'UPDATE *PREFIX*aletsch_spool SET ' . $fieldName . '=? WHERE jobid = ?';
         $args = array(
-            $fieldName,
             $data,
             $jobID
         );
