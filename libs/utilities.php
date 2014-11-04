@@ -211,6 +211,14 @@ class utilities {
         if(count($spooler) === 0) {
             $result = '<div id="aletsch_emptylist">' . $l->t('No jobs on your spooler.') . '</div>';
         } else {
+            // Prepare the vault list
+            $OCUserName = \OCP\User::getUser();
+            $userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
+            
+            $vaultsHandler = new \OCA\aletsch\vaultHandler($userAccount->getCredID());
+            $vaults = array_keys($vaultsHandler->getVaults());
+            
+            // Prepare table
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
             if($insertCheckBoxes) {
@@ -234,8 +242,21 @@ class utilities {
                  */
 
                 $action = ($insertCheckBoxes) ? sprintf("<td><input type='checkbox' id='%s' class='spoolJobSelection' data-spooljobid='%s' /></td>", uniqid("aletsch_"), $entry['jobid']) : '';
+                
+                // Prepare vaults select
                 $vaultName = \OCA\aletsch\aletsch::explodeARN($entry['vaultarn'], TRUE);
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultName, $entry['jobtype'], $entry['jobstatus'], $entry['jobdata'], $entry['jobdiagnostic']);
+                
+                $vaultAction = '<select class="vaultSelect" data-jobid="' . $entry['jobid'] . '">';
+                $thisSelected = ($vaultName === '') ? ' selected="selected"' : '';
+                $vaultAction .= '<option value="EMPTY"' . $thisSelected . '>' . $l->t('Not selected') . "</option>";
+                
+                foreach($vaults as $vault) {
+                    $thisSelected = ($vaultName === $vault) ? ' selected="selected"' : '';
+                    $vaultAction .= '<option value="' . $vault . '"' . $thisSelected . '>' . \OCA\aletsch\aletsch::explodeARN($vault, TRUE) . '</option>';
+                }
+                $vaultAction .= '</select>';
+                
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultAction, $entry['jobtype'], $entry['jobstatus'], $entry['jobdata'], $entry['jobdiagnostic']);
             }
             
             $result .= '</table>';
