@@ -67,44 +67,6 @@ $userCredID = $userAccount->getCredID();
 $vaultHandler = new \OCA\aletsch\vaultHandler($userCredID);
 $vaultHandler->update($vaults);
 
-// Set first vault as selected
-$actualArn = (count($vaults) !== 0) ? $vaults[0]['VaultARN'] : '';
-$vaultName = (count($vaults) !== 0) ? $vaults[0]['VaultName'] : '';
-
-// Get jobs list (online)
-if(!$errStatus) {
-    try {
-        $jobs = $glacier->listJobs($vaultName);
-    }
-    catch(Aws\Glacier\Exception\GlacierException $ex) {
-        $exCode = $ex->getExceptionCode();
-        $exMessage = $ex->getMessage();
-        $errStatus = TRUE;
-    
-        \OCP\Util::writeLog('aletsch', $exCode . ' - ' . $exMessage, 0);
-    }
-} else {
-    $jobs = array();
-}
-
-// Get inventory from DB
-if(!$errStatus) {
-    $inventory = new \OCA\aletsch\inventoryHandler();
-    $inventoryID = $inventory->loadFromDB($actualArn);
-    
-    if($inventoryID === FALSE) {
-        $inventoryArchives = NULL;
-        $inventoryDate = NULL;
-    } else {
-        $inventoryArchives = $inventory->getArchives();
-        $inventoryDate = $inventory->getInventoryDate();
-        $inventoryOutdated = ($inventoryDate !== $vaultHandler->getLastInventory($actualArn));
-    }
-} else {
-    $inventoryArchives = array();
-    $inventoryDate = '';
-}
-
 // In case of error, assign the message to the template's variables
 if($errStatus) {
     $tpl = new OCP\Template("aletsch", "svcerr", "user");
@@ -119,11 +81,6 @@ if($errStatus) {
     $tpl->assign('serverTextLocation', $serverAvailableLocations[$serverLocation]);
     $tpl->assign('actVaults', $vaultHandler->getVaults());
     $tpl->assign('allVaultsSize', $vaultHandler->getAllVaultSize());
-    $tpl->assign('actualArn', $actualArn);
-    $tpl->assign('jobs', $jobs);
-    $tpl->assign('inventoryDate', $inventoryDate);
-    $tpl->assign('inventoryArchives', $inventoryArchives);
-    $tpl->assign('inventoryOutdated', $inventoryOutdated);
 }
 
 $tpl->printPage();

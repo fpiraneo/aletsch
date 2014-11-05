@@ -53,7 +53,7 @@ class utilities {
         $l = new \OC_L10N('aletsch');
 
         if(count($vaultData) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No vaults.') . '</div>';
+            $result = '<div class="aletsch_emptylist">' . $l->t('No vaults.') . '</div>';
         } else {
             $result = '';
             
@@ -85,7 +85,7 @@ class utilities {
         $l = new \OC_L10N('aletsch');
 
         if(count($jobList) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No running or completed jobs on this vault.') . '</div>';
+            $result = '<div class="aletsch_emptylist">' . $l->t('No running or completed jobs on this vault.') . '</div>';
         } else {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
@@ -159,9 +159,9 @@ class utilities {
         $l = new \OC_L10N('aletsch');
 
         if(is_null($archivesList)) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No inventory - Click on "Inventory" to refresh.') . '</div>'; 
+            $result = '<div class="aletsch_emptylist">' . $l->t('No inventory - Click on "Inventory" to refresh.') . '</div>'; 
         } else if(count($archivesList) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No archives on this vault.') . '</div>';
+            $result = '<div class="aletsch_emptylist">' . $l->t('No archives on this vault.') . '</div>';
         } else {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';

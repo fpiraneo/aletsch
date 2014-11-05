@@ -181,7 +181,95 @@ switch($op) {
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         
         foreach($jobIDs as $jobID) {
-            $statusChangeResult = $spoolerHandler->setJobStatus($jobID, $status);
+            $actualStatus = $spoolerHandler->getJobStatus($jobID);
+            $statusChangeResult = FALSE;
+            
+            if($actualStatus === 'hold') {
+                $statusChangeResult = $spoolerHandler->setJobStatus($jobID, $status);
+
+                if(!$statusChangeResult) {
+                    $result = array(
+                        'opResult' => 'KO',
+                        'opData' => array(),
+                        'errData' => array(
+                            'exCode' => 'AletschParamError',
+                            'exMessage' => 'Parameter job id or jobstatus not valid'
+                        )
+                    );
+
+                    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                    die(json_encode($result));
+                }
+            } else {
+                if(!$statusChangeResult) {
+                    $result = array(
+                        'opResult' => 'KO',
+                        'opData' => array(),
+                        'errData' => array(
+                            'exCode' => 'AletschWrongJobState',
+                            'exMessage' => 'Job status must be \'hold\' to be released'
+                        )
+                    );
+
+                    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                    die(json_encode($result));
+                }
+            }
+        }
+
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    case 'resetJobStatus': {
+        $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
+
+        $jobIDs = json_decode($jobIDsJSON);
+        
+        // Check for right format of jobid
+        if(!is_array($jobIDs)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'Parameter jobid in wrong format - Must be an array'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        // Reset job status
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        
+        foreach($jobIDs as $jobID) {
+            $actualStatus = $spoolerHandler->getJobStatus($jobID);
+            if($actualStatus === 'error') {
+                $statusChangeResult = $spoolerHandler->setJobStatus($jobID, 'waiting');
+                $spoolerHandler->setJobDiagnostic($jobID, '');
+            } else {
+                $result = array(
+                    'opResult' => 'KO',
+                    'opData' => array(),
+                    'errData' => array(
+                        'exCode' => 'AletschWrongJobState',
+                        'exMessage' => 'Job status must be \'error\' to be reset.'
+                    )
+                );
+
+                \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                die(json_encode($result));
+            }
             
             if(!$statusChangeResult) {
                 $result = array(
@@ -197,6 +285,58 @@ switch($op) {
 
                 die(json_encode($result));
             }
+        }
+
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    case 'removeJob': {
+        $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
+
+        $jobIDs = json_decode($jobIDsJSON);
+        
+        // Check for right format of jobid
+        if(!is_array($jobIDs)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'Parameter jobid in wrong format - Must be an array'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        // Remove the job
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        
+        foreach($jobIDs as $jobID) {
+            $actualStatus = $spoolerHandler->getJobStatus($jobID);
+            if($actualStatus !== 'running') {
+                $spoolerHandler->removeJob($jobID);
+            } else {
+                $result = array(
+                    'opResult' => 'KO',
+                    'opData' => array(),
+                    'errData' => array(
+                        'exCode' => 'AletschWrongJobState',
+                        'exMessage' => 'Job status must not be \'running\' to be removed.'
+                    )
+                );
+
+                \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                die(json_encode($result));
+            }            
         }
 
         $result['opResult'] = 'OK';

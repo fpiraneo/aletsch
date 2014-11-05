@@ -378,7 +378,7 @@ class inventoryHandler {
 class spoolerHandler {
     private $OCUserName = NULL;
     private $operations = array();
-    private $jobtype = array('fileUpload');
+    private $jobtype = array('fileUpload', 'fileDownload');
     private $jobStatus = array('hold', 'waiting', 'running', 'completed', 'error');
 
     function __construct($OCUserName) {
@@ -410,16 +410,22 @@ class spoolerHandler {
         $this->operations = array();
         
         // Get spooled operations
-        $sql = 'SELECT * FROM *PREFIX*aletsch_spool WHERE ocusername=?';
-        $args = array(
-            $this->OCUserName
-        );
+        if(is_null($this->OCUserName)) {
+            $sql = 'SELECT * FROM *PREFIX*aletsch_spool';
+            $args = array();            
+        } else {
+            $sql = 'SELECT * FROM *PREFIX*aletsch_spool WHERE ocusername=?';
+            $args = array(
+                $this->OCUserName
+            );
+        }
 
         $query = \OCP\DB::prepare($sql);
         $resRsrc = $query->execute($args);
         
         while($row = $resRsrc->fetchRow()) {
             $spoolEntry = array(
+                'ocusername' => $row['ocusername'],
                 'vaultarn' => $row['vaultarn'],
                 'jobtype' => $row['jobtype'],
                 'jobstatus' => $row['jobstatus'],
@@ -431,6 +437,40 @@ class spoolerHandler {
         }
     }
     
+    /**
+     * Return the number of jobs with given status
+     * @param String $status Status to count the job, 'running' for default
+     * @return int Counted jobs
+     */
+    function countJobsWithStatus($status='running') {
+        $total = 0;
+        
+        foreach($this->operations as $op) {
+            if($op['jobstatus'] === $status) {
+                $total++;
+            }
+        }
+        
+        return $total;
+    }
+    
+    /**
+     * Get the jobs with given status
+     * @param String $status Status to count the job, 'running' for default
+     * @return array Jobs with the indicated status
+     */
+    function getJobsWithStatus($status='running') {
+        $jobs = array();
+        
+        foreach($this->operations as $op) {
+            if($op['jobstatus'] === $status) {
+                $jobs[] = $op;
+            }
+        }
+        
+        return $jobs;
+    }
+
     /**
      * Enter new job in spool
      * @param string $jobtype
@@ -463,6 +503,23 @@ class spoolerHandler {
         return $newID;
     }
     
+    function removeJob($jobid) {
+        // Remove job from spool
+        $sql = 'DELETE FROM *PREFIX*aletsch_spool WHERE jobid=?';
+        $args = array(
+            $jobid
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $query->execute($args);
+        
+        // Update local structure
+        unset($this->operations[$jobid]);
+        
+        // Return last insterted ID
+        return TRUE;
+    }
+
     /**
      * Set vault ARN for given job ID
      * @param Integer $jobid

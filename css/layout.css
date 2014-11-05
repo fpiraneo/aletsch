@@ -11,7 +11,7 @@ div.aletsch_content {
     width: 100%;
 }
 
-#aletsch_emptylist {
+div.aletsch_emptylist {
     top: 50%;
     text-align: center;
     color: rgb(136, 136, 136);

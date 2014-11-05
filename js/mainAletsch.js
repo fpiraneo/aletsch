@@ -4,8 +4,27 @@ $('document').ready(function() {
     refreshSpoolList();
 
     $("#aletsch_vaults").accordion({
+        active: false,
+        collapsible: true,
         activate: function(event, ui) {
             var selected = ui.newHeader.attr("data-vaultarn");
+            
+            if(typeof(selected) === "undefined") {
+                $("#inventoryContent").hide();
+                $("#noInventory").show();
+
+                $("#jobContent").hide();
+                $("#noJobs").show();
+
+                return;
+            } else {
+                $("#inventoryContent").show();
+                $("#noInventory").hide();
+
+                $("#jobContent").show();
+                $("#noJobs").hide();
+            }
+            
             $("#aletsch_tabs").attr("data-actualarn", selected);
             
             $.ajax({
@@ -258,13 +277,7 @@ $('document').ready(function() {
     $("#btnReleaseJob")
         .button()
         .click(function() {
-            var selectedJobs = [];
-    
-            $(".spoolJobSelection").each(function() {
-                if($(this).prop("checked")) {
-                    selectedJobs[selectedJobs.length] = $(this).data('spooljobid');
-                }
-            });
+            var selectedJobs = getSelectedJobs();
 
             if(selectedJobs.length > 0) {
                 $.ajax({
@@ -281,28 +294,95 @@ $('document').ready(function() {
                     success: function(result) {
                         var resultData = jQuery.parseJSON(result);
 
-                        if(resultData.opResult === 'OK') {
-                            refreshSpoolList();
-                        } else {
+                        if(resultData.opResult !== 'OK') {
                             updateStatusBar(t('aletsch', 'Unable to change!'));
                         }
+                        
+                        refreshSpoolList();
                     },
                     error: function( xhr, status ) {
                         updateStatusBar(t('aletsch', 'Unable to change! Ajax error!'));
                     }
                 });
-            }            
+            }
         });
     
     $("#btnResetStatus")
         .button()
-        .click(function() {});
+        .click(function() {
+            var selectedJobs = getSelectedJobs();
+    
+            if(selectedJobs.length > 0) {
+                $.ajax({
+                    url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+                    data: {
+                        op: 'resetJobStatus',
+                        jobid: JSON.stringify(selectedJobs)
+                    },
+
+                    type: "POST",
+
+                    success: function(result) {
+                        var resultData = jQuery.parseJSON(result);
+
+                        if(resultData.opResult !== 'OK') {
+                            updateStatusBar(t('aletsch', 'Unable to reset!'));
+                        }
+                        
+                        refreshSpoolList();
+                    },
+                    error: function( xhr, status ) {
+                        updateStatusBar(t('aletsch', 'Unable to reset! Ajax error!'));
+                    }
+                });
+            }
+        });
     
     $("#btnDeleteJob")
         .button()
-        .click(function() {});
-    
+        .click(function() {
+            var selectedJobs = getSelectedJobs();
+
+            if(selectedJobs.length > 0) {
+                $.ajax({
+                    url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+                    data: {
+                        op: 'removeJob',
+                        jobid: JSON.stringify(selectedJobs)
+                    },
+
+                    type: "POST",
+
+                    success: function(result) {
+                        var resultData = jQuery.parseJSON(result);
+
+                        if(resultData.opResult !== 'OK') {
+                            updateStatusBar(t('aletsch', 'Unable to remove!'));
+                        }
+                        
+                        refreshSpoolList();
+                    },
+                    error: function( xhr, status ) {
+                        updateStatusBar(t('aletsch', 'Unable to remove! Ajax error!'));
+                    }
+                });
+            }
+        });    
 });
+
+function getSelectedJobs() {
+    var selectedJobs = [];
+
+    $(".spoolJobSelection").each(function() {
+        if($(this).prop("checked")) {
+            selectedJobs[selectedJobs.length] = $(this).data('spooljobid');
+        }
+    });
+    
+    return selectedJobs;
+}
 
 function refreshSpoolList() {
     $.ajax({

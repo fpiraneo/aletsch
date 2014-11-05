@@ -24,3 +24,4 @@ OC::$CLASSPATH['OCA\aletsch\inventoryHandler'] = 'aletsch/libs/dataHandler.php';
 OC::$CLASSPATH['OCA\aletsch\spoolerHandler'] = 'aletsch/libs/dataHandler.php';
 OC::$CLASSPATH['OCA\aletsch\vaultHandler'] = 'aletsch/libs/dataHandler.php';
 OC::$CLASSPATH['OCA\aletsch\utilities'] = 'aletsch/libs/utilities.php';
+OC::$CLASSPATH['OCA\aletsch\cron\spooler'] = 'aletsch/cron/spooler.php';
