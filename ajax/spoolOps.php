@@ -23,8 +23,6 @@ OCP\User::checkLoggedIn();
 
 $OCUserName = \OCP\User::getUser();
 $op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
-$asHtml = filter_input(INPUT_POST, 'ashtml', FILTER_SANITIZE_NUMBER_INT);
-$filePath = filter_input(INPUT_POST, 'filePath', FILTER_SANITIZE_URL);
 
 // Prepare result structure
 $result = array(
@@ -49,7 +47,7 @@ if(!isset($op)) {
 
     \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
     
-    die($result);
+    die(json_encode($result));
 }
 
 //
@@ -58,6 +56,8 @@ if(!isset($op)) {
 switch($op) {
     // Get spool contents for given user
     case 'getOps': {
+        $asHtml = filter_input(INPUT_POST, 'ashtml', FILTER_SANITIZE_NUMBER_INT);
+        
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $spool = $spoolerHandler->getOperations();
         
@@ -71,6 +71,8 @@ switch($op) {
     
     // Get spool contents for given user
     case 'addUploadOp': {
+        $filePath = filter_input(INPUT_POST, 'filePath', FILTER_SANITIZE_URL);
+        
         if(!isset($filePath)) {
             $result = array(
                 'opResult' => 'KO',
@@ -83,13 +85,120 @@ switch($op) {
 
             \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
 
-            die($result);
+            die(json_encode($result));
         }
         
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileUpload');
         $spoolerHandler->setJobData($jobID, $filePath);
         
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Change job attribute
+    case 'changeJobAttribute': {
+        $attr = filter_input(INPUT_POST, 'attr', FILTER_SANITIZE_STRING);
+        $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
+        $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
+        
+        if(!isset($attr) || !isset($vaultARN) || !isset($jobID)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'Essential parameter not set'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        
+        switch($attr) {
+            case 'vaultarn': {
+                $spoolerHandler->setVaultARN($jobID, $vaultARN);
+                break;
+            }
+            
+            default: {
+                $result = array(
+                    'opResult' => 'KO',
+                    'opData' => array(),
+                    'errData' => array(
+                        'exCode' => 'AletschParamError',
+                        'exMessage' => 'Parameter to set not handled'
+                    )
+                );
+
+                \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                die(json_encode($result));
+                
+                break;
+            }
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    case 'changeJobStatus': {
+        $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+
+        $jobIDs = json_decode($jobIDsJSON);
+        
+        // Check for right format of jobid
+        if(!is_array($jobIDs)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'Parameter jobid in wrong format - Must be an array'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        // Change job status
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        
+        foreach($jobIDs as $jobID) {
+            $statusChangeResult = $spoolerHandler->setJobStatus($jobID, $status);
+            
+            if(!$statusChangeResult) {
+                $result = array(
+                    'opResult' => 'KO',
+                    'opData' => array(),
+                    'errData' => array(
+                        'exCode' => 'AletschParamError',
+                        'exMessage' => 'Parameter job id or jobstatus not valid'
+                    )
+                );
+
+                \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+                die(json_encode($result));
+            }
+        }
+
         $result['opResult'] = 'OK';
         $result['opData'] = '';
 

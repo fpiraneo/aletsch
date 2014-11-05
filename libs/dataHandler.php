@@ -364,9 +364,9 @@ class inventoryHandler {
      * @param String $VaultARN Vault ARN to remove the inventories
      * @return boolean TRUE on success
      */
-    public static function removeInventories($credID, $VaultARN) {
+    public static function removeInventories($VaultARN) {
         $sql = 'DELETE FROM oc_aletsch_inventories WHERE vaultarn=?';
-        $args = array($credID, $VaultARN);
+        $args = array($VaultARN);
 
         $query = \OCP\DB::prepare($sql);
         $query->execute($args);                

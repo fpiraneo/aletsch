@@ -1,29 +1,7 @@
 $('document').ready(function() {
     var selectedArchives = [];
 
-    $.ajax({
-        url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
-
-        data: {
-            op: 'getOps',
-            ashtml: 1
-        },
-
-        type: "POST",
-
-        success: function(result) {
-            var resultData = jQuery.parseJSON(result);
-
-            if(resultData.opResult === 'OK') {
-                $('#spoolerContent').html(resultData.opData);
-            } else {
-                $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content!'));
-            }
-        },
-        error: function( xhr, status ) {
-            $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content! Ajax error'));
-        }
-    });        
+    refreshSpoolList();
 
     $("#aletsch_vaults").accordion({
         activate: function(event, ui) {
@@ -242,7 +220,115 @@ $('document').ready(function() {
             }
         }
     });
+    
+    $("#spoolerContent").on("click", "#aletsch_selectAllSpoolJobs", function(eventData) {
+        var selected = eventData.target.checked;
+        
+        $(".spoolJobSelection").each(function() {
+            $(this).prop("checked", selected);
+        });
+    });
+    
+    $("#spoolerContent").on("change", ".vaultSelect", function(eventData) {
+        $.ajax({
+            url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+            data: {
+                op: 'changeJobAttribute',
+                attr: 'vaultarn',
+                vaultARN: $(this).val(),
+                jobid: $(this).attr("data-jobid")
+            },
+
+            type: "POST",
+
+            success: function(result) {
+                var resultData = jQuery.parseJSON(result);
+
+                if(resultData.opResult !== 'OK') {
+                    updateStatusBar(t('aletsch', 'Unable to change!'));
+                }
+            },
+            error: function( xhr, status ) {
+                updateStatusBar(t('aletsch', 'Unable to change! Ajax error!'));
+            }
+        });
+    });
+
+    $("#btnReleaseJob")
+        .button()
+        .click(function() {
+            var selectedJobs = [];
+    
+            $(".spoolJobSelection").each(function() {
+                if($(this).prop("checked")) {
+                    selectedJobs[selectedJobs.length] = $(this).data('spooljobid');
+                }
+            });
+
+            if(selectedJobs.length > 0) {
+                $.ajax({
+                    url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+                    data: {
+                        op: 'changeJobStatus',
+                        status: 'waiting',
+                        jobid: JSON.stringify(selectedJobs)
+                    },
+
+                    type: "POST",
+
+                    success: function(result) {
+                        var resultData = jQuery.parseJSON(result);
+
+                        if(resultData.opResult === 'OK') {
+                            refreshSpoolList();
+                        } else {
+                            updateStatusBar(t('aletsch', 'Unable to change!'));
+                        }
+                    },
+                    error: function( xhr, status ) {
+                        updateStatusBar(t('aletsch', 'Unable to change! Ajax error!'));
+                    }
+                });
+            }            
+        });
+    
+    $("#btnResetStatus")
+        .button()
+        .click(function() {});
+    
+    $("#btnDeleteJob")
+        .button()
+        .click(function() {});
+    
 });
+
+function refreshSpoolList() {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+        data: {
+            op: 'getOps',
+            ashtml: 1
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                $('#spoolerContent').html(resultData.opData);
+            } else {
+                $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content!'));
+            }
+        },
+        error: function( xhr, status ) {
+            $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content! Ajax error'));
+        }
+    });        
+}
 
 function createVault(vaultName) {
     $.ajax({
