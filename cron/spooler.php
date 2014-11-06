@@ -37,8 +37,7 @@ class spooler {
         if($running > 0) {
             // Check for running jobs status
             \OCP\Util::writeLog('aletsch', 'We already have running jobs! - Refreshing status!', 0);
-            $runningJob = $spooler->getRunningJob();
-            \OCA\aletsch\cron\spooler::refreshJobStatus($spooler, $runningJob);
+            \OCA\aletsch\cron\spooler::refreshJobStatus($spooler);
         } else if ($waiting > 0) {
             // Start first waiting job
             $waitingJob = $spooler->getJobsWithStatus('waiting');
@@ -50,23 +49,28 @@ class spooler {
     }
     
     public static function runJob(\OCA\aletsch\spoolerHandler $spooler, $jobData) {
-        $spooler->setJobStatus($jobData['jobid'], 'running');
-        \OCP\Util::writeLog('aletsch', 'Job ' . $jobData['jobid'] . ' started - PID:' . getmypid(), 0);
-        
         $command = "sleep 300";
         $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $command));
-        
-        $spooler->setJobDiagnostic($jobData['jobid'], 'PID:' . $pid);
+
+        $spooler->setJobStatus($jobData['jobid'], 'running');
+        $spooler->setJobDiagnostic($jobData['jobid'], 'Started at ' . date('c'));
+        $spooler->setJobPID($jobData['jobid'], $pid);
+
+        \OCP\Util::writeLog('aletsch', 'Job ' . $jobData['jobid'] . ' started at ' . date('c') . ' - PID:' . $pid, 0);
     }
     
-    public static function refreshJobStatus(\OCA\aletsch\spoolerHandler $spooler, $runningJob) {
-        $diagnostic = $spooler->getJobDiagnostic($runningJob['jobid']);
+    public static function refreshJobStatus(\OCA\aletsch\spoolerHandler $spooler) {
+        $runningJob = $spooler->getRunningJob();
+        $pid = $spooler->getJobPID($runningJob['jobid']);
         
-        sscanf("PID:%d", $pid);
-        
-        $spooler->setJobDiagnostic($runningJob['jobid'], 'PID:' . $pid . ' Last refresh at ' . date('c'));
-        $jobData = json_encode($runningJob);
-        \OCP\Util::writeLog('aletsch', 'Running job data:' . $jobData, 0);
+        if(file_exists('/proc/' . $pid)){
+            $spooler->setJobDiagnostic($runningJob['jobid'], 'Last refresh at ' . date('c'));
+        } else {
+            // Close old job
+            $spooler->setJobStatus($runningJob['jobid'], 'completed');
+            $spooler->setJobPID($runningJob['jobid'], 0);
+            $spooler->setJobDiagnostic($runningJob['jobid'], 'Job ended at ' . date('c'));
+        }
     }
 }
 

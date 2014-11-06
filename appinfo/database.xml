@@ -1,247 +1,263 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <database>
-	<name>*dbname*</name>
-	<create>true</create>
-	<overwrite>false</overwrite>
-	<charset>utf8</charset>
+    <name>*dbname*</name>
+    <create>true</create>
+    <overwrite>false</overwrite>
+    <charset>utf8</charset>
 
-	<table>
-		<name>*dbprefix*aletsch_credentials</name>
-		<declaration>
-			<field>
-				<name>credid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>11</length>
-				<autoincrement>1</autoincrement>
-			</field>
-		
-			<field>
-				<name>ocusername</name>
-				<type>text</type>
-				<default />
-				<notnull>true</notnull>
-				<length>40</length>
-			</field>
-			
-			<field>
-				<name>serverlocation</name>
-				<type>text</type>
-				<default />
-				<notnull>true</notnull>
-				<length>11</length>
-			</field>
-
-			<field>
-				<name>username</name>
-				<type>text</type>
-				<default />
-				<notnull>true</notnull>
-				<length>40</length>
-			</field>
-
-			<field>
-				<name>password</name>
-				<type>text</type>
-				<default />
-				<notnull>true</notnull>
-				<length>40</length>
-			</field>
-		</declaration>
-	</table>
-
-	<table>
-		<name>*dbprefix*aletsch_vaults</name>
-		<declaration>
-			<field>
-				<name>vaultid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>11</length>
-				<autoincrement>1</autoincrement>
-			</field>
-			<field>
-				<name>credid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>11</length>
-			</field>			
-			<field>
-				<name>vaultarn</name>
-				<type>text</type>
-				<notnull>true</notnull>
-				<length>255</length>
-			</field>                
-			<field>
-				<name>creationdate</name>
-				<type>datetime</type>
-			</field>                
-			<field>
-				<name>lastinventory</name>
-				<type>datetime</type>
-			</field>                
-			<field>
-				<name>numberofarchives</name>
-				<type>integer</type>
-                                <notnull>true</notnull>
-                                <default>0</default>
-			</field>                
-			<field>
-				<name>sizeinbytes</name>
-				<type>integer</type>
-                                <notnull>true</notnull>
-                                <length>11</length>
-                                <default>0</default>
-			</field>                
-		</declaration>
-	</table>
-    
-	<table>
-		<name>*dbprefix*aletsch_inventories</name>
-		<declaration>
-			<field>
-				<name>inventoryid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<autoincrement>1</autoincrement>
-				<length>11</length>
-			</field>
-			
-			<field>
-				<name>credid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>11</length>
-			</field>			
-
-                        <field>
-				<name>vaultarn</name>
-				<type>text</type>
-				<notnull>true</notnull>
-				<length>255</length>
-			</field>
-
-			<field>
-				<name>inventorydate</name>
-				<type>datetime</type>
-			</field>
-
-			<field>
-				<name>inventorydata</name>
-				<type>blob</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>16777216</length>
-			</field>
-		</declaration>
-	</table>
-	
-	<table>
-            <name>*dbprefix*aletsch_spool</name>
+    <table>
+            <name>*dbprefix*aletsch_credentials</name>
             <declaration>
-                <field>
-                    <name>jobid</name>
-                    <type>integer</type>
-                    <default>0</default>
-                    <notnull>true</notnull>
-                    <autoincrement>1</autoincrement>
-                    <length>11</length>
-                </field>
+                    <field>
+                            <name>credid</name>
+                            <type>integer</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <length>11</length>
+                            <autoincrement>1</autoincrement>
+                    </field>
 
-                <field>
-                    <name>ocusername</name>
-                    <type>text</type>
-                    <default />
-                    <notnull>true</notnull>
-                    <length>40</length>
-                </field>
+                    <field>
+                            <name>ocusername</name>
+                            <type>text</type>
+                            <default />
+                            <notnull>true</notnull>
+                            <length>40</length>
+                    </field>
 
-                <field>
-                    <name>vaultarn</name>
-                    <type>text</type>
-                    <notnull></notnull>
-                    <length>255</length>
-                </field>
+                    <field>
+                            <name>serverlocation</name>
+                            <type>text</type>
+                            <default />
+                            <notnull>true</notnull>
+                            <length>11</length>
+                    </field>
 
-                <field>
-                    <name>jobtype</name>
-                    <type>text</type>
-                    <default />
-                    <notnull>true</notnull>
-                    <length>20</length>
-                </field>
+                    <field>
+                            <name>username</name>
+                            <type>text</type>
+                            <default />
+                            <notnull>true</notnull>
+                            <length>40</length>
+                    </field>
 
-                <field>
-                    <name>jobstatus</name>
-                    <type>text</type>
-                    <default />
-                    <notnull>true</notnull>
-                    <length>20</length>
-                </field>
-
-                <field>
-                    <name>jobdata</name>
-                    <type>text</type>
-                    <default />
-                    <notnull></notnull>
-                    <length>255</length>
-                </field>
-
-                <field>
-                    <name>jobdiagnostic</name>
-                    <type>text</type>
-                    <default />
-                    <notnull></notnull>
-                    <length>255</length>
-                </field>
+                    <field>
+                            <name>password</name>
+                            <type>text</type>
+                            <default />
+                            <notnull>true</notnull>
+                            <length>40</length>
+                    </field>
             </declaration>
-	</table>
+    </table>
 
-        <table>
-		<name>*dbprefix*aletsch_archives</name>
-		<declaration>
-			<field>
-				<name>archiveid</name>
-				<type>integer</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<autoincrement>1</autoincrement>
-				<length>11</length>
-			</field>
+    <table>
+            <name>*dbprefix*aletsch_vaults</name>
+            <declaration>
+                    <field>
+                            <name>vaultid</name>
+                            <type>integer</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <length>11</length>
+                            <autoincrement>1</autoincrement>
+                    </field>
+                    <field>
+                            <name>credid</name>
+                            <type>integer</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <length>11</length>
+                    </field>			
+                    <field>
+                            <name>vaultarn</name>
+                            <type>text</type>
+                            <notnull>true</notnull>
+                            <length>255</length>
+                    </field>                
+                    <field>
+                            <name>creationdate</name>
+                            <type>datetime</type>
+                    </field>                
+                    <field>
+                            <name>lastinventory</name>
+                            <type>datetime</type>
+                    </field>                
+                    <field>
+                            <name>numberofarchives</name>
+                            <type>integer</type>
+                            <notnull>true</notnull>
+                            <default>0</default>
+                    </field>                
+                    <field>
+                            <name>sizeinbytes</name>
+                            <type>integer</type>
+                            <notnull>true</notnull>
+                            <length>11</length>
+                            <default>0</default>
+                    </field>                
+            </declaration>
+    </table>
 
-			<field>
-				<name>ocuserid</name>
-				<type>text</type>
-				<default />
-				<notnull>true</notnull>
-				<length>40</length>
-			</field>
-			
-			<field>
-				<name>archivedate</name>
-				<type>timestamp</type>
-			</field>
+    <table>
+            <name>*dbprefix*aletsch_inventories</name>
+            <declaration>
+                    <field>
+                            <name>inventoryid</name>
+                            <type>integer</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <autoincrement>1</autoincrement>
+                            <length>11</length>
+                    </field>
 
-			<field>
-				<name>archivedescr</name>
-				<type>text</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>256</length>
-			</field>
+                    <field>
+                            <name>credid</name>
+                            <type>integer</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <length>11</length>
+                    </field>			
 
-			<field>
-				<name>catalog</name>
-				<type>blob</type>
-				<default>0</default>
-				<notnull>true</notnull>
-				<length>16777216</length>
-			</field>
-		</declaration>
-	</table>
+                    <field>
+                            <name>vaultarn</name>
+                            <type>text</type>
+                            <notnull>true</notnull>
+                            <length>255</length>
+                    </field>
+
+                    <field>
+                            <name>inventorydate</name>
+                            <type>datetime</type>
+                    </field>
+
+                    <field>
+                            <name>inventorydata</name>
+                            <type>blob</type>
+                            <default>0</default>
+                            <notnull>true</notnull>
+                            <length>16777216</length>
+                    </field>
+            </declaration>
+    </table>
+
+    <table>
+        <name>*dbprefix*aletsch_spool</name>
+        <declaration>
+            <field>
+                <name>jobid</name>
+                <type>integer</type>
+                <default>0</default>
+                <notnull>true</notnull>
+                <autoincrement>1</autoincrement>
+                <length>11</length>
+            </field>
+
+            <field>
+                <name>ocusername</name>
+                <type>text</type>
+                <default />
+                <notnull>true</notnull>
+                <length>40</length>
+            </field>
+
+            <field>
+                <name>vaultarn</name>
+                <type>text</type>
+                <notnull />
+                <length>255</length>
+            </field>
+
+            <field>
+                <name>jobtype</name>
+                <type>text</type>
+                <default />
+                <notnull>true</notnull>
+                <length>20</length>
+            </field>
+
+            <field>
+                <name>jobstatus</name>
+                <type>text</type>
+                <default />
+                <notnull>true</notnull>
+                <length>20</length>
+            </field>
+
+            <field>
+                <name>jobdata</name>
+                <type>text</type>
+                <default />
+                <notnull />
+                <length>255</length>
+            </field>
+
+            <field>
+                <name>jobpid</name>
+                <type>integer</type>
+                <default />
+                <notnull />
+                <length>10</length>
+            </field>
+
+            <field>
+                <name>jobdiagnostic</name>
+                <type>text</type>
+                <default />
+                <notnull />
+                <length>255</length>
+            </field>
+
+            <field>
+                <name>jobextdata</name>
+                <type>text</type>
+                <default />
+                <notnull />
+                <length>4096</length>
+            </field>
+        </declaration>
+    </table>
+
+    <table>
+        <name>*dbprefix*aletsch_archives</name>
+        <declaration>
+            <field>
+                <name>archiveid</name>
+                <type>integer</type>
+                <default>0</default>
+                <notnull>true</notnull>
+                <autoincrement>1</autoincrement>
+                <length>11</length>
+            </field>
+
+            <field>
+                <name>ocuserid</name>
+                <type>text</type>
+                <default />
+                <notnull>true</notnull>
+                <length>40</length>
+            </field>
+
+            <field>
+                <name>archivedate</name>
+                <type>timestamp</type>
+            </field>
+
+            <field>
+                <name>archivedescr</name>
+                <type>text</type>
+                <default>0</default>
+                <notnull>true</notnull>
+                <length>256</length>
+            </field>
+
+            <field>
+                <name>catalog</name>
+                <type>blob</type>
+                <default>0</default>
+                <notnull>true</notnull>
+                <length>16777216</length>
+            </field>
+        </declaration>
+    </table>
 </database>

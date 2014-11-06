@@ -431,6 +431,7 @@ class spoolerHandler {
                 'jobtype' => $row['jobtype'],
                 'jobstatus' => $row['jobstatus'],
                 'jobdata' => $row['jobdata'],
+                'jobpid' => $row['jobpid'],
                 'jobdiagnostic' => $row['jobdiagnostic']
             );
             
@@ -655,7 +656,7 @@ class spoolerHandler {
     /**
      * Set job data for given jobid
      * @param Integer $jobid
-     * @return String Job data, FALSE if job data is not set
+     * @return Boolean TRUE if ok, FALSE if $jobid is not set
      */
     function setJobData($jobid, $jobdata) {
         // Check if job with given ID is set
@@ -665,6 +666,70 @@ class spoolerHandler {
         
         // Set job data
         $this->updateFieldData($jobid, 'jobdata', $jobdata);
+        
+        return TRUE;
+    }
+    
+    /**
+     * Return job PID for given jobid
+     * @param Integer $jobid
+     * @return String Job data, FALSE if job data is not set
+     */
+    function getJobPID($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid]['jobpid'];
+    }
+
+    /**
+     * Set job PID for given jobid
+     * @param Integer $jobid
+     * @return Boolean TRUE if ok, FALSE if $jobid is not set
+     */
+    function setJobPID($jobid, $jobPID) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set job data
+        $this->updateFieldData($jobid, 'jobpid', $jobPID);
+        
+        return TRUE;
+    }
+    
+    /**
+     * Return extended job data for given jobid
+     * @param Integer $jobid
+     * @return String Job data, FALSE if job data is not set
+     */
+    function getJobExtData($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid]['jobextdata'];
+    }
+
+    /**
+     * Set extended job data for given jobid
+     * @param Integer $jobid
+     * @return Boolean TRUE if ok, FALSE if $jobid is not set
+     */
+    function setJobExtData($jobid, $jobextdata) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set job data
+        $this->updateFieldData($jobid, 'jobextdata', $jobextdata);
         
         return TRUE;
     }
