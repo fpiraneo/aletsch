@@ -29,25 +29,43 @@ class spooler {
         
         // Get the spooler
         $spooler = new \OCA\aletsch\spoolerHandler(NULL);
-        
+        \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+    }
+    
+    public static function checkForNextOp($spooler) {
         // Check for running and waiting jobs
+        if(!\OCA\aletsch\cron\spooler::checkForRunningJobs($spooler)) {
+            if(!\OCA\aletsch\cron\spooler::checkForWaitingJobs($spooler)) {
+                // Nothing to do!
+                \OCP\Util::writeLog('aletsch', 'No jobs running or to start - Exiting now!', 0);
+            }
+        }        
+    }
+    
+    public static function checkForRunningJobs($spooler) {
         $running = $spooler->countJobsWithStatus();
-        $waiting = $spooler->countJobsWithStatus('waiting');
-        
-        if($running > 0) {
-            // Check for running jobs status
+
+        // Check for running jobs status
+        if($running) {
             \OCP\Util::writeLog('aletsch', 'We already have running jobs! - Refreshing status!', 0);
             \OCA\aletsch\cron\spooler::refreshJobStatus($spooler);
-        } else if ($waiting > 0) {
+        }
+
+        return ($running === 0) ? FALSE : TRUE;
+    }
+
+    public static function checkForWaitingJobs($spooler) {
+        $waiting = $spooler->countJobsWithStatus('waiting');
+        
+        if($waiting) {
             // Start first waiting job
             $waitingJob = $spooler->getJobsWithStatus('waiting');
             \OCA\aletsch\cron\spooler::runJob($spooler, $waitingJob[0]);
-        } else {
-            // Nothing to do!
-            \OCP\Util::writeLog('aletsch', 'No jobs running or to start - Exiting now!', 0);
         }
+        
+        return ($waiting === 0) ? FALSE : TRUE;
     }
-    
+
     public static function runJob(\OCA\aletsch\spoolerHandler $spooler, $jobData) {
         $command = "sleep 300";
         $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $command));
@@ -70,6 +88,9 @@ class spooler {
             $spooler->setJobStatus($runningJob['jobid'], 'completed');
             $spooler->setJobPID($runningJob['jobid'], 0);
             $spooler->setJobDiagnostic($runningJob['jobid'], 'Job ended at ' . date('c'));
+            
+            // Check for next operation
+            \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
         }
     }
 }
