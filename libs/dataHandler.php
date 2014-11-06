@@ -425,6 +425,7 @@ class spoolerHandler {
         
         while($row = $resRsrc->fetchRow()) {
             $spoolEntry = array(
+                'jobid' => $row['jobid'],
                 'ocusername' => $row['ocusername'],
                 'vaultarn' => $row['vaultarn'],
                 'jobtype' => $row['jobtype'],
@@ -469,6 +470,20 @@ class spoolerHandler {
         }
         
         return $jobs;
+    }
+    
+    /**
+     * Return first running job data, FALSE if not found
+     * @return Array Array with all job's data, FALSE if no running job found
+     */
+    function getRunningJob() {
+        foreach ($this->operations as $op) {
+            if($op['jobstatus'] === 'running') {
+                return $op;
+            }
+        }
+        
+        return FALSE;
     }
 
     /**
