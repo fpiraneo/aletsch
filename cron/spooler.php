@@ -67,7 +67,7 @@ class spooler {
     }
 
     public static function runJob(\OCA\aletsch\spoolerHandler $spooler, $jobData) {
-        $command = "sleep 300";
+        $command = sprintf("startjob %s", $jobData['jobid']);
         $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $command));
 
         $spooler->setJobStatus($jobData['jobid'], 'running');

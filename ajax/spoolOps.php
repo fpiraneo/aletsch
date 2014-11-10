@@ -72,6 +72,7 @@ switch($op) {
     // Get spool contents for given user
     case 'addUploadOp': {
         $filePath = filter_input(INPUT_POST, 'filePath', FILTER_SANITIZE_URL);
+        $localPath = \OC\Files\Filesystem::getLocalFolder($filePath);
         
         if(!isset($filePath)) {
             $result = array(
@@ -90,7 +91,11 @@ switch($op) {
         
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileUpload');
-        $spoolerHandler->setJobData($jobID, $filePath);
+        $jobData = array(
+            'filePath' => $filePath,
+            'localPath' => $localPath
+                );
+        $spoolerHandler->setJobData($jobID, json_encode($jobData));
         
         $result['opResult'] = 'OK';
         $result['opData'] = '';

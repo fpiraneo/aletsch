@@ -209,7 +209,7 @@ switch($op) {
         $lastDBInventoryDate = $inventory->getInventoryDate();
         $inventoryDetails = array(
             'date' => $inventory->getInventoryDate(),
-            'outdated' => ($lastGlacierInventoryDate !== $lastDBInventoryDate),
+            'outdated' => ($lastGlacierInventoryDate !== $lastDBInventoryDate) && $lastDBInventoryDate !== NULL,
             'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
         );            
 
