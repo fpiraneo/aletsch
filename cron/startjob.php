@@ -18,46 +18,38 @@
      * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
      */
 
-    require __DIR__ . '/../libs/dataHandler.php';
     require __DIR__ . '/../libs/aletsch.php';
 
-    // Check for right parameter number
-    if($argc != 3) {
-        die();
-    }
-    
-    // Check for right job id
-    $jobid = intval($argv[1]);
-    if($jobid <= 0) {
-        die();
-    }
-    
-    // Reverts job informations
-    $spooler = new \OCA\aletsch\spoolerHandler();
-    $jobData = $spooler->getJobData($jobid);
-    
-    // Reverts credentials of the job's owner
-    $credentials = new \OCA\aletsch\credentialsHandler($jobData['ocusername']);
-    $username = $credentials->getUsername();
-    $password = $credentials->getPassword();
+    // Set arguments names
+    $argNames = array(
+        'cmdName',
+        'username',
+        'password',
+        'vaultarn',
+        'jobtype',
+        'localPath',
+        'statusPath'
+    );
 
-    // Instance to aletsch
-    $vaultData = \OCA\aletsch\aletsch::explodeARN($jobData['vaultarn']);
-    $glacier = new \OCA\aletsch\aletsch($vaultData['serverLocation'], $username, $password);
+    // Check for right parameter number
+    if($argc != count($argNames)) {
+        die('Not enough parameters.');
+    }
     
-    switch($jobData['jobtype']) {
+    $clp = array_combine($argNames, $argv);
+    
+    // Instance to aletsch
+    $vaultData = \OCA\aletsch\aletsch::explodeARN($clp['vaultarn']);
+    $glacier = new \OCA\aletsch\aletsch($vaultData['serverLocation'], $clp['username'], $clp['password']);
+    
+    switch($clp['jobtype']) {
+        // Upload a file
         case 'fileUpload': {
-            // Upload a file
             // Check if the file can be accessed
-            $filePaths = json_decode($jobData['jobdata']);
-            if(!is_file($filePath)) {
-                die();
+            if(!is_file($clp['localPath'])) {
+                die('Unable to access file.');
             }
 
-            $description = pathinfo($filePath, PATHINFO_BASENAME);
-            $message = date('c') . ' - ' . 'Uploading ' . $filePaths['localPath'] . ' on ' . $vaultData['vaultName'] . ' Description: ' . $description;
-            file_put_contents(__DIR__ . 'fpglog.txt', $message, FILE_APPEND);
-            
-            //$glacier->uploadArchive($vaultData['vaultName'], $filePaths['localPath'], $description);            
+            $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], NULL, $clp['statusPath']);            
         }
     }

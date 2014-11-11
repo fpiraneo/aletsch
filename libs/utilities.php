@@ -254,8 +254,9 @@ class utilities {
                 }
                 $vaultAction .= '</select>';
                 
-                $filePaths = json_decode($jobData['jobdata']);
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultAction, $jobData['jobtype'], $jobData['jobstatus'], $filePaths['filePath'], $jobData['jobdiagnostic']);
+                $filePaths = json_decode($jobData['jobdata'], TRUE);
+                $status = ($jobData['jobstatus'] === 'running') ? 'Running ' . $jobData['jobstarted'] : $jobData['jobstatus'];
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultAction, $jobData['jobtype'], $status, $filePaths['filePath'], $jobData['jobdiagnostic']);
             }
             
             $result .= '</table>';

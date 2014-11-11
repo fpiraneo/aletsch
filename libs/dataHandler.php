@@ -430,6 +430,7 @@ class spoolerHandler {
                 'vaultarn' => $row['vaultarn'],
                 'jobtype' => $row['jobtype'],
                 'jobstatus' => $row['jobstatus'],
+                'jobstarted' => $row['jobstarted'],
                 'jobdata' => $row['jobdata'],
                 'jobpid' => $row['jobpid'],
                 'jobdiagnostic' => $row['jobdiagnostic']
@@ -555,6 +556,21 @@ class spoolerHandler {
     }
     
     /**
+     * Get vault ARN for given job ID
+     * @param Integer $jobid
+     * @return String Job's vaultarn if job id is valid, FALSE otherwise
+     */
+    function getVaultARN($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get ARN
+        return $this->operations[$jobid]['vaultarn'];
+    }
+    
+    /**
      * Return job type for given jobid
      * @param Integer $jobid
      * @return String Job type, FALSE if jobid is not set
@@ -566,7 +582,7 @@ class spoolerHandler {
         }
         
         // Get job type
-        return $this->operations[$jobid['jobtype']];        
+        return $this->operations[$jobid['jobtype']];
     }
     
     /**
@@ -656,6 +672,7 @@ class spoolerHandler {
     /**
      * Set job data for given jobid
      * @param Integer $jobid
+     * @param String $jobdata Job data to set
      * @return Boolean TRUE if ok, FALSE if $jobid is not set
      */
     function setJobData($jobid, $jobdata) {
@@ -666,6 +683,39 @@ class spoolerHandler {
         
         // Set job data
         $this->updateFieldData($jobid, 'jobdata', $jobdata);
+        
+        return TRUE;
+    }
+    
+    /**
+     * Return job start date for given jobid
+     * @param Integer $jobid
+     * @return String Job data, FALSE if job data is not set
+     */
+    function getJobStartDate($jobid) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Get job type
+        return $this->operations[$jobid]['jobstarted'];
+    }
+
+    /**
+     * Set job start date for given jobid
+     * @param Integer $jobid
+     * @param String $jobStartDate Job start timestamp
+     * @return Start date and time, FALSE if $jobid is not set
+     */
+    function setJobStartDate($jobid, $jobStartDate) {
+        // Check if job with given ID is set
+        if(!isset($this->operations[$jobid])) {
+            return FALSE;
+        }
+        
+        // Set job data
+        $this->updateFieldData($jobid, 'jobstarted', $jobStartDate);
         
         return TRUE;
     }

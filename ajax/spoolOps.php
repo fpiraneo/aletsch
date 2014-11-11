@@ -93,8 +93,9 @@ switch($op) {
         $jobID = $spoolerHandler->newJob('fileUpload');
         $jobData = array(
             'filePath' => $filePath,
-            'localPath' => $localPath
-                );
+            'localPath' => $localPath,
+            'statusPath' => sys_get_temp_dir() . '/aletsch_sts_' . uniqid()
+        );
         $spoolerHandler->setJobData($jobID, json_encode($jobData));
         
         $result['opResult'] = 'OK';
@@ -190,7 +191,14 @@ switch($op) {
             $statusChangeResult = FALSE;
             
             if($actualStatus === 'hold') {
-                $statusChangeResult = $spoolerHandler->setJobStatus($jobID, $status);
+                $currentARN = $spoolerHandler->getVaultARN($jobID);
+                $ARNPrefix = substr($currentARN, 0, 16);
+                if($ARNPrefix !== 'arn:aws:glacier:') {
+                    $statusChangeResult = $spoolerHandler->setJobStatus($jobID, 'error');
+                    $spoolerHandler->setJobDiagnostic($jobID, 'Vault name is not set.');
+                } else {
+                    $statusChangeResult = $spoolerHandler->setJobStatus($jobID, $status);
+                }
 
                 if(!$statusChangeResult) {
                     $result = array(
@@ -259,7 +267,7 @@ switch($op) {
         foreach($jobIDs as $jobID) {
             $actualStatus = $spoolerHandler->getJobStatus($jobID);
             if($actualStatus === 'error') {
-                $statusChangeResult = $spoolerHandler->setJobStatus($jobID, 'waiting');
+                $statusChangeResult = $spoolerHandler->setJobStatus($jobID, 'hold');
                 $spoolerHandler->setJobDiagnostic($jobID, '');
             } else {
                 $result = array(

@@ -401,24 +401,75 @@ class aletsch {
 	 * $vaultName - Name of the vault to upload the archive into
 	 * $filePath - Path of the file to upload
 	 */
-	function uploadArchive($vaultName, $filePath, $description = NULL) {
+	function uploadArchive($vaultName, $filePath, $description = NULL, $progressFile = NULL) {
+            // Get archive description if passed is null
             if(is_null($description)) {
                 $pathParts = pathinfo($filePath);
                 $description = $pathParts['basename'];
             }
 
+            // Initialize status array
+            $progress = array(
+                'pid'		=> getmypid(),
+                'offline'	=> $this->offline,
+                'totalRead' 	=> 0,
+                'totalWritten'	=> 0,
+                'processedFiles'=> 0,
+                'fileRead'	=> 0,
+                'totalFiles'	=> 1,
+                'thisFilePath'	=> '',
+                'thisFilePerc'	=> '',
+                'status'        => '',
+                'extStatus'     => ''
+            );
+            
+            // Get file size; if FALSE the file is not accessible, forfait
             $size = filesize($filePath);
 
             if($size === FALSE) {
+                // Record on progress file
+                if(!is_null($progressFile)) {
+                    $progress['status'] = 'abort';
+                    $progress['extStatus'] = 'Unable to read file';
+                    file_put_contents($progressFile, json_encode($progress));
+                }
+                
                 return FALSE;
             }
 
+            // Choose the right upload way and run for it
             if($size < (10 * $this->megaByte)) {
+                // Record on progress file
+                if(!is_null($progressFile)) {
+                    $progress['status'] = 'running';
+                    $progress['extStatus'] = 'Uploading with uploadArchiveSingle';
+                    file_put_contents($progressFile, json_encode($progress));
+                }
+
+                // Do upload
                 $archiveID = $this->uploadArchiveSingle($vaultName, $filePath, $description);
             } else {
+                // Record on progress file
+                if(!is_null($progressFile)) {
+                    $progress['status'] = 'running';
+                    $progress['extStatus'] = 'Uploading with uploadArchiveMultipart';
+                    file_put_contents($progressFile, json_encode($progress));
+                }
+
+                // Do upload
                 $archiveID = $this->uploadArchiveMultipart($vaultName, $filePath, $description);
             }
-
+            
+            // Five minutes relax!
+            sleep(300);
+            
+            // Record on progress file
+            if(!is_null($progressFile)) {
+                $progress['processedFiles'] = 1;
+                $progress['status'] = 'completed';
+                $progress['extStatus'] = $archiveID;
+                file_put_contents($progressFile, json_encode($progress));
+            }
             return $archiveID;
 	}
 	
@@ -428,19 +479,23 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchiveSingle($vaultName, $filePath, $description) {
-            $archiveData = fopen($filePath, 'rb');
+            if($this->offline) {
+                $archiveID = uniqid('OFFLINE_');
+            } else {
+                $archiveData = fopen($filePath, 'rb');
 
-            if($archiveData === FALSE) {
-                return FALSE;
+                if($archiveData === FALSE) {
+                    return FALSE;
+                }
+
+                $result = $this->glacierClient->uploadArchive(array(
+                    'vaultName' => $vaultName,
+                    'archiveDescription' => $description,
+                    'body' => $archiveData
+                ));
+
+                $archiveID = $result->get('archiveId');
             }
-
-            $result = $this->glacierClient->uploadArchive(array(
-                'vaultName' => $vaultName,
-                'archiveDescription' => $description,
-                'body' => $archiveData
-            ));
-
-            $archiveID = $result->get('archiveId');
 
             return $archiveID;
 	}
@@ -451,48 +506,52 @@ class aletsch {
 	 * $filePath - Path of the file to upload
 	 */
 	function uploadArchiveMultipart($vaultName, $filePath, $description) {
-            $archiveRSRC = fopen($filePath, 'rb');
-            $multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
+            if($this->offline) {
+                $archiveID = uniqid('OFFLINE_');
+            } else {
+                $archiveRSRC = fopen($filePath, 'rb');
+                $multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
 
-            // Initiate multipart upload
-            $result = $this->glacierClient->initiateMultipartUpload(array(
-                'vaultName' => $vaultName,
-                'archiveDescription' => $description,
-                'partSize'  => $this->uploadPartSize,
-            ));
-
-            $multipartUploadId = $result->get('uploadId');
-
-            // Upload each part individually using data from the part generator
-            $archiveData = fopen($filePath, 'rb');
-            foreach ($multiParts as $part) {
-                fseek($archiveData, $part->getOffset());
-
-                $this->glacierClient->uploadMultipartPart(array(
-                    'vaultName'     => $vaultName,
-                    'uploadId'      => $multipartUploadId,
-                    'body'          => fread($archiveData, $part->getSize()),
-                    'range'         => $multiParts->getFormattedRange(),
-                    'checksum'      => $multiParts->getChecksum(),
-                    'ContentSHA256' => $multiParts->getContentHash()
+                // Initiate multipart upload
+                $result = $this->glacierClient->initiateMultipartUpload(array(
+                    'vaultName' => $vaultName,
+                    'archiveDescription' => $description,
+                    'partSize'  => $this->uploadPartSize,
                 ));
+
+                $multipartUploadId = $result->get('uploadId');
+
+                // Upload each part individually using data from the part generator
+                $archiveData = fopen($filePath, 'rb');
+                foreach ($multiParts as $part) {
+                    fseek($archiveData, $part->getOffset());
+
+                    $this->glacierClient->uploadMultipartPart(array(
+                        'vaultName'     => $vaultName,
+                        'uploadId'      => $multipartUploadId,
+                        'body'          => fread($archiveData, $part->getSize()),
+                        'range'         => $multiParts->getFormattedRange(),
+                        'checksum'      => $multiParts->getChecksum(),
+                        'ContentSHA256' => $multiParts->getContentHash()
+                    ));
+                }
+                fclose($archiveData);
+
+                // Complete the upload
+                $result = $this->glacierClient->completeMultipartUpload(array(
+                    'vaultName'   => $vaultName,
+                    'uploadId'    => $multipartUploadId,
+                    'archiveSize' => $multiParts->getArchiveSize(),
+                    'checksum'    => $multiParts->getRootChecksum()
+                ));
+
+                unset($multipartUploadId);
+                unset($multiParts);
+
+                $archiveID = $result->get('archiveId');
             }
-            fclose($archiveData);
-
-            // Complete the upload
-            $result = $this->glacierClient->completeMultipartUpload(array(
-                'vaultName'   => $vaultName,
-                'uploadId'    => $multipartUploadId,
-                'archiveSize' => $multiParts->getArchiveSize(),
-                'checksum'    => $multiParts->getRootChecksum()
-            ));
-
-            unset($multipartUploadId);
-            unset($multiParts);
-
-            $archiveId = $result->get('archiveId');
-
-            return $archiveId;
+            
+            return $archiveID;
 	}
 		
 	/**
@@ -537,12 +596,12 @@ class aletsch {
 	 * Remove a file from the list given it's ID
 	 */
 	function removeFileFromArchiver($fileID) {
-		if(array_search($fileID, $this->archiver)) {
-			unset($this->archiver[$fileID]);
-			return $fileID;
-		} else {
-			return FALSE;
-		}
+            if(array_search($fileID, $this->archiver)) {
+                unset($this->archiver[$fileID]);
+                return $fileID;
+            } else {
+                return FALSE;
+            }
 	}
 	
 	/**
@@ -570,194 +629,194 @@ class aletsch {
 	 * Execute a new archiver operation
 	 */
 	function archive($vaultName, $archiveName, $progressFile = NULL) {
-		// Check if we have files on archiver
-		if(count($this->archiver) < 1) {
-			return FALSE;
-		}
-		
-		// Begin operations
-		$tempDir = sys_get_temp_dir();
-		$tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
-		$catalog = array();
-		$inThisReel = array();
-		$reelNo = 0;
-		$blockNo = 0;
-		$reelWritten = 0;
-		$timeBegin = time();
-		
-		// Keeps track of working parameters
-		$progress = array(
-                    'pid'		=> getmypid(),
-                    'offline'		=> $this->offline,
-                    'totalRead' 	=> 0,
-                    'totalWritten'	=> 0,
-                    'processedFiles'	=> 0,
-                    'fileRead'		=> 0,
-                    'totalFiles'	=> count($this->archiver),
-                    'thisFilePath'	=> '',
-                    'thisFilePerc'	=> ''
-		);
-		
-		// Actual chunk output
-		$tempFile = fopen($tempFileName, 'wb');
-		if(!$tempFile) {
-			return FALSE;
-		}
-		
-		// Loop through files to be stored
-		foreach($this->archiver as $inFileID => $inFileData) {
-			$progress['thisFilePath'] = $inFileData['filePath'];
-			$progress['fileRead'] = 0;
-			
-			$inrsrc = fopen($inFileData['filePath'], 'rb');
-			$fileLen = 0;		// Length of compressed file in bytes
-			$blocksLen = 0;		// Lenght of compressed file in blocks
+            // Check if we have files on archiver
+            if(count($this->archiver) < 1) {
+                return FALSE;
+            }
 
-			$catalog[$inFileID] = array(
-                            'filePos'	=> $reelWritten,	// The beginning of this file!
-                            'fileData'	=> $inFileData
-			);
-			
-			// Update file list on current reel
-			$inThisReel[] = $inFileID;
-			
-			// Read file content and proceed for compression
-			while($buff = fread($inrsrc, $this->blockSize)) {
-				$bufout = gzcompress($buff);
-				$bufOutSize = strlen($bufout);
-				
-				$ctrlData = sprintf("reel=%d,block=%d,len=%d\n", $reelNo, $blockNo++, $bufOutSize);
-				$newDataLen = $bufOutSize + strlen($ctrlData);
-				
-				// Here evaluate if continue to actual reel or open a new one
-				// If a new reel has to be opened, put a %NEXTREEL mark
-				if($reelWritten + $newDataLen >= $this->maxReelSize) {
-					// Put next reel mark and close the file
-					fwrite($tempFile, '%NEXTREEL');
-					fclose($tempFile);
-					
-					// Upload last reel
-					$outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
-					if($this->offline) {
-						$reelID = $tempDir . '/' . $outFileName;
-						rename($tempFileName, $reelID);
-					} else {
-						$reelID = $this->uploadArchive($vaultName, $tempFileName, $outFileName);
-					}
-					
-					// Assign reel ID to all file contained on last reel
-					foreach($inThisReel as $fileID) {
-						$catalog[$fileID]['reelID'][] = $reelID;
-					}
-					
-					// Cleanup list of file on current reel - Leave just the current file ID
-					unset($inThisReel);
-					$inThisReel = array($inFileID);
-					
-					// Begin a new reel
-					$tempFile = fopen($tempFileName, 'wb');
-					if(!$tempFile) {
-						return FALSE;
-					}
-					
-					// Increment counters
-					$reelNo++;
-					
-					// Reset position pointers
-					$reelWritten = 0;
-					$blockNo = 0;
-					
-					// New control data
-					$ctrlData = sprintf("reel=%d,block=%d,len=%d\n", $reelNo, $blockNo, $bufOutSize);
-				}
-				
-				fwrite($tempFile, $ctrlData);
-				fwrite($tempFile, $bufout);
-				
-				// Increment read data counters
-				$blockRead = strlen($buff);
-				$progress['totalRead'] += $blockRead;
-				$progress['fileRead'] += $blockRead;
+            // Begin operations
+            $tempDir = sys_get_temp_dir();
+            $tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
+            $catalog = array();
+            $inThisReel = array();
+            $reelNo = 0;
+            $blockNo = 0;
+            $reelWritten = 0;
+            $timeBegin = time();
 
-				// Increment written data counters
-				$fileLen += $newDataLen;
-				$reelWritten = ftell($tempFile);
-				$progress['totalWritten'] += $newDataLen;
-				$blocksLen++;
-				
-				// output progress data if requested
-				$progress['thisFilePerc'] = sprintf("%6.2f", ($progress['fileRead'] / $inFileData['fileSize']) * 100);
-				if(!is_null($progressFile)) {
-					file_put_contents($progressFile, json_encode($progress));					
-				}
-			}
-			
-			// Store file data
-			$catalog[$inFileID]['fileLen'] = $fileLen;
-			$catalog[$inFileID]['blocksLen'] = $blocksLen;
-			$catalog[$inFileID]['endPos'] = $reelWritten;
+            // Keeps track of working parameters
+            $progress = array(
+                'pid'		=> getmypid(),
+                'offline'	=> $this->offline,
+                'totalRead' 	=> 0,
+                'totalWritten'	=> 0,
+                'processedFiles'=> 0,
+                'fileRead'	=> 0,
+                'totalFiles'	=> count($this->archiver),
+                'thisFilePath'	=> '',
+                'thisFilePerc'	=> ''
+            );
 
-			// Close actual infile
-			fclose($inrsrc);
-			
-			// Increment number of processed files
-			$progress['processedFiles']++;
-		}
+            // Actual chunk output
+            $tempFile = fopen($tempFileName, 'wb');
+            if(!$tempFile) {
+                return FALSE;
+            }
 
-		// Close and upload current reel
-		fclose($tempFile);
-		$outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
-		
-		if($this->offline) {
-			$reelID = $tempDir . '/' . $outFileName;
-			rename($tempFileName, $reelID);
-		} else {
-			$reelID = $this->uploadArchive($vaultName, $tempFileName, $outFileName);
-		}
+            // Loop through files to be stored
+            foreach($this->archiver as $inFileID => $inFileData) {
+                $progress['thisFilePath'] = $inFileData['filePath'];
+                $progress['fileRead'] = 0;
 
-		// Assign reel ID to last processed files
-		foreach($inThisReel as $fileID) {
-			$catalog[$fileID]['reelID'][] = $reelID;
-		}
-		unset($inThisReel);
+                $inrsrc = fopen($inFileData['filePath'], 'rb');
+                $fileLen = 0;		// Length of compressed file in bytes
+                $blocksLen = 0;		// Lenght of compressed file in blocks
 
-		// Save current catalog
-		$this->lastCatalog = $catalog;
+                $catalog[$inFileID] = array(
+                    'filePos'	=> $reelWritten,	// The beginning of this file!
+                    'fileData'	=> $inFileData
+                );
 
-		// Save on glacier the full catalog
-		$catalog2upload = gzcompress(json_encode($catalog));
-		if($this->offline) {
-                    $catalogID = $tempDir . '/' . $archiveName . '.catalog';
-                    file_put_contents($catalogID, $catalog2upload);
-		} else {
-                    file_put_contents($tempFileName, $catalog2upload);
-                    $catalogID = $this->uploadArchive($vaultName, $tempFileName, $archiveName . '.catalog');
-		}
+                // Update file list on current reel
+                $inThisReel[] = $inFileID;
 
-		// Cleanup temp file
-		unlink($tempFileName);
-		
-		// Return operation's data
-		$summary = array(
-                    'reels'         => ($reelNo + 1),
-                    'files'         => $progress['processedFiles'],
-                    'totTime'       => time() - $timeBegin,
-                    'totalRead'     => $progress['totalRead'],
-                    'totalWritten'  => $progress['totalWritten']
-		);
-		
-		$result = array(
-                    'catalogID' => $catalogID,
-                    'summary'   => $summary,
-                    'catalog'   => $catalog
-		);
-		
-		if($this->offline) {
-                    $summaryID = $tempDir . '/' . $archiveName . '.summary';
-                    file_put_contents($summaryID, json_encode($result));
-		}
-		
-		return $result;
+                // Read file content and proceed for compression
+                while($buff = fread($inrsrc, $this->blockSize)) {
+                    $bufout = gzcompress($buff);
+                    $bufOutSize = strlen($bufout);
+
+                    $ctrlData = sprintf("reel=%d,block=%d,len=%d\n", $reelNo, $blockNo++, $bufOutSize);
+                    $newDataLen = $bufOutSize + strlen($ctrlData);
+
+                    // Here evaluate if continue to actual reel or open a new one
+                    // If a new reel has to be opened, put a %NEXTREEL mark
+                    if($reelWritten + $newDataLen >= $this->maxReelSize) {
+                        // Put next reel mark and close the file
+                        fwrite($tempFile, '%NEXTREEL');
+                        fclose($tempFile);
+
+                        // Upload last reel
+                        $outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
+                        if($this->offline) {
+                                $reelID = $tempDir . '/' . $outFileName;
+                                rename($tempFileName, $reelID);
+                        } else {
+                                $reelID = $this->uploadArchive($vaultName, $tempFileName, $outFileName);
+                        }
+
+                        // Assign reel ID to all file contained on last reel
+                        foreach($inThisReel as $fileID) {
+                                $catalog[$fileID]['reelID'][] = $reelID;
+                        }
+
+                        // Cleanup list of file on current reel - Leave just the current file ID
+                        unset($inThisReel);
+                        $inThisReel = array($inFileID);
+
+                        // Begin a new reel
+                        $tempFile = fopen($tempFileName, 'wb');
+                        if(!$tempFile) {
+                                return FALSE;
+                        }
+
+                        // Increment counters
+                        $reelNo++;
+
+                        // Reset position pointers
+                        $reelWritten = 0;
+                        $blockNo = 0;
+
+                        // New control data
+                        $ctrlData = sprintf("reel=%d,block=%d,len=%d\n", $reelNo, $blockNo, $bufOutSize);
+                    }
+
+                    fwrite($tempFile, $ctrlData);
+                    fwrite($tempFile, $bufout);
+
+                    // Increment read data counters
+                    $blockRead = strlen($buff);
+                    $progress['totalRead'] += $blockRead;
+                    $progress['fileRead'] += $blockRead;
+
+                    // Increment written data counters
+                    $fileLen += $newDataLen;
+                    $reelWritten = ftell($tempFile);
+                    $progress['totalWritten'] += $newDataLen;
+                    $blocksLen++;
+
+                    // output progress data if requested
+                    $progress['thisFilePerc'] = sprintf("%6.2f", ($progress['fileRead'] / $inFileData['fileSize']) * 100);
+                    if(!is_null($progressFile)) {
+                        file_put_contents($progressFile, json_encode($progress));
+                    }
+                }
+
+                // Store file data
+                $catalog[$inFileID]['fileLen'] = $fileLen;
+                $catalog[$inFileID]['blocksLen'] = $blocksLen;
+                $catalog[$inFileID]['endPos'] = $reelWritten;
+
+                // Close actual infile
+                fclose($inrsrc);
+
+                // Increment number of processed files
+                $progress['processedFiles']++;
+            }
+
+            // Close and upload current reel
+            fclose($tempFile);
+            $outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
+
+            if($this->offline) {
+                $reelID = $tempDir . '/' . $outFileName;
+                rename($tempFileName, $reelID);
+            } else {
+                $reelID = $this->uploadArchive($vaultName, $tempFileName, $outFileName);
+            }
+
+            // Assign reel ID to last processed files
+            foreach($inThisReel as $fileID) {
+                $catalog[$fileID]['reelID'][] = $reelID;
+            }
+            unset($inThisReel);
+
+            // Save current catalog
+            $this->lastCatalog = $catalog;
+
+            // Save on glacier the full catalog
+            $catalog2upload = gzcompress(json_encode($catalog));
+            if($this->offline) {
+                $catalogID = $tempDir . '/' . $archiveName . '.catalog';
+                file_put_contents($catalogID, $catalog2upload);
+            } else {
+                file_put_contents($tempFileName, $catalog2upload);
+                $catalogID = $this->uploadArchive($vaultName, $tempFileName, $archiveName . '.catalog');
+            }
+
+            // Cleanup temp file
+            unlink($tempFileName);
+
+            // Return operation's data
+            $summary = array(
+                'reels'         => ($reelNo + 1),
+                'files'         => $progress['processedFiles'],
+                'totTime'       => time() - $timeBegin,
+                'totalRead'     => $progress['totalRead'],
+                'totalWritten'  => $progress['totalWritten']
+            );
+
+            $result = array(
+                'catalogID' => $catalogID,
+                'summary'   => $summary,
+                'catalog'   => $catalog
+            );
+
+            if($this->offline) {
+                $summaryID = $tempDir . '/' . $archiveName . '.summary';
+                file_put_contents($summaryID, json_encode($result));
+            }
+
+            return $result;
 	}
 	
 	/**

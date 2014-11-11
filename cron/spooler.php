@@ -67,30 +67,76 @@ class spooler {
     }
 
     public static function runJob(\OCA\aletsch\spoolerHandler $spooler, $jobData) {
-        $command = sprintf("startjob %s", $jobData['jobid']);
+        $credentials = new \OCA\aletsch\credentialsHandler($jobData['ocusername']);
+        
+        $jobFiles = json_decode($jobData['jobdata'], TRUE);
+        
+        $parameters = array();
+        $parameters['username'] = $credentials->getUsername();
+        $parameters['password'] = $credentials->getPassword();
+        $parameters['vaultarn'] = $jobData['vaultarn'];
+        $parameters['jobtype'] = $jobData['jobtype'];
+        $parameters['localPath'] = $jobFiles['localPath'];
+        $parameters['statusPath'] = $jobFiles['statusPath'];
+        
+        $commandLineArgs = implode(' ', $parameters);
+        
+        $command = "php -f " . __DIR__ . sprintf("/startjob.php %s", $commandLineArgs);
         $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $command));
-
+        
         $spooler->setJobStatus($jobData['jobid'], 'running');
-        $spooler->setJobDiagnostic($jobData['jobid'], 'Started at ' . date('c'));
+        $spooler->setJobDiagnostic($jobData['jobid'], 'Started');
         $spooler->setJobPID($jobData['jobid'], $pid);
+        $spooler->setJobStartDate($jobData['jobid'], date('c'));
 
         \OCP\Util::writeLog('aletsch', 'Job ' . $jobData['jobid'] . ' started at ' . date('c') . ' - PID:' . $pid, 0);
     }
     
     public static function refreshJobStatus(\OCA\aletsch\spoolerHandler $spooler) {
         $runningJob = $spooler->getRunningJob();
-        $pid = $spooler->getJobPID($runningJob['jobid']);
+        $filePaths = json_decode($runningJob['jobdata'], TRUE);
         
-        if(file_exists('/proc/' . $pid)){
-            $spooler->setJobDiagnostic($runningJob['jobid'], 'Last refresh at ' . date('c'));
+        if(file_exists($filePaths['statusPath'])) {
+            $status = file_get_contents($filePaths['statusPath']);
+            $progress = json_decode($status, TRUE);
+
+            $spooler->setJobStatus($runningJob['jobid'], $progress['status']);
+            $spooler->setJobDiagnostic($runningJob['jobid'], date('c') . ' - ' . $progress['extStatus']);
+
+            switch($progress['status']) {
+                case 'running': {
+                    break;
+                }
+                
+                case 'abort':
+                case 'completed': {
+                    // Close old job
+                    $spooler->setJobPID($runningJob['jobid'], 0);
+                    
+                    // Remove status file
+                    unlink($filePaths['statusPath']);
+
+                    // Check for next operation
+                    \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+
+                    break;
+                }
+            }
         } else {
-            // Close old job
-            $spooler->setJobStatus($runningJob['jobid'], 'completed');
-            $spooler->setJobPID($runningJob['jobid'], 0);
-            $spooler->setJobDiagnostic($runningJob['jobid'], 'Job ended at ' . date('c'));
-            
-            // Check for next operation
-            \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+            $pid = $spooler->getJobPID($runningJob['jobid']);
+
+            if(file_exists('/proc/' . $pid)){
+                $spooler->setJobStatus($runningJob['jobid'], 'running');
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Last refresh at ' . date('c'));
+            } else {
+                // Close old job
+                $spooler->setJobStatus($runningJob['jobid'], 'completed');
+                $spooler->setJobPID($runningJob['jobid'], 0);
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Job ended at ' . date('c'));
+
+                // Check for next operation
+                \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+            }
         }
     }
 }
