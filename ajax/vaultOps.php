@@ -225,7 +225,7 @@ switch($op) {
     case 'getInventoryResult': {
         $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
 
-        // If vault is not set, forfait
+        // If jobid is not set, forfait
         if(!isset($jobID)) {
             $result['opResult'] = 'KO';
             $result['errData']['exCode'] = 'AletschParamError';
@@ -235,7 +235,7 @@ switch($op) {
         }        
         
         try {
-            $tmpFilePath = tempnam(sys_get_temp_dir(), uniqid("aletsch_"));
+            $tmpFilePath = tempnam(sys_get_temp_dir(), uniqid('/aletsch_'));
             $inventoryData = $glacier->getInventoryResult($vaultName, $jobID, $tmpFilePath);
         }
         catch (Aws\Glacier\Exception\GlacierException $ex) {
@@ -283,6 +283,33 @@ switch($op) {
 
         die(json_encode($result));
 
+        break;
+    }
+    
+    // Retrieve archives
+    case 'retrieveArchives': {
+        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+
+        try {
+            foreach($archives as $archiveID) {
+                $retrieveOpRes = $glacier->retrieveArchive($vaultName, $archiveID);
+            }
+        }
+        catch(Aws\Glacier\Exception\GlacierException $ex) {
+            $result['opResult'] = 'KO';
+            $result['errData']['exCode'] = $ex->getExceptionCode();
+            $result['errData']['exMessage'] = $ex->getMessage();
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+    
+            die(json_encode($result));
+        }
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $retrieveOpRes;
+
+        die(json_encode($result));
+        
         break;
     }
     

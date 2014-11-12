@@ -112,7 +112,7 @@ $('document').ready(function() {
                 }
             });            
         });
-
+        
     $("#tabJobList").on("click", ".getInventory", function() {
         var actVault = $("#aletsch_tabs").attr("data-actualarn");
         var jobID = $(this).data('jobid');
@@ -145,6 +145,37 @@ $('document').ready(function() {
                 updateStatusBar(t('aletsch', 'Inventory not get! Ajax error!'));
             }
         });            
+    });
+
+    $("#tabJobList").on("click", ".getArchive", function() {
+        var actVault = $("#aletsch_tabs").attr("data-actualarn");
+        var jobID = $(this).data('jobid');
+
+        $.ajax({
+            url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+            data: {
+                op: 'addDownloadOp',
+                vault: actVault,
+                glacierJobID: jobID,
+                dstFileName: ''
+            },
+
+            type: "POST",
+
+            success: function(result) {
+                var resultData = jQuery.parseJSON(result);
+
+                if(resultData.opResult === 'OK') {
+                    updateStatusBar(t('aletsch', 'Download queued!'));
+                } else {
+                    updateStatusBar(t('aletsch', 'Download not queued!'));
+                }
+            },
+            error: function( xhr, status ) {
+                updateStatusBar(t('aletsch', 'Download not queued! Ajax error'));
+            }
+        });
     });
     
     $("#aletsch_archives").on("click", "#aletsch_selectAllArchives", function(eventData) {
@@ -239,6 +270,40 @@ $('document').ready(function() {
             }
         }
     });
+    
+    $("#btnDownloadArchive")
+    .button()
+    .click(function() {
+        $(".archiveSelection").each(function() {
+            if($(this).prop("checked")) {
+                selectedArchives[selectedArchives.length] = $(this).data('archiveid');
+            }
+        });
+
+        if(selectedArchives.length > 0) {
+            downloadArchivesDlog.dialog("open");
+        }
+    });
+
+    var downloadArchivesDlog = $("#aletsch_downloadArchivesDlog").dialog({
+        autoOpen: false,
+        resizable: false,
+        height: 150,
+        width: 350,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                var actVaultARN = $("#aletsch_tabs").attr("data-actualarn");
+                retrieveArchives(actVaultARN, selectedArchives);
+                $(this).dialog("close");
+            },
+            Cancel: function() {
+                $(this).dialog("close");
+            }
+        }
+    });
+    
+
     
     $("#spoolerContent").on("click", "#aletsch_selectAllSpoolJobs", function(eventData) {
         var selected = eventData.target.checked;
@@ -372,6 +437,10 @@ $('document').ready(function() {
         });    
 });
 
+setInterval(function() {
+    refreshSpoolList();
+}, 60000);
+
 function getSelectedJobs() {
     var selectedJobs = [];
 
@@ -487,6 +556,33 @@ function removeArchives(vaultARN, archivesID) {
         },
         error: function( xhr, status ) {
             updateStatusBar(t('aletsch', 'Unable to delete archives! Ajax error!'));
+        }
+    });
+}
+
+function retrieveArchives(vaultARN, archivesID) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'retrieveArchives',
+            vault: vaultARN,
+            archives: JSON.stringify(archivesID)
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Archives retrieving queued!'));
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to queue archives retrieval!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to queue archives retrieval! Ajax error!'));
         }
     });
 }

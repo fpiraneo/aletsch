@@ -92,3 +92,8 @@ $l = new \OC_L10N('aletsch');
 <div id="aletsch_deleteArchivesDlog" title="<?php p($l->t('Delete archives')) ?>">
     <p><?php p($l->t('The selected archives will be removed; are you sure?')) ?></p>
 </div>
+
+<!-- Download selected archives -->
+<div id="aletsch_downloadArchivesDlog" title="<?php p($l->t('Download archives')) ?>">
+    <p><?php p($l->t('The selected archives will be queued for retriveal and download; are you sure?')) ?></p>
+</div>

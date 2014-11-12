@@ -24,7 +24,7 @@ class aletsch {
     private $archiver;
     private $lastCatalog;
 
-    private $offline = TRUE;
+    private $offline = FALSE;
 
     /**
      * Class constructor
@@ -40,75 +40,75 @@ class aletsch {
         $this->blockSize = $this->megaByte * 4;
         $this->uploadPartSize = 4 * $this->megaByte;
     }
-	
-	/**
-	 * Set the reel maximum size
-	 * Provide Mb or Gb as measure unit
-	 * Minimum allowed 4Mb, maximum allowed: 4Gb
-	 */
-	function setReelSize($reelSize) {
-            $minAccept = $this->megaByte * 4;			// 4Mb
-            $maxAccept = ($this->megaByte * 1024) * 4;	// 4Gb
 
-            $ucReelSize = trim(strtoupper($reelSize));
-            $umMB = strpos($ucReelSize, 'MB');
-            $umGB = strpos($ucReelSize, 'GB');
+    /**
+     * Set the reel maximum size
+     * Provide Mb or Gb as measure unit
+     * Minimum allowed 4Mb, maximum allowed: 4Gb
+     */
+    function setReelSize($reelSize) {
+        $minAccept = $this->megaByte * 4;		// 4Mb
+        $maxAccept = ($this->megaByte * 1024) * 4;	// 4Gb
 
-            // Accepts only megabyte or gigabyte
-            if(!$umMB && !$umGB) {
-                return false;
-            }
+        $ucReelSize = trim(strtoupper($reelSize));
+        $umMB = strpos($ucReelSize, 'MB');
+        $umGB = strpos($ucReelSize, 'GB');
 
-            // Sets measure unit
-            $value = trim(substr($ucReelSize, 0, strlen($ucReelSize) - 2));
+        // Accepts only megabyte or gigabyte
+        if(!$umMB && !$umGB) {
+            return false;
+        }
 
-            if($umMB) {
-                $multiplier = $this->megaByte;
-            } else if($umGB) {
-                $multiplier = $this->megaByte * 1024;
-            } else {
-                $multiplier = 0;
-            }
+        // Sets measure unit
+        $value = trim(substr($ucReelSize, 0, strlen($ucReelSize) - 2));
 
-            $setValue = $multiplier * $value;
+        if($umMB) {
+            $multiplier = $this->megaByte;
+        } else if($umGB) {
+            $multiplier = $this->megaByte * 1024;
+        } else {
+            $multiplier = 0;
+        }
 
-            if($setValue >= $minAccept && $setValue <= $maxAccept) {
-                $this->maxReelSize = $setValue;
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-	}
-	
-	/**
-	 * Get the reel maximum size
-	 * Results in bytes - Always
-	 */
-	function getReelSize() {
-            return $this->maxReelSize;
-	}
-	
-	/**
-	 * Set catalog from json
-	 */
-	function setCatalogFromJson($catalog) {
-            $this->lastCatalog = json_decode($catalog, TRUE);
-	}
-	
-	/**
-	 * Get catalog entries number
-	 */
-	function getCatalogEntries() {
-            return count($this->lastCatalog);
-	}
-	
-	/**
-	 * Get catalog item
-	 */
-	function getCatalogItem($itemNum) {
-            $keys = array_keys($this->lastCatalog);
-            return $this->lastCatalog[$keys[$itemNum]];
-	}
+        $setValue = $multiplier * $value;
+
+        if($setValue >= $minAccept && $setValue <= $maxAccept) {
+            $this->maxReelSize = $setValue;
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+
+    /**
+     * Get the reel maximum size
+     * Results in bytes - Always
+     */
+    function getReelSize() {
+        return $this->maxReelSize;
+    }
+
+    /**
+     * Set catalog from json
+     */
+    function setCatalogFromJson($catalog) {
+        $this->lastCatalog = json_decode($catalog, TRUE);
+    }
+
+    /**
+     * Get catalog entries number
+     */
+    function getCatalogEntries() {
+        return count($this->lastCatalog);
+    }
+
+    /**
+     * Get catalog item
+     */
+    function getCatalogItem($itemNum) {
+        $keys = array_keys($this->lastCatalog);
+        return $this->lastCatalog[$keys[$itemNum]];
+    }
 
     /**
      * Get all possible servers locations
@@ -169,7 +169,6 @@ class aletsch {
         }
     }
 
-
     /**
      * Get all files ID of the indicated user
      * NOTE: TO BE PATCHED FOR OC7!!!
@@ -225,35 +224,35 @@ class aletsch {
         return $result;
     }
 	
-	/**
-	 * Get all files starting from indicated directory
-	 */
-	public static function getFSFileList($path = '/', $includeHidden = FALSE) {
-            if(substr($path, -1, 1) == '/' && strlen($path) > 1) {
-                $path = substr($path, 0, strlen($path) - 1);
-            }
+    /**
+     * Get all files starting from indicated directory
+     */
+    public static function getFSFileList($path = '/', $includeHidden = FALSE) {
+        if(substr($path, -1, 1) == '/' && strlen($path) > 1) {
+            $path = substr($path, 0, strlen($path) - 1);
+        }
 
-            $result = array();
+        $result = array();
 
-            $currentDir = dir($path);
+        $currentDir = dir($path);
 
-            while($entry = $currentDir->read()) {
-                if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
-                    $workPath = $path . '/' . $entry;
+        while($entry = $currentDir->read()) {
+            if($entry != '.' && $entry!= '..' && ($includeHidden || substr($entry, 0, 1) != '.')) {
+                $workPath = $path . '/' . $entry;
 
-                    if(is_dir($workPath)) {
-                        $result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
-                    } else {
-                        $result[] = $workPath;
-                    }
+                if(is_dir($workPath)) {
+                    $result = array_merge($result, \OCA\aletsch\aletsch::getFSFileList($workPath));
+                } else {
+                    $result[] = $workPath;
                 }
             }
+        }
 
-            $currentDir->close();
+        $currentDir->close();
 
-            return $result;
-	}
-	
+        return $result;
+    }
+
     /**
      * Get the vaults list
      */
@@ -268,21 +267,60 @@ class aletsch {
 
         return $vaultList;
     }
-	
-	/**
-	 * Begin getting of the inventory of the indicated vault
-	 */
-	function getInventory($vaultName) {
-		$answer = $this->glacierClient->initiateJob(array(
-			'accountId' => '-',
-			'vaultName' => $vaultName,
-			'Format'    => 'JSON',
-			'Type' => 'inventory-retrieval'
-		));
 
-		$data = $answer->getAll();
-		return $data;
-	}
+    /**
+     * Begin getting of the inventory of the indicated vault
+     */
+    function getInventory($vaultName) {
+        $answer = $this->glacierClient->initiateJob(array(
+            'accountId' => '-',
+            'vaultName' => $vaultName,
+            'Format'    => 'JSON',
+            'Type' => 'inventory-retrieval',
+            'Description' => 'Retrieve inventory'
+        ));
+
+        $data = $answer->getAll();
+        return $data;
+    }
+    
+    /**
+     * Start an archive retrieval job
+     * $retrBegin and $retrEnd are optional: if not set the whole archive will be
+     * retrieved; if not null these data will be automatically megabyte aligned.
+     * @param String $vaultName Name of the vault to retrieve the archive from
+     * @param String $archiveID The ID of the archive to retrieve
+     * @param Integer $retrBegin Start byte to retrieve the archive from
+     * @param Integer $retrEnd End byte to retrieve the archive to
+     * @return Array Job queuing result
+     */
+    function retrieveArchive($vaultName, $archiveID, $retrBegin=NULL, $retrEnd=NULL) {        
+        $retrivealParameters = array(
+            'accountId' => '-',
+            'vaultName' => $vaultName,
+            'Format' => 'JSON',
+            'Type' => 'archive-retrieval',
+            'ArchiveId' => $archiveID,
+            'Description' => 'Retrieve archive'
+        );
+
+        if(!is_null($retrBegin) && !is_null($retrEnd)) {
+            // Compute range to be retrieved - megabyte aligned
+            $archiveBegin = $retrBegin - ($retrBegin % $this->megaByte);
+
+            $remainder = ($retrEnd + 1) % $this->megaByte;
+            $endOffset = ($remainder == 0) ? 0 : ($this->megaByte - $remainder);
+            $archiveEnd = $retrEnd + $endOffset + 1;
+
+            $retrivealParameters['RetrievalByteRange'] = sprintf("%d-%d", $archiveBegin, $archiveEnd);
+        }
+
+        $result = $this->glacierClient->initiateJob($retrivealParameters);
+
+        $data = $result->getAll();
+        
+        return $data;
+    }
 	
     /**
      * Get the list of all the jobs for the indicated vault
@@ -294,7 +332,7 @@ class aletsch {
         ));
 
         $data = $answer->getAll();
-        return $data['JobList'];	
+        return $data['JobList'];
     }
 	
     /**
@@ -310,257 +348,308 @@ class aletsch {
         $data = $answer->getAll();
         return $data;	
     }
-	
-	/**
-	 * Get the job's results and store on the indicated path
-	 */
-	function getJobData($vaultName, $jobID, $destFilePath) {
-        $answer = $this->glacierClient->getJobOutput(array(
-            'accountId' => '-',
-            'vaultName' => $vaultName,
-            'jobId' => $jobID,
-            'saveAs' => $destFilePath
-        ));
+    
+    /**
+     * Get the job's results and store on the indicated path
+     * @param String $vaultName Vault name to retrieve the data from
+     * @param String $jobID Job ID of the data retrieve job
+     * @param String $destFilePath Destination path to put the contents
+     * @param String $progressFile Path for status file
+     * @return Array Operation's result
+     */
+    function getJobData($vaultName, $jobID, $destFilePath, $progressFile) {
+        $progress = array(
+            'pid'		=> getmypid(),
+            'offline'   	=> $this->offline,
+            'totalRead' 	=> 0,
+            'totalWritten'	=> 0,
+            'processedFiles'    => 0,
+            'fileRead'          => 0,
+            'totalFiles'	=> 1,
+            'thisFilePath'	=> '',
+            'thisFilePerc'	=> '',
+            'status'            => '',
+            'extStatus'         => ''
+        );
 
+        try {
+            $answer = $this->glacierClient->getJobOutput(array(
+                'accountId' => '-',
+                'vaultName' => $vaultName,
+                'jobId' => $jobID,
+                'saveAs' => $destFilePath
+            ));
+        }
+        catch (Aws\Glacier\Exception\GlacierException $ex) {
+            $progress['status'] = 'error';
+            $progress['extStatus'] = $ex->getExceptionCode() . ' - ' . $ex->getMessage();
+
+            file_put_contents($progressFile, json_encode($progress));
+            
+            return FALSE;
+        }
+
+        $progress['status'] = 'completed';
+        file_put_contents($progressFile, json_encode($progress));
+        
         $data = $answer->getAll();
 
         return $data;
-	}
-	
-	/**
-	 * Get the result of an inventory
-	 */
-	function getInventoryResult($vaultName, $jobID, $tmpFilePath) {
-            $this->getJobData($vaultName, $jobID, $tmpFilePath);
+    }
 
-            // Read JSON data
-            $inventoryJSON = file_get_contents($tmpFilePath);
-            $inventory = json_decode($inventoryJSON);
-            unlink($tmpFilePath);
+    /**
+     * Get the result of an inventory
+     */
+    function getInventoryResult($vaultName, $jobID, $tmpFilePath) {
+        $this->getJobData($vaultName, $jobID, $tmpFilePath);
 
-            return $inventory;
-	}
-	
-	/**
-	 * Create a new vault
-	 */
-	function createVault($vaultName) {
-            $answer = $this->glacierClient->createVault(array(
-                'accountId' => '-',
-                'vaultName' => $vaultName
-            ));
+        // Read JSON data
+        $inventoryJSON = file_get_contents($tmpFilePath);
+        $inventory = json_decode($inventoryJSON);
+        unlink($tmpFilePath);
 
-            $result = $answer->getAll();
+        return $inventory;
+    }
 
-            return $result['location'];
-	}
-	
-	/**
-	 * Delete a vault
-	 */
-	function deleteVault($vaultName) {
-            $answer = $this->glacierClient->deleteVault(array(
-                'accountId' => '-',
-                'vaultName' => $vaultName
-            ));
-		
-            $result = $answer->getAll();
+    /**
+     * Create a new vault
+     */
+    function createVault($vaultName) {
+        $answer = $this->glacierClient->createVault(array(
+            'accountId' => '-',
+            'vaultName' => $vaultName
+        ));
 
-            return $result;
-	}
-	
-	/**
-	 * Delete an archive
-	 */
-	function deleteArchive($vaultName, $archiveID) {
-            $answer = $this->glacierClient->deleteArchive(array(
-                'accountId' => '-',
-                'vaultName' => $vaultName,
-                'archiveId' => $archiveID
-            ));
+        $result = $answer->getAll();
 
-            return $answer->getAll();
-	}
+        return $result['location'];
+    }
 
-	/**
-	 * Check for SHA-256 algorithm registered
-	 * Return TRUE if present, an array with registered algorithm otherwise
-	 */
-	function checkAlgos() {
-            $algos = hash_algos();
-            if(array_search('sha256', $algos) === FALSE) {
-                return $algos;
-            } else {
-                return TRUE;
+    /**
+     * Delete a vault
+     */
+    function deleteVault($vaultName) {
+        $answer = $this->glacierClient->deleteVault(array(
+            'accountId' => '-',
+            'vaultName' => $vaultName
+        ));
+
+        $result = $answer->getAll();
+
+        return $result;
+    }
+
+    /**
+     * Delete an archive
+     */
+    function deleteArchive($vaultName, $archiveID) {
+        $answer = $this->glacierClient->deleteArchive(array(
+            'accountId' => '-',
+            'vaultName' => $vaultName,
+            'archiveId' => $archiveID
+        ));
+
+        return $answer->getAll();
+    }
+
+    /**
+     * Check for SHA-256 algorithm registered
+     * Return TRUE if present, an array with registered algorithm otherwise
+     */
+    function checkAlgos() {
+        $algos = hash_algos();
+        if(array_search('sha256', $algos) === FALSE) {
+            return $algos;
+        } else {
+            return TRUE;
+        }
+    }
+
+    /**
+     * Upload an archive - choose the best method based on size
+     * Less than 100Mb will be single request, multiple request otherwise
+     * @param String $vaultName Name of the vault to upload the archive into
+     * @param String $filePath Path of the file to upload
+     * @param String $description Description of the archive - If NULL the filename will be assigned
+     * @param String $progressFile Path of the progress file to write
+     */
+    function uploadArchive($vaultName, $filePath, $description = NULL, $progressFile = NULL) {
+        // Get archive description if passed is null
+        if(is_null($description)) {
+            $pathParts = pathinfo($filePath);
+            $description = $pathParts['basename'];
+        }
+
+        // Initialize status array
+        $progress = array(
+            'pid'		=> getmypid(),
+            'offline'	=> $this->offline,
+            'totalRead' 	=> 0,
+            'totalWritten'	=> 0,
+            'processedFiles'=> 0,
+            'fileRead'	=> 0,
+            'totalFiles'	=> 1,
+            'thisFilePath'	=> '',
+            'thisFilePerc'	=> '',
+            'status'        => '',
+            'extStatus'     => ''
+        );
+
+        // Get file size; if FALSE the file is not accessible, forfait
+        $size = filesize($filePath);
+
+        if($size === FALSE) {
+            // Record on progress file
+            if(!is_null($progressFile)) {
+                $progress['status'] = 'abort';
+                $progress['extStatus'] = 'Unable to read file';
+                file_put_contents($progressFile, json_encode($progress));
             }
-	}
-	
-	/**
-	 * Upload an archive - choose the best method based on size
-	 * Less than 100Mb will be single request, multiple request otherwise
-	 * $vaultName - Name of the vault to upload the archive into
-	 * $filePath - Path of the file to upload
-	 */
-	function uploadArchive($vaultName, $filePath, $description = NULL, $progressFile = NULL) {
-            // Get archive description if passed is null
-            if(is_null($description)) {
-                $pathParts = pathinfo($filePath);
-                $description = $pathParts['basename'];
+
+            return FALSE;
+        }
+
+        // Choose the right upload way and run for it
+        if($size < (10 * $this->megaByte)) {
+            // Record on progress file
+            if(!is_null($progressFile)) {
+                $progress['status'] = 'running';
+                $progress['extStatus'] = 'Uploading single file ' . \OCA\aletsch\utilities::formatBytes($size);
+                file_put_contents($progressFile, json_encode($progress));
             }
 
-            // Initialize status array
-            $progress = array(
-                'pid'		=> getmypid(),
-                'offline'	=> $this->offline,
-                'totalRead' 	=> 0,
-                'totalWritten'	=> 0,
-                'processedFiles'=> 0,
-                'fileRead'	=> 0,
-                'totalFiles'	=> 1,
-                'thisFilePath'	=> '',
-                'thisFilePerc'	=> '',
-                'status'        => '',
-                'extStatus'     => ''
-            );
-            
-            // Get file size; if FALSE the file is not accessible, forfait
-            $size = filesize($filePath);
+            // Do upload
+            try {
+                $archiveID = $this->uploadArchiveSingle($vaultName, $filePath, $description);
+            }
+            catch (Aws\Glacier\Exception\GlacierException $ex) {
+                $progress['status'] = 'error';
+                $progress['extStatus'] = $ex->getExceptionCode() . ' - ' . $ex->getMessage();
 
-            if($size === FALSE) {
-                // Record on progress file
-                if(!is_null($progressFile)) {
-                    $progress['status'] = 'abort';
-                    $progress['extStatus'] = 'Unable to read file';
-                    file_put_contents($progressFile, json_encode($progress));
-                }
-                
+                file_put_contents($progressFile, json_encode($progress));
+
+                return FALSE;
+            }
+        } else {
+            // Record on progress file
+            if(!is_null($progressFile)) {
+                $progress['status'] = 'running';
+                $progress['extStatus'] = 'Uploading multipart ' . \OCA\aletsch\utilities::formatBytes($size);
+                file_put_contents($progressFile, json_encode($progress));
+            }
+
+            // Do upload
+            try {
+                $archiveID = $this->uploadArchiveMultipart($vaultName, $filePath, $description);
+            }
+            catch (Aws\Glacier\Exception\GlacierException $ex) {
+                $progress['status'] = 'error';
+                $progress['extStatus'] = $ex->getExceptionCode() . ' - ' . $ex->getMessage();
+
+                file_put_contents($progressFile, json_encode($progress));
+
+                return FALSE;
+            }
+        }
+
+        // Record on progress file
+        if(!is_null($progressFile)) {
+            $progress['processedFiles'] = 1;
+            $progress['status'] = 'completed';
+            $progress['extStatus'] = $archiveID;
+            file_put_contents($progressFile, json_encode($progress));
+        }
+        return $archiveID;
+    }
+
+    /**
+     * Upload an archive with a single request
+     * $vaultName - Name of the vault to upload the archive into
+     * $filePath - Path of the file to upload
+     */
+    function uploadArchiveSingle($vaultName, $filePath, $description) {
+        if($this->offline) {
+            $archiveID = uniqid('OFFLINE_');
+        } else {
+            $archiveData = fopen($filePath, 'rb');
+
+            if($archiveData === FALSE) {
                 return FALSE;
             }
 
-            // Choose the right upload way and run for it
-            if($size < (10 * $this->megaByte)) {
-                // Record on progress file
-                if(!is_null($progressFile)) {
-                    $progress['status'] = 'running';
-                    $progress['extStatus'] = 'Uploading with uploadArchiveSingle';
-                    file_put_contents($progressFile, json_encode($progress));
-                }
+            $result = $this->glacierClient->uploadArchive(array(
+                'vaultName' => $vaultName,
+                'archiveDescription' => $description,
+                'body' => $archiveData
+            ));
 
-                // Do upload
-                $archiveID = $this->uploadArchiveSingle($vaultName, $filePath, $description);
-            } else {
-                // Record on progress file
-                if(!is_null($progressFile)) {
-                    $progress['status'] = 'running';
-                    $progress['extStatus'] = 'Uploading with uploadArchiveMultipart';
-                    file_put_contents($progressFile, json_encode($progress));
-                }
+            $archiveID = $result->get('archiveId');
+        }
 
-                // Do upload
-                $archiveID = $this->uploadArchiveMultipart($vaultName, $filePath, $description);
-            }
-            
-            // Five minutes relax!
-            sleep(300);
-            
-            // Record on progress file
-            if(!is_null($progressFile)) {
-                $progress['processedFiles'] = 1;
-                $progress['status'] = 'completed';
-                $progress['extStatus'] = $archiveID;
-                file_put_contents($progressFile, json_encode($progress));
-            }
-            return $archiveID;
-	}
-	
-	/**
-	 * Upload an archive with a single request
-	 * $vaultName - Name of the vault to upload the archive into
-	 * $filePath - Path of the file to upload
-	 */
-	function uploadArchiveSingle($vaultName, $filePath, $description) {
-            if($this->offline) {
-                $archiveID = uniqid('OFFLINE_');
-            } else {
-                $archiveData = fopen($filePath, 'rb');
+        return $archiveID;
+    }
 
-                if($archiveData === FALSE) {
-                    return FALSE;
-                }
+    /**
+     * Upload an archive with a multiple request
+     * $vaultName - Name of the vault to upload the archive into
+     * $filePath - Path of the file to upload
+     */
+    function uploadArchiveMultipart($vaultName, $filePath, $description) {
+        if($this->offline) {
+            $archiveID = uniqid('OFFLINE_');
+        } else {
+            $archiveRSRC = fopen($filePath, 'rb');
+            $multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
 
-                $result = $this->glacierClient->uploadArchive(array(
-                    'vaultName' => $vaultName,
-                    'archiveDescription' => $description,
-                    'body' => $archiveData
+            // Initiate multipart upload
+            $result = $this->glacierClient->initiateMultipartUpload(array(
+                'vaultName' => $vaultName,
+                'archiveDescription' => $description,
+                'partSize'  => $this->uploadPartSize,
+            ));
+
+            $multipartUploadId = $result->get('uploadId');
+
+            // Upload each part individually using data from the part generator
+            $archiveData = fopen($filePath, 'rb');
+            foreach ($multiParts as $part) {
+                fseek($archiveData, $part->getOffset());
+
+                $this->glacierClient->uploadMultipartPart(array(
+                    'vaultName'     => $vaultName,
+                    'uploadId'      => $multipartUploadId,
+                    'body'          => fread($archiveData, $part->getSize()),
+                    'range'         => $part->getFormattedRange(),
+                    'checksum'      => $part->getChecksum(),
+                    'ContentSHA256' => $part->getContentHash()
                 ));
-
-                $archiveID = $result->get('archiveId');
             }
+            fclose($archiveData);
 
-            return $archiveID;
-	}
-	
-	/**
-	 * Upload an archive with a multiple request
-	 * $vaultName - Name of the vault to upload the archive into
-	 * $filePath - Path of the file to upload
-	 */
-	function uploadArchiveMultipart($vaultName, $filePath, $description) {
-            if($this->offline) {
-                $archiveID = uniqid('OFFLINE_');
-            } else {
-                $archiveRSRC = fopen($filePath, 'rb');
-                $multiParts = UploadPartGenerator::factory($archiveRSRC, $this->uploadPartSize);
+            // Complete the upload
+            $result = $this->glacierClient->completeMultipartUpload(array(
+                'vaultName'   => $vaultName,
+                'uploadId'    => $multipartUploadId,
+                'archiveSize' => $multiParts->getArchiveSize(),
+                'checksum'    => $multiParts->getRootChecksum()
+            ));
 
-                // Initiate multipart upload
-                $result = $this->glacierClient->initiateMultipartUpload(array(
-                    'vaultName' => $vaultName,
-                    'archiveDescription' => $description,
-                    'partSize'  => $this->uploadPartSize,
-                ));
+            unset($multipartUploadId);
+            unset($multiParts);
 
-                $multipartUploadId = $result->get('uploadId');
+            $archiveID = $result->get('archiveId');
+        }
 
-                // Upload each part individually using data from the part generator
-                $archiveData = fopen($filePath, 'rb');
-                foreach ($multiParts as $part) {
-                    fseek($archiveData, $part->getOffset());
+        return $archiveID;
+    }
 
-                    $this->glacierClient->uploadMultipartPart(array(
-                        'vaultName'     => $vaultName,
-                        'uploadId'      => $multipartUploadId,
-                        'body'          => fread($archiveData, $part->getSize()),
-                        'range'         => $multiParts->getFormattedRange(),
-                        'checksum'      => $multiParts->getChecksum(),
-                        'ContentSHA256' => $multiParts->getContentHash()
-                    ));
-                }
-                fclose($archiveData);
-
-                // Complete the upload
-                $result = $this->glacierClient->completeMultipartUpload(array(
-                    'vaultName'   => $vaultName,
-                    'uploadId'    => $multipartUploadId,
-                    'archiveSize' => $multiParts->getArchiveSize(),
-                    'checksum'    => $multiParts->getRootChecksum()
-                ));
-
-                unset($multipartUploadId);
-                unset($multiParts);
-
-                $archiveID = $result->get('archiveId');
-            }
-            
-            return $archiveID;
-	}
-		
-	/**
-	 * Cleanup and init the archiver
-	 */
-	function cleanupArchiver() {
-            $this->archiver = array();
-            unset($this->archiver);
-	}
+    /**
+     * Cleanup and init the archiver
+     */
+    function cleanupArchiver() {
+        $this->archiver = array();
+        unset($this->archiver);
+    }
 	
 	/**
 	 * Get file's id from it's path
@@ -636,7 +725,7 @@ class aletsch {
 
             // Begin operations
             $tempDir = sys_get_temp_dir();
-            $tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
+            $tempFileName = $tempDir . uniqid('/aletsch_tmp_');
             $catalog = array();
             $inThisReel = array();
             $reelNo = 0;
@@ -911,7 +1000,7 @@ class aletsch {
                 if($this->offline) {
                     // Prepare some "chunk file" that conform to what glacier will return
                     $tempDir = sys_get_temp_dir();
-                    $chunkFileName = $tempDir . '/aletsch_chunk_' . uniqid();
+                    $chunkFileName = $tempDir . uniqid('/aletsch_chunk_');
 
                     $retrJobID[] =
                         array(
@@ -982,7 +1071,7 @@ class aletsch {
                 $tempFileName = $jobID;
             } else {
                 $tempDir = sys_get_temp_dir();
-                $tempFileName = $tempDir . '/aletsch_tmp_' . uniqid();
+                $tempFileName = $tempDir . uniqid('/aletsch_tmp_');
 
                 $result = $this->glacierClient->getJobOutput(array(
                     'accountId' => '-',
@@ -1036,13 +1125,13 @@ class aletsch {
 
             // Start file processing
             $tempDir = sys_get_temp_dir();
-            $retrieveFileName = $tempDir . '/aletsch_retrieve_' . uniqid();
+            $retrieveFileName = $tempDir . uniqid('/aletsch_retrieve_');
             $destRsrc = fopen($retrieveFileName, 'wb');
 
             $nbOfReels = count($retrieveData['jobIDs']);
 		
             for($index = 0; $index < $nbOfReels; $index++) {
-                $partRetrieveFileName = $tempDir . '/aletsch_part_' . uniqid();
+                $partRetrieveFileName = $tempDir . uniqid('/aletsch_part_');
                 $retrieveJobID = $retrieveData['jobIDs'][$index]['ArchiveId'];
 
                 if($this->offline) {
@@ -1176,13 +1265,13 @@ class aletsch {
 		
 		// Send job complete status
 		$progress = array(
-			'pid'				=> getmypid(),
-			'offline'			=> $this->offline,
+			'pid'			=> getmypid(),
+			'offline'		=> $this->offline,
 			'totalBlocks'		=> $retrieveData['fileInfo']['blocksLen'],
 			'thisFilePath'		=> $outPath,
-			'step'				=> 'DONE',
-			'descr1'			=> '',
-			'descr2'			=> '',
+			'step'			=> 'DONE',
+			'descr1'		=> '',
+			'descr2'		=> '',
 			'totalRead' 		=> 0,
 			'totalWritten'		=> 0,
 			'blocksProcessed'	=> 0,

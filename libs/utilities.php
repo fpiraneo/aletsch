@@ -126,7 +126,12 @@ class utilities {
                 if(trim($job['Completed']) === '1' && trim($job['StatusCode']) === 'Succeeded') {
                     switch(trim($job['Action'])) {
                         case 'InventoryRetrieval': {
-                            $action = sprintf("<button id='%s' class='getInventory' data-jobid='%s'>%s</button>", uniqid('aletsh_'), trim($job['JobId']), $l->t('Get inventory'));
+                            $action = sprintf("<button id='%s' class='getInventory' data-jobid='%s'>%s</button>", uniqid('aletsch_'), trim($job['JobId']), $l->t('Get inventory'));
+                            break;
+                        }
+                        
+                        case 'ArchiveRetrieval': {
+                            $action = sprintf("<button id='%s' class='getArchive' data-jobid='%s'>%s</button>", uniqid('aletsch_'), trim($job['JobId']), $l->t('Get archive'));
                             break;
                         }
                         

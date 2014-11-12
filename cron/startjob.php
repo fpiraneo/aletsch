@@ -19,6 +19,7 @@
      */
 
     require __DIR__ . '/../libs/aletsch.php';
+    require __DIR__ . '/../libs/utilities.php';
 
     // Set arguments names
     $argNames = array(
@@ -26,13 +27,11 @@
         'username',
         'password',
         'vaultarn',
-        'jobtype',
-        'localPath',
-        'statusPath'
+        'jobtype'
     );
 
     // Check for right parameter number
-    if($argc != count($argNames)) {
+    if($argc < count($argNames)) {
         die('Not enough parameters.');
     }
     
@@ -45,11 +44,62 @@
     switch($clp['jobtype']) {
         // Upload a file
         case 'fileUpload': {
+            // Set arguments names
+            $argNames = array(
+                'cmdName',
+                'username',
+                'password',
+                'vaultarn',
+                'jobtype',
+                'localPath',
+                'statusPath'
+            );
+
+            // Check for right parameter number
+            if($argc != count($argNames)) {
+                die('Not enough parameters.');
+            }
+
+            $clp = array_combine($argNames, $argv);
+
             // Check if the file can be accessed
             if(!is_file($clp['localPath'])) {
                 die('Unable to access file.');
             }
 
-            $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], NULL, $clp['statusPath']);            
+            $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], NULL, $clp['statusPath']);
+            
+            break;
+        }
+        
+        // Download a file
+        case 'fileDownload': {
+            // Set arguments names
+            $argNames = array(
+                'cmdName',
+                'username',
+                'password',
+                'vaultarn',
+                'jobtype',
+                'jobid',
+                'destPath',
+                'statusPath'
+            );
+
+            // Check for right parameter number
+            if($argc != count($argNames)) {
+                die('Not enough parameters.');
+            }
+
+            $clp = array_combine($argNames, $argv);
+
+            $tempOutFile = sys_get_temp_dir() . uniqid('/aletsch_out_');
+            $success = $glacier->getJobData($vaultData['vaultName'], $clp['jobid'], $clp['destPath'], $clp['statusPath']);
+            
+            if($success) {
+                copy($tempOutFile, $clp['destPath']);
+            }
+            
+            unlink($tempOutFile);
         }
     }

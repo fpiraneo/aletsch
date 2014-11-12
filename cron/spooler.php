@@ -71,13 +71,32 @@ class spooler {
         
         $jobFiles = json_decode($jobData['jobdata'], TRUE);
         
-        $parameters = array();
-        $parameters['username'] = $credentials->getUsername();
-        $parameters['password'] = $credentials->getPassword();
-        $parameters['vaultarn'] = $jobData['vaultarn'];
-        $parameters['jobtype'] = $jobData['jobtype'];
-        $parameters['localPath'] = $jobFiles['localPath'];
-        $parameters['statusPath'] = $jobFiles['statusPath'];
+        switch($jobData['jobtype']) {
+            case 'fileUpload': {
+                $parameters = array(
+                    'username' => $credentials->getUsername(),
+                    'password' => $credentials->getPassword(),
+                    'vaultarn' => $jobData['vaultarn'],
+                    'jobtype' => $jobData['jobtype'],
+                    'localPath' => $jobFiles['localPath'],
+                    'statusPath' => $jobFiles['statusPath']
+                );
+                break;
+            }
+            
+            case 'fileDownload': {
+                $parameters = array(
+                    'username' => $credentials->getUsername(),
+                    'password' => $credentials->getPassword(),
+                    'vaultarn' => $jobData['vaultarn'],
+                    'jobtype' => $jobData['jobtype'],
+                    'jobid' => $jobData['jobID'],
+                    'destPath' => $jobFiles['destPath'],
+                    'statusPath' => $jobFiles['statusPath']
+                );
+                break;
+            }
+        }
         
         $commandLineArgs = implode(' ', $parameters);
         

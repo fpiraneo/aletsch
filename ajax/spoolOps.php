@@ -69,7 +69,7 @@ switch($op) {
         break;
     }
     
-    // Get spool contents for given user
+    // Add upload operation to spool
     case 'addUploadOp': {
         $filePath = filter_input(INPUT_POST, 'filePath', FILTER_SANITIZE_URL);
         $localPath = \OC\Files\Filesystem::getLocalFolder($filePath);
@@ -94,7 +94,47 @@ switch($op) {
         $jobData = array(
             'filePath' => $filePath,
             'localPath' => $localPath,
-            'statusPath' => sys_get_temp_dir() . '/aletsch_sts_' . uniqid()
+            'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_')
+        );
+        $spoolerHandler->setJobData($jobID, json_encode($jobData));
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Add download operation to spool
+    case 'addDownloadOp': {
+        $fileName = filter_input(INPUT_POST, 'dstFileName', FILTER_SANITIZE_URL);
+        $glacierJobID = filter_input(INPUT_POST, 'glacierJobID', FILTER_SANITIZE_URL);
+        
+        if(!isset($filePath)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'File path not set'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        $destPath = \OC_User::getHome($user) . '/files/' . $fileName;
+        
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        $jobID = $spoolerHandler->newJob('fileDownload');
+        $jobData = array(
+            'filePath' => $fileName,
+            'destPath' => $destPath,
+            'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_'),
+            'jobID' => $glacierJobID
         );
         $spoolerHandler->setJobData($jobID, json_encode($jobData));
         
