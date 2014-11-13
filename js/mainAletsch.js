@@ -150,6 +150,7 @@ $('document').ready(function() {
     $("#tabJobList").on("click", ".getArchive", function() {
         var actVault = $("#aletsch_tabs").attr("data-actualarn");
         var jobID = $(this).data('jobid');
+        var archiveID = $(this).data('archiveid');
 
         $.ajax({
             url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
@@ -158,7 +159,7 @@ $('document').ready(function() {
                 op: 'addDownloadOp',
                 vault: actVault,
                 glacierJobID: jobID,
-                dstFileName: ''
+                archiveID: archiveID
             },
 
             type: "POST",

@@ -108,22 +108,46 @@ switch($op) {
     
     // Add download operation to spool
     case 'addDownloadOp': {
-        $fileName = filter_input(INPUT_POST, 'dstFileName', FILTER_SANITIZE_URL);
+        $archiveID = filter_input(INPUT_POST, 'archiveID', FILTER_SANITIZE_URL);
         $glacierJobID = filter_input(INPUT_POST, 'glacierJobID', FILTER_SANITIZE_URL);
+        $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
         
-        if(!isset($filePath)) {
+        if(!isset($archiveID) || !isset($glacierJobID)) {
             $result = array(
                 'opResult' => 'KO',
                 'opData' => array(),
                 'errData' => array(
                     'exCode' => 'AletschParamError',
-                    'exMessage' => 'File path not set'
+                    'exMessage' => 'Either archiveID or glacier job is are not set'
                 )
             );
 
             \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
 
             die(json_encode($result));
+        }
+        
+        // Recover archive's description and try to use it as destination file name
+        // Obviously the file name should be plausible
+        $inventory = new \OCA\aletsch\inventoryHandler();
+        $inventory->loadFromDB($vaultARN);
+        $archives = $inventory->getArchives();
+        $fileName = NULL;
+        
+        foreach($archivesList as $entry) {
+            if($entry['ArchiveId'] === $archiveID) {
+                $fileName = $entry['ArchiveDescription'];
+                break;
+            }
+        }
+
+        // Archive description not found - Assign a random name
+        if(is_null($fileName)) {
+            $fileName = uniqid('archive_');
+        } else {
+            // Check if description can be used as file name - Assign a truncated file name otherwise
+            // We use maximum 255 characters to maintain a compatibility on all file systems that can be used
+            $fileName = substr($fileName, 0, 255);
         }
         
         $destPath = \OC_User::getHome($user) . '/files/' . $fileName;
