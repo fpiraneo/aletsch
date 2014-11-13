@@ -214,7 +214,6 @@ class aletsch {
         $retrivealParameters = array(
             'accountId' => '-',
             'vaultName' => $vaultName,
-            'Format' => 'JSON',
             'Type' => 'archive-retrieval',
             'ArchiveId' => $archiveID,
             'Description' => 'Retrieve archive'

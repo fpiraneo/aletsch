@@ -73,7 +73,7 @@ div.aletsch_errMessage {
 }
 
 table.aletsch_resultTable {
-    
+    border-collapse: collapse;
 }
 
 .aletsch_resultTable th {
@@ -87,4 +87,22 @@ table.aletsch_resultTable {
     border: 1px solid darkgray;
     padding: 5px;
     text-align: center;
+}
+
+td.aletsch_resultTable_right {
+    border: 1px solid darkgray;
+    padding: 5px;
+    text-align: right;
+}
+
+td.aletsch_resultTable_center {
+    border: 1px solid darkgray;
+    padding: 5px;
+    text-align: center;
+}
+
+td.aletsch_resultTable_left {
+    border: 1px solid darkgray;
+    padding: 5px;
+    text-align: left;
 }

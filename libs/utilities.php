@@ -2,20 +2,20 @@
 /*
  * Copyright 2014 by Francesco PIRANEO G. (fpiraneo@gmail.com)
  * 
- * This file is part of oclife.
+ * This file is part of aletsch.
  * 
- * oclife is free software: you can redistribute it and/or modify
+ * aletsch is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * oclife is distributed in the hope that it will be useful,
+ * aletsch is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with oclife.  If not, see <http://www.gnu.org/licenses/>.
+ * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace OCA\aletsch;
@@ -57,10 +57,10 @@ class utilities {
         $oc_version = $_SESSION['OC_Version'][0];
         
         if($oc_version === 7) {
-            $myres = \OCA\OCLife\utilities::getOC7FileList($user, $path, $onlyID, $indexed);
+            $myres = \OCA\aletsch\utilities::getOC7FileList($user, $path, $onlyID, $indexed);
             return $myres;
         } else {
-            return \OCA\OCLife\utilities::getOC6FileList($user, $path, $onlyID, $indexed);            
+            return \OCA\aletsch\utilities::getOC6FileList($user, $path, $onlyID, $indexed);            
         }
     }
     
@@ -91,7 +91,7 @@ class utilities {
                     $itemPath = 'files/' . $item['name'];
                 }
 
-                $itemRes = \OCA\OCLife\utilities::getOC6FileList($user, $itemPath, $onlyID, $indexed);
+                $itemRes = \OCA\aletsch\utilities::getOC6FileList($user, $itemPath, $onlyID, $indexed);
             }            
             
             foreach($itemRes as $item) {
@@ -134,7 +134,7 @@ class utilities {
                         
                 $itemRes[] = ($onlyID) ? $fileID : $fileData;
             } else {
-                $itemRes = \OCA\OCLife\utilities::getOC7FileList($user, $filePath, $onlyID, $indexed);
+                $itemRes = \OCA\aletsch\utilities::getOC7FileList($user, $filePath, $onlyID, $indexed);
             }            
             
             foreach($itemRes as $item) {
@@ -148,6 +148,112 @@ class utilities {
                     }
                 }
             }
+        }
+
+        return $result;        
+    }
+    
+    /**
+    * Get all files ID of the indicated user
+    * TODO: Check if this function gives back only the files the user can access.
+    * @param string $user Username
+    * @param string $path Path to get the content
+    * @param boolean $onlyID Get only the ID of files
+    * @param boolean $indexed Output result as dictionary array with fileID as index
+    * @return array Files list
+    */
+    public static function getFileTree($user, $path = '') {
+        $oc_version = $_SESSION['OC_Version'][0];
+        
+        if($oc_version === 7) {
+            $myres = \OCA\aletsch\utilities::getOC7FileTree($user, $path);
+            return $myres;
+        } else {
+            return \OCA\aletsch\utilities::getOC6FileTree($user, $path);            
+        }
+    }
+    
+    private static function getOC6FileTree($user, $path) {
+        $result = array();
+
+        $dirView = new \OC\Files\View('/' . $user);
+        $dirContent = $dirView->getDirectoryContent($path);
+        
+        foreach($dirContent as $item) {
+            $itemRes = array();
+            
+            if(strpos($item['mimetype'], 'directory') === FALSE) {
+                $fileData = array('fileid'=>$item['fileid'], 'name'=>$item['name'], 'mimetype'=>$item['mimetype']);
+                $fileData['path'] = isset($item['usersPath']) ? $item['usersPath'] : $item['path'];
+                        
+                $itemRes[] = ($onlyID) ? $item['fileid'] : $fileData;
+            } else {
+                // Case by case build appropriate path
+                if(isset($item['usersPath'])) {
+                    // - this condition when usersPath is set - i.e. Shared files
+                    $itemPath = $item['usersPath'];
+                } elseif(isset($item['path'])) {
+                    // - Standard case - Normal user's folder
+                    $itemPath = $item['path'];
+                } else {
+                    // - Special folders - i.e. sharings
+                    $itemPath = 'files/' . $item['name'];
+                }
+
+                $itemRes = \OCA\aletsch\utilities::getOC6FileList($user, $itemPath, $onlyID, $indexed);
+            }            
+            
+            foreach($itemRes as $item) {
+                if($onlyID) {
+                    $result[] = intval($item);
+                } else {
+                    if($indexed) {
+                        $result[intval($item['fileid'])] = $item;
+                    } else {
+                        $result[] = $item;
+                    }
+                }
+            }
+        }
+
+        return $result;        
+    }
+
+    private static function getOC7FileTree($user, $path) {
+        $result = array();
+
+        $dirView = new \OC\Files\View('/' . $user);
+        $dirContent = $dirView->getDirectoryContent($path);
+        
+        foreach($dirContent as $item) {
+            $fileMime = $item->getMimetype();
+            $fileName = $item->getName();
+            $fileSize = $item->getSize();
+            $filePath = substr($item->getPath(), strlen($user) + 2);
+            
+            if(strpos($fileMime, 'directory') === FALSE) {
+                $fileData = array(
+                    'key' => $filePath,
+                    'title' => $fileName,
+                    'expanded' => TRUE,
+                    'folder' => FALSE,
+                    'mime' => $fileMime,
+                    'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'children' => array()
+                );                        
+            } else {
+                $fileData = array(
+                    'key' => $filePath,
+                    'title' => $fileName,
+                    'expanded' => TRUE,
+                    'folder' => TRUE,
+                    'mime' => $fileMime,
+                    'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'children' => \OCA\aletsch\utilities::getOC7FileTree($user, $filePath)
+                );
+            }
+
+            $result[] = $fileData;
         }
 
         return $result;        

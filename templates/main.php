@@ -32,6 +32,7 @@ $l = new \OC_L10N('aletsch');
         <div id="aletsch_tabs" data-actualarn="">
             <ul>
                 <li><a href="#tabSpooler"><?php p($l->t('Spooler')) ?></a></li>
+                <li><a href="#tabArchiver"><?php p($l->t('Archiver')) ?></a></li>
                 <li><a href="#tabInventory"><?php p($l->t('Inventory')) ?></a></li>
                 <li><a href="#tabJobList"><?php p($l->t('Jobs list')) ?></a></li>
             </ul>
@@ -52,6 +53,33 @@ $l = new \OC_L10N('aletsch');
                 <div id="noInventory">
                     <div class="aletsch_emptylist"><?php p($l->t('Select a vault to get it\'s inventory.')); ?></div>
                 </div>
+            </div>
+
+            <div id="tabArchiver" style="text-align: left;">
+                <table id="archiverTree" class="aletsch_resultTable">
+                    <colgroup>
+                        <col width="30px"></col>
+                        <col width="*"></col>
+                        <col width="*"></col>
+                        <col width="*"></col>
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>File name</th>
+                            <th>Mime</th>
+                            <th>Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div id="tabJobList">

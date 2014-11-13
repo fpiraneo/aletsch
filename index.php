@@ -25,6 +25,11 @@ OCP\App::setActiveNavigationEntry('aletsch');
 \OCP\User::checkLoggedIn();
 \OCP\App::checkAppEnabled('aletsch');
 
+// Include what's needed by fancytree
+\OCP\Util::addStyle('aletsch', 'ui.fancytree');
+
+\OCP\Util::addScript('aletsch', 'fancytree/jquery.fancytree-all');
+
 // Following is needed by layout manager
 \OCP\Util::addScript('aletsch', 'layout/jquery.sizes');
 \OCP\Util::addScript('aletsch', 'layout/jlayout.border');

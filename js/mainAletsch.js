@@ -2,6 +2,30 @@ $('document').ready(function() {
     var selectedArchives = [];
 
     refreshSpoolList();
+    
+    $("#archiverTree").fancytree({
+        source: {
+            url: OC.filePath('aletsch', 'ajax', 'getCloudFiles.php')
+        },
+
+        checkbox: true,
+        selectMode: 3,
+        extensions: ["table"],
+        table: {
+            indentation: 20,      // indent 20px per node level
+            nodeColumnIdx: 1,     // render the node title into the 2nd column
+            checkboxColumnIdx: 0  // render the checkboxes into the 1st column
+        },
+        
+        renderColumns: function(event, data) {
+            var node = data.node,
+            tdList = $(node.tr).find(">td");
+            tdList.eq(0).addClass('aletsch_resultTable_center');
+            tdList.eq(1).addClass('aletsch_resultTable_left');
+            tdList.eq(2).text(node.data.mime).addClass('aletsch_resultTable_center');
+            tdList.eq(3).text(node.data.size).addClass('aletsch_resultTable_right');
+        }
+    });
 
     $("#aletsch_vaults").accordion({
         active: false,
