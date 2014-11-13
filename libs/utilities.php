@@ -180,40 +180,47 @@ class utilities {
         $dirContent = $dirView->getDirectoryContent($path);
         
         foreach($dirContent as $item) {
-            $itemRes = array();
+            $fileMime = $item->getMimetype();
+            $fileName = $item->getName();
+            $fileSize = $item->getSize();
+            $filePath = substr($item->getPath(), strlen($user) + 2);
             
             if(strpos($item['mimetype'], 'directory') === FALSE) {
-                $fileData = array('fileid'=>$item['fileid'], 'name'=>$item['name'], 'mimetype'=>$item['mimetype']);
-                $fileData['path'] = isset($item['usersPath']) ? $item['usersPath'] : $item['path'];
-                        
-                $itemRes[] = ($onlyID) ? $item['fileid'] : $fileData;
+                $fileData = array(
+                    'key' => $filePath,
+                    'title' => $fileName,
+                    'expanded' => TRUE,
+                    'folder' => FALSE,
+                    'mime' => $fileMime,
+                    'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'rawSize' => $fileSize,
+                    'children' => array()
+                );
+                
+                $fileData['path'] = isset($item['usersPath']) ? $item['usersPath'] : $item['path'];                        
             } else {
                 // Case by case build appropriate path
                 if(isset($item['usersPath'])) {
-                    // - this condition when usersPath is set - i.e. Shared files
-                    $itemPath = $item['usersPath'];
-                } elseif(isset($item['path'])) {
-                    // - Standard case - Normal user's folder
-                    $itemPath = $item['path'];
+                    $itemPath = $item['usersPath'];         // - this condition when usersPath is set - i.e. Shared files
+                } else if(isset($item['path'])) {
+                    $itemPath = $item['path'];              // - Standard case - Normal user's folder
                 } else {
-                    // - Special folders - i.e. sharings
-                    $itemPath = 'files/' . $item['name'];
+                    $itemPath = 'files/' . $item['name'];   // - Special folders - i.e. sharings
                 }
 
-                $itemRes = \OCA\aletsch\utilities::getOC6FileList($user, $itemPath, $onlyID, $indexed);
-            }            
-            
-            foreach($itemRes as $item) {
-                if($onlyID) {
-                    $result[] = intval($item);
-                } else {
-                    if($indexed) {
-                        $result[intval($item['fileid'])] = $item;
-                    } else {
-                        $result[] = $item;
-                    }
-                }
+                $fileData = array(
+                    'key' => $itemPath,
+                    'title' => $fileName,
+                    'expanded' => TRUE,
+                    'folder' => TRUE,
+                    'mime' => $fileMime,
+                    'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'rawSize' => $fileSize,
+                    'children' => \OCA\aletsch\utilities::getOC6FileTree($user, $itemPath)
+                );
             }
+
+            $result[] = $fileData;
         }
 
         return $result;        
@@ -239,6 +246,7 @@ class utilities {
                     'folder' => FALSE,
                     'mime' => $fileMime,
                     'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'rawSize' => $fileSize,
                     'children' => array()
                 );                        
             } else {
@@ -249,6 +257,7 @@ class utilities {
                     'folder' => TRUE,
                     'mime' => $fileMime,
                     'size' => \OCA\aletsch\utilities::formatBytes($fileSize),
+                    'rawSize' => $fileSize,
                     'children' => \OCA\aletsch\utilities::getOC7FileTree($user, $filePath)
                 );
             }

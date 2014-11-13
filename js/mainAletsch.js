@@ -1,5 +1,6 @@
 $('document').ready(function() {
     var selectedArchives = [];
+    var selectedArchiverFiles = [];
 
     refreshSpoolList();
     
@@ -11,6 +12,7 @@ $('document').ready(function() {
         checkbox: true,
         selectMode: 3,
         extensions: ["table"],
+        
         table: {
             indentation: 20,      // indent 20px per node level
             nodeColumnIdx: 1,     // render the node title into the 2nd column
@@ -24,8 +26,59 @@ $('document').ready(function() {
             tdList.eq(1).addClass('aletsch_resultTable_left');
             tdList.eq(2).text(node.data.mime).addClass('aletsch_resultTable_center');
             tdList.eq(3).text(node.data.size).addClass('aletsch_resultTable_right');
+        },
+        
+        select: function(event, data) {
+            var selectedNodes = data.tree.getSelectedNodes();
+            var filesNum = 0;
+            var folderNum = 0;
+            var totSize = 0;
+            selectedArchiverFiles = [];
+            
+            for(i = 0; i < selectedNodes.length; i++) {
+                if(selectedNodes[i].data.mime.indexOf('directory') === -1) {
+                    filesNum++;
+                    totSize += parseInt(selectedNodes[i].data.rawSize);
+                    selectedArchiverFiles.push(selectedNodes[i].key);
+                } else {
+                    folderNum++;
+                }
+            }
+            
+            if(filesNum !== 0 || folderNum !== 0) {
+                var selectionData = t('aletsch', 'Selected: ') + filesNum.toString() + t('aletsch', ' files, ') + folderNum.toString() + t('aletsch', ' folders. Total size: ') + HRFileSize(totSize);
+                $("#aletsch_actualSelection").html(selectionData);
+            } else {
+                $("#aletsch_actualSelection").html('');
+            }
         }
     });
+    
+    $("#btnSelectAll")
+        .button()
+        .click(function() {
+            $("#archiverTree").fancytree("getTree").visit(function(node){
+                node.setSelected(true);
+            });
+            
+            return false;
+        });
+
+    $("#btnUnselectAll")
+        .button()
+        .click(function() {
+            $("#archiverTree").fancytree("getTree").visit(function(node){
+                node.setSelected(false);
+            });
+
+            return false;
+        });
+
+    $("#btnBuildArchive")
+        .button()
+        .click(function() {
+            window.alert("Building archive");
+        });
 
     $("#aletsch_vaults").accordion({
         active: false,
@@ -618,4 +671,9 @@ function updateStatusBar(t) {
     window.setTimeout(function(){
         $('#notification').slideUp();
     }, 5000);
+}
+
+function HRFileSize(size) {
+    var i = Math.floor(Math.log(size) / Math.log(1024));
+    return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 }

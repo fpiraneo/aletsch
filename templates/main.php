@@ -56,6 +56,13 @@ $l = new \OC_L10N('aletsch');
             </div>
 
             <div id="tabArchiver" style="text-align: left;">
+                <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px;">
+                    <button id="btnSelectAll"><?php p($l->t('Select all')) ?></button>
+                    <button id="btnUnselectAll"><?php p($l->t('Unselect all')) ?></button>
+                    <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
+                    <button id="btnBuildArchive"><?php p($l->t('Build archive')) ?></button>
+                    <div id="aletsch_actualSelection" style="float: right; background-color: lightgray; padding: 5px;">&nbsp;</div>
+                </div>
                 <table id="archiverTree" class="aletsch_resultTable">
                     <colgroup>
                         <col width="30px"></col>
@@ -66,9 +73,9 @@ $l = new \OC_L10N('aletsch');
                     <thead>
                         <tr>
                             <th></th>
-                            <th>File name</th>
-                            <th>Mime</th>
-                            <th>Size</th>
+                            <th><?php p($l->t('File name')); ?></th>
+                            <th><?php p($l->t('Mime type')); ?></th>
+                            <th><?php p($l->t('Size')); ?></th>
                         </tr>
                     </thead>
                     <tbody>
