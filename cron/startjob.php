@@ -21,22 +21,61 @@
     require __DIR__ . '/../libs/aletsch.php';
     require __DIR__ . '/../libs/utilities.php';
 
-    // Set arguments names
-    $argNames = array(
-        'cmdName',
-        'username',
-        'password',
-        'vaultarn',
-        'jobtype'
-    );
+    // Right parameter combine
+    switch($argv[1]) {
+        // Upload a file
+        case 'fileUpload': {
+            // Set arguments names
+            $argNames = array(
+                'cmdName',
+                'jobtype',
+                'username',
+                'password',
+                'vaultarn',
+                'localPath',
+                'statusPath'
+            );
 
-    // Check for right parameter number
-    if($argc < count($argNames)) {
-        die('Not enough parameters.');
+            // Check for right parameter number
+            if($argc != count($argNames)) {
+                error_log('fileUpload: Not enough parameters - Passed:' . $argc . ', required: ' . count($argNames) . ' - List: ' . implode(',', $argv));
+                die();
+            }
+
+            break;
+        }
+        // Download a file
+        case 'fileDownload': {
+            // Set arguments names
+            $argNames = array(
+                'cmdName',
+                'jobtype',
+                'username',
+                'password',
+                'vaultarn',
+                'jobid',
+                'destPath',
+                'statusPath'
+            );
+
+            // Check for right parameter number
+            if($argc != count($argNames)) {
+                error_log('fileDownload: Not enough parameters - Passed:' . $argc . ', required: ' . count($argNames) . ' - List: ' . implode(',', $argv));
+                die();
+            }
+
+            break;
+        }
+        
+        default: {
+            error_log('Invalid option for jobType: ' . $argv[1]);
+            die();
+            break;
+        }
     }
-    
+
     $clp = array_combine($argNames, $argv);
-    
+
     // Instance to aletsch
     $vaultData = \OCA\aletsch\aletsch::explodeARN($clp['vaultarn']);
     $glacier = new \OCA\aletsch\aletsch($vaultData['serverLocation'], $clp['username'], $clp['password']);
@@ -44,27 +83,10 @@
     switch($clp['jobtype']) {
         // Upload a file
         case 'fileUpload': {
-            // Set arguments names
-            $argNames = array(
-                'cmdName',
-                'username',
-                'password',
-                'vaultarn',
-                'jobtype',
-                'localPath',
-                'statusPath'
-            );
-
-            // Check for right parameter number
-            if($argc != count($argNames)) {
-                die('Not enough parameters.');
-            }
-
-            $clp = array_combine($argNames, $argv);
-
             // Check if the file can be accessed
             if(!is_file($clp['localPath'])) {
-                die('Unable to access file.');
+                error_log('fileUpload: Unable to access file: ' . $clp['localPath']);
+                die();
             }
 
             $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], NULL, $clp['statusPath']);
@@ -74,32 +96,15 @@
         
         // Download a file
         case 'fileDownload': {
-            // Set arguments names
-            $argNames = array(
-                'cmdName',
-                'username',
-                'password',
-                'vaultarn',
-                'jobtype',
-                'jobid',
-                'destPath',
-                'statusPath'
-            );
-
-            // Check for right parameter number
-            if($argc != count($argNames)) {
-                die('Not enough parameters.');
-            }
-
-            $clp = array_combine($argNames, $argv);
-
             $tempOutFile = sys_get_temp_dir() . uniqid('/aletsch_out_');
-            $success = $glacier->getJobData($vaultData['vaultName'], $clp['jobid'], $clp['destPath'], $clp['statusPath']);
+            $success = $glacier->getJobData($vaultData['vaultName'], $clp['jobid'], $tempOutFile, $clp['statusPath']);
             
             if($success) {
                 copy($tempOutFile, $clp['destPath']);
             }
             
             unlink($tempOutFile);
+            
+            break;
         }
     }

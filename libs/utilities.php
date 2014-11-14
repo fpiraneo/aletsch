@@ -444,13 +444,13 @@ class utilities {
                  */
 
                 if($insertCheckBoxes) {
-                    $action = sprintf("<td><input type='checkbox' id='%s' class='archiveSelection' data-archiveid='%s' /></td>", uniqid("aletsch_"), $entry->ArchiveId);
+                    $action = sprintf("<td><input type='checkbox' id='%s' class='archiveSelection' data-archiveid='%s' /></td>", uniqid('aletsch_'), $entry['ArchiveId']);
                 } else {
                     $action = '';
                 }
-                $size = \OCA\aletsch\utilities::formatBytes($entry->Size);
+                $size = \OCA\aletsch\utilities::formatBytes($entry['Size']);
                                 
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td></tr>", $action, $entry->ArchiveDescription, $entry->CreationDate, $size);
+                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td></tr>", $action, $entry['ArchiveDescription'], $entry['CreationDate'], $size);
             }
             
             $result .= '</table>';

@@ -234,7 +234,7 @@ $('document').ready(function() {
 
             data: {
                 op: 'addDownloadOp',
-                vault: actVault,
+                vaultARN: actVault,
                 glacierJobID: jobID,
                 archiveID: archiveID
             },

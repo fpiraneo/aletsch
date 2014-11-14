@@ -349,7 +349,7 @@ class inventoryHandler {
             $this->vaultArn = $vaultARN;
 
             $jsonArchives = gzuncompress($row['inventorydata']);
-            $this->archives = json_decode($jsonArchives);
+            $this->archives = json_decode($jsonArchives, TRUE);
             
             $inventoryID = $row['inventoryid'];
         }
@@ -603,6 +603,7 @@ class spoolerHandler {
     /**
      * Set job status for given jobid
      * @param Integer $jobid
+     * @param String $jobstatus One of these: 'hold', 'waiting', 'running', 'completed', 'error'
      * @return String Job type, FALSE if jobid is not set
      */
     function setJobStatus($jobid, $jobstatus) {

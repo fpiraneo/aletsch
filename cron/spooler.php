@@ -74,10 +74,10 @@ class spooler {
         switch($jobData['jobtype']) {
             case 'fileUpload': {
                 $parameters = array(
+                    'jobtype' => $jobData['jobtype'],
                     'username' => $credentials->getUsername(),
                     'password' => $credentials->getPassword(),
                     'vaultarn' => $jobData['vaultarn'],
-                    'jobtype' => $jobData['jobtype'],
                     'localPath' => $jobFiles['localPath'],
                     'statusPath' => $jobFiles['statusPath']
                 );
@@ -86,11 +86,11 @@ class spooler {
             
             case 'fileDownload': {
                 $parameters = array(
+                    'jobtype' => $jobData['jobtype'],
                     'username' => $credentials->getUsername(),
                     'password' => $credentials->getPassword(),
                     'vaultarn' => $jobData['vaultarn'],
-                    'jobtype' => $jobData['jobtype'],
-                    'jobid' => $jobData['jobID'],
+                    'jobid' => $jobFiles['jobID'],
                     'destPath' => $jobFiles['destPath'],
                     'statusPath' => $jobFiles['statusPath']
                 );

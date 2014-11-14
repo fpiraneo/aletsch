@@ -305,6 +305,7 @@ class aletsch {
         }
 
         $progress['status'] = 'completed';
+        $progress['extStatus'] = 'HTTP status: ' . $answer['status'];
         file_put_contents($progressFile, json_encode($progress));
         
         $data = $answer->getAll();

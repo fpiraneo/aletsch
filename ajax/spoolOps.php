@@ -134,7 +134,7 @@ switch($op) {
         $archives = $inventory->getArchives();
         $fileName = NULL;
         
-        foreach($archivesList as $entry) {
+        foreach($archives as $entry) {
             if($entry['ArchiveId'] === $archiveID) {
                 $fileName = $entry['ArchiveDescription'];
                 break;
@@ -150,10 +150,13 @@ switch($op) {
             $fileName = substr($fileName, 0, 255);
         }
         
-        $destPath = \OC_User::getHome($user) . '/files/' . $fileName;
+        $destPath = \OC_User::getHome($OCUserName) . '/files/' . $fileName;
         
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileDownload');
+        $spoolerHandler->setVaultARN($jobID, $vaultARN);
+        $spoolerHandler->setJobStatus($jobID, 'waiting');
+        
         $jobData = array(
             'filePath' => $fileName,
             'destPath' => $destPath,
