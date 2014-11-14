@@ -69,7 +69,7 @@ class spooler {
     public static function runJob(\OCA\aletsch\spoolerHandler $spooler, $jobData) {
         $credentials = new \OCA\aletsch\credentialsHandler($jobData['ocusername']);
         
-        $jobFiles = json_decode($jobData['jobdata'], TRUE);
+        $jobDataDetails = json_decode($jobData['jobdata'], TRUE);
         
         switch($jobData['jobtype']) {
             case 'fileUpload': {
@@ -78,8 +78,9 @@ class spooler {
                     'username' => $credentials->getUsername(),
                     'password' => $credentials->getPassword(),
                     'vaultarn' => $jobData['vaultarn'],
-                    'localPath' => $jobFiles['localPath'],
-                    'statusPath' => $jobFiles['statusPath']
+                    'localPath' => $jobDataDetails['localPath'],
+                    'statusPath' => $jobDataDetails['statusPath'],
+                    'description' => $jobDataDetails['description']
                 );
                 break;
             }
@@ -90,9 +91,9 @@ class spooler {
                     'username' => $credentials->getUsername(),
                     'password' => $credentials->getPassword(),
                     'vaultarn' => $jobData['vaultarn'],
-                    'jobid' => $jobFiles['jobID'],
-                    'destPath' => $jobFiles['destPath'],
-                    'statusPath' => $jobFiles['statusPath']
+                    'jobid' => $jobDataDetails['jobID'],
+                    'destPath' => $jobDataDetails['destPath'],
+                    'statusPath' => $jobDataDetails['statusPath']
                 );
                 break;
             }

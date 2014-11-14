@@ -33,7 +33,8 @@
                 'password',
                 'vaultarn',
                 'localPath',
-                'statusPath'
+                'statusPath',
+                'description'
             );
 
             // Check for right parameter number
@@ -89,7 +90,8 @@
                 die();
             }
 
-            $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], NULL, $clp['statusPath']);
+            error_log(sprintf("fileUpload: [DEBUG ] localPath: %s, Description: %s", $clp['localPath'], $clp['description']));
+            $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], $clp['description'], $clp['statusPath']);
             
             break;
         }
@@ -100,6 +102,7 @@
             $success = $glacier->getJobData($vaultData['vaultName'], $clp['jobid'], $tempOutFile, $clp['statusPath']);
             
             if($success) {
+                mkdir(dirname($clp['destPath']), 0755, TRUE);
                 copy($tempOutFile, $clp['destPath']);
             }
             

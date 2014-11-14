@@ -60,7 +60,9 @@ $l = new \OC_L10N('aletsch');
                     <button id="btnSelectAll"><?php p($l->t('Select all')) ?></button>
                     <button id="btnUnselectAll"><?php p($l->t('Unselect all')) ?></button>
                     <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
-                    <button id="btnBuildArchive"><?php p($l->t('Build archive')) ?></button>
+                    <button id="btnBuildArchive" disabled="disabled"><?php p($l->t('Build archive')) ?></button>
+                    <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
+                    <button id="btnSendToVault" disabled="disabled"><?php p($l->t('Send to vault')) ?></button>
                     <div id="aletsch_actualSelection" style="float: right; background-color: lightgray; padding: 5px;">&nbsp;</div>
                 </div>
                 <table id="archiverTree" class="aletsch_resultTable">
@@ -131,4 +133,14 @@ $l = new \OC_L10N('aletsch');
 <!-- Download selected archives -->
 <div id="aletsch_downloadArchivesDlog" title="<?php p($l->t('Download archives')) ?>">
     <p><?php p($l->t('The selected archives will be queued for retriveal and download; are you sure?')) ?></p>
+</div>
+
+<!-- Send selected files to vault -->
+<div id="aletsch_sendArchivesDlog" title="<?php p($l->t('Send selected files to vault')) ?>">
+    <p>
+        <?php p($l->t('Vault name: ')); print \OCA\aletsch\utilities::prepareVaultSelect('aletsch_sendToVault', NULL, NULL, '') ?>
+    </p>
+    <p>
+        <input type="checkbox" id="aletsch_immediateRelease" /> <label for="aletsch_immediateRelease"><?php p($l->t('Immediate release of file sending')); ?></label>
+    </p>
 </div>

@@ -33,16 +33,28 @@ $OCUserName = \OCP\User::getUser();
 $userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
 
 if(is_null($userAccount->getCredID())) {
-	// No accounts found
-	$tmpl->assign('credID', '');
-	$tmpl->assign('serverLocation', '');
-	$tmpl->assign('username', '');
-	$tmpl->assign('password', '');
+    // No accounts found
+    $tmpl->assign('credID', '');
+    $tmpl->assign('serverLocation', '');
+    $tmpl->assign('username', '');
+    $tmpl->assign('password', '');
 } else {
-	$tmpl->assign('credID', $userAccount->getCredID());	
-	$tmpl->assign('serverLocation', $userAccount->getServerLocation());
-	$tmpl->assign('username', $userAccount->getUsername());
-	$tmpl->assign('password', $userAccount->getPassword());
+    $tmpl->assign('credID', $userAccount->getCredID());	
+    $tmpl->assign('serverLocation', $userAccount->getServerLocation());
+    $tmpl->assign('username', $userAccount->getUsername());
+    $tmpl->assign('password', $userAccount->getPassword());
 }
+
+// Default download directory - Where the files will be downloaded
+$downloadDir = OCP\Config::getAppValue('aletsch', 'downloadDir');
+if(trim($downloadDir) === '') {
+    $downloadDir = 'aletsch downloads';
+    OCP\Config::setAppValue('aletsch', 'downloadDir', $downloadDir);
+}
+$tmpl->assign('downloadDir', $downloadDir);
+
+$storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
+
+$tmpl->assign('storeFullPath', ($storeFullPath === 1) ? 'checked="checked"' : '');
 
 return $tmpl->fetchPage();

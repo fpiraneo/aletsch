@@ -272,7 +272,7 @@ switch($op) {
     
     // Delete archives
     case 'deleteArchives': {
-        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);
         
         foreach($archives as $archiveID) {
             $result = $glacier->deleteArchive($vaultName, $archiveID);
@@ -288,7 +288,7 @@ switch($op) {
     
     // Retrieve archives
     case 'retrieveArchives': {
-        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);
 
         try {
             foreach($archives as $archiveID) {

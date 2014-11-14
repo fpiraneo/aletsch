@@ -240,7 +240,7 @@ class utilities {
             
             if(strpos($fileMime, 'directory') === FALSE) {
                 $fileData = array(
-                    'key' => $filePath,
+                    'key' => substr($filePath, 5),
                     'title' => $fileName,
                     'expanded' => TRUE,
                     'folder' => FALSE,
@@ -251,7 +251,7 @@ class utilities {
                 );                        
             } else {
                 $fileData = array(
-                    'key' => $filePath,
+                    'key' => substr($filePath, 5),
                     'title' => $fileName,
                     'expanded' => TRUE,
                     'folder' => TRUE,
@@ -470,15 +470,8 @@ class utilities {
         $l = new \OC_L10N('aletsch');
 
         if(count($spooler) === 0) {
-            $result = '<div id="aletsch_emptylist">' . $l->t('No jobs on your spooler.') . '</div>';
+            $result = '<div class="aletsch_emptylist">' . $l->t('No jobs on your spooler.') . '</div>';
         } else {
-            // Prepare the vault list
-            $OCUserName = \OCP\User::getUser();
-            $userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
-            
-            $vaultsHandler = new \OCA\aletsch\vaultHandler($userAccount->getCredID());
-            $vaults = array_keys($vaultsHandler->getVaults());
-            
             // Prepare table
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
@@ -505,15 +498,7 @@ class utilities {
                 $action = ($insertCheckBoxes) ? sprintf("<td><input type='checkbox' id='%s' class='spoolJobSelection' data-spooljobid='%s' /></td>", uniqid("aletsch_"), $jobid) : '';
                 
                 // Prepare vaults select
-                $vaultAction = '<select class="vaultSelect" data-jobid="' . $jobid . '">';
-                $thisSelected = ($jobData['vaultarn'] === '') ? ' selected="selected"' : '';
-                $vaultAction .= '<option value="EMPTY"' . $thisSelected . '>' . $l->t('Not selected') . "</option>";
-                
-                foreach($vaults as $vault) {
-                    $thisSelected = ($jobData['vaultarn'] === $vault) ? ' selected="selected"' : '';
-                    $vaultAction .= '<option value="' . $vault . '"' . $thisSelected . '>' . \OCA\aletsch\aletsch::explodeARN($vault, TRUE) . '</option>';
-                }
-                $vaultAction .= '</select>';
+                $vaultAction = \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']);
                 
                 $filePaths = json_decode($jobData['jobdata'], TRUE);
                 $status = ($jobData['jobstatus'] === 'running') ? 'Running ' . $jobData['jobstarted'] : $jobData['jobstatus'];
@@ -524,5 +509,41 @@ class utilities {
         }
         
         return $result;
+    }
+    
+    /**
+     * Prepare the vault select with the provided ID
+     * @param string $selectID Select ID
+     * @param string $dataName Name of the data field
+     * @param string $dataValue Value of the data field
+     * @param string $selectedARN Actually selected ARN
+     * @return string HTML code for the vault select
+     */
+    public static function prepareVaultSelect($selectID, $dataName, $dataValue, $selectedARN) {
+        // Handle translations
+        $l = new \OC_L10N('aletsch');
+        
+        // Prepare the vault list
+        $OCUserName = \OCP\User::getUser();
+        $userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
+
+        $vaultsHandler = new \OCA\aletsch\vaultHandler($userAccount->getCredID());
+        $vaults = array_keys($vaultsHandler->getVaults());
+
+        // Build object
+        $fullID = is_null($selectID) ? '' : sprintf("id='%s'", $selectID);
+        $fullData = is_null($dataName) ? '' : sprintf("data-%s='%s'", $dataName, $dataValue);
+        
+        $vaultAction = '<select class="vaultSelect" ' . $fullID . ' ' . $fullData . '>';
+        $thisSelected = ($selectedARN === '') ? ' selected="selected"' : '';
+        $vaultAction .= '<option value="EMPTY"' . $thisSelected . '>' . $l->t('Not selected') . "</option>";
+
+        foreach($vaults as $vault) {
+            $thisSelected = ($selectedARN === $vault) ? ' selected="selected"' : '';
+            $vaultAction .= '<option value="' . $vault . '"' . $thisSelected . '>' . \OCA\aletsch\aletsch::explodeARN($vault, TRUE) . '</option>';
+        }
+        $vaultAction .= '</select>';
+
+        return $vaultAction;
     }
 }

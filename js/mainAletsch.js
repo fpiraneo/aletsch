@@ -48,8 +48,12 @@ $('document').ready(function() {
             if(filesNum !== 0 || folderNum !== 0) {
                 var selectionData = t('aletsch', 'Selected: ') + filesNum.toString() + t('aletsch', ' files, ') + folderNum.toString() + t('aletsch', ' folders. Total size: ') + HRFileSize(totSize);
                 $("#aletsch_actualSelection").html(selectionData);
+                $("#btnBuildArchive").button("option", "disabled", false);
+                $("#btnSendToVault").button("option", "disabled", false);
             } else {
                 $("#aletsch_actualSelection").html('');
+                $("#btnBuildArchive").button("option", "disabled", true);
+                $("#btnSendToVault").button("option", "disabled", true);
             }
         }
     });
@@ -78,6 +82,12 @@ $('document').ready(function() {
         .button()
         .click(function() {
             window.alert("Building archive");
+        });
+        
+    $("#btnSendToVault")
+        .button()
+        .click(function() {
+            sendArchivesDlog.dialog("open");
         });
 
     $("#aletsch_vaults").accordion({
@@ -381,6 +391,31 @@ $('document').ready(function() {
         }
     });
     
+    var sendArchivesDlog = $("#aletsch_sendArchivesDlog").dialog({
+        autoOpen: false,
+        resizable: false,
+        height: 175,
+        width: 350,
+        modal: true,
+        buttons: {
+            Ok: function() {
+                var destVault = $("#aletsch_sendToVault").val();
+                var immediateRelease = ($('#aletsch_immediateRelease').is(":checked")) ? 1 : 0;
+                
+                addArchiverFilesToSpool(destVault, immediateRelease, selectedArchiverFiles);
+                
+                $(this).dialog("close");
+            },
+            Cancel: function() {
+                $(this).dialog("close");
+            }
+        },
+        
+        close: function() {
+            $("#aletsch_sendToVault").val("EMPTY");
+            $("#aletsch_immediateRelease").attr('checked', false);
+        }
+    });
 
     
     $("#spoolerContent").on("click", "#aletsch_selectAllSpoolJobs", function(eventData) {
@@ -661,6 +696,35 @@ function retrieveArchives(vaultARN, archivesID) {
         },
         error: function( xhr, status ) {
             updateStatusBar(t('aletsch', 'Unable to queue archives retrieval! Ajax error!'));
+        }
+    });
+}
+
+function addArchiverFilesToSpool(vaultARN, immediateRelease, archives) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
+
+        data: {
+            op: 'addBatchUploadOp',
+            vaultARN: vaultARN,
+            immediateRelease: immediateRelease,
+            filePath: JSON.stringify(archives) 
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Queued!'));
+                refreshSpoolList();
+            } else {
+                updateStatusBar(t('aletsch', 'File not queued!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'File not queued! Ajax error'));
         }
     });
 }

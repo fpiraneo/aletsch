@@ -250,13 +250,13 @@ class inventoryHandler {
     
     function setDataFromInventory($inventoryData) {
         // Set the date
-        $this->inventoryDate = $inventoryData->InventoryDate;
+        $this->inventoryDate = $inventoryData['InventoryDate'];
         
         // Save vault's ARN
-        $this->vaultArn = $inventoryData->VaultARN;
+        $this->vaultArn = $inventoryData['VaultARN'];
         
         // Set archives data
-        $this->archives = $inventoryData->ArchiveList;
+        $this->archives = $inventoryData['ArchiveList'];
     }
 
     /**

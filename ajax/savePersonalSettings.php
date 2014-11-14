@@ -23,14 +23,32 @@ OCP\User::checkLoggedIn();
 
 $OCUserName = \OCP\User::getUser();
 
-$credID = filter_input(INPUT_POST, 'credid', FILTER_SANITIZE_NUMBER_INT);
-$serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
-$username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
-$password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
+$credentials = filter_input(INPUT_POST, 'credentials', FILTER_SANITIZE_NUMBER_INT);
 
-$userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
-$userAccount->setServerLocation($serverLocation);
-$userAccount->setUsername($username);
-$userAccount->setPassword($password);
+if($credentials === 1) {
+    // Save just credentials here
+    $credID = filter_input(INPUT_POST, 'credid', FILTER_SANITIZE_NUMBER_INT);
+    $serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
+    $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+    $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING);
 
-print 'OK';
+    $userAccount = new OCA\aletsch\credentialsHandler($OCUserName);
+    $userAccount->setServerLocation($serverLocation);
+    $userAccount->setUsername($username);
+    $userAccount->setPassword($password);
+
+    print 'OK';
+} else {
+    $result = array();
+    
+    // Save other parameters here
+    $downloadDir = filter_input(INPUT_POST, 'downloadDir', FILTER_SANITIZE_STRING);
+    $result[0] = OCP\Config::setAppValue('aletsch', 'downloadDir', $downloadDir);
+    
+    $storeFullPath = filter_input(INPUT_POST, 'storeFullPath', FILTER_SANITIZE_STRING);
+    $result[1] = OCP\Config::setAppValue('aletsch', 'storeFullPath', $storeFullPath);
+    
+    echo $result[0] && $result[1] ? 'OK' : 'KO';
+}
+
+

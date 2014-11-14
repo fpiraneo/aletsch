@@ -19,13 +19,52 @@
 
 $(function() {
     $("#aletsch_saveCredentials")
-            .button()
-            .click(function(event) {
-                event.preventDefault();
-                saveData();
-            });
-	
-    function saveData() {
+        .button()
+        .click(function(event) {
+            event.preventDefault();
+            saveCredentials();
+        });
+ 
+    $("#aletsch_downloadDir").blur(function() {
+        saveParameters();
+    });
+
+    $("#aletsch_storeFullPath").click(function() {
+        saveParameters();
+    });
+
+    function saveParameters() {
+        var downloadDir = $("#aletsch_downloadDir").val();
+        var v_storeFullPath = ($('#aletsch_storeFullPath').is(":checked")) ? 1 : 0;
+        
+        $.ajax({
+            url: OC.filePath('aletsch', 'ajax', 'savePersonalSettings.php'),
+            async: false,
+            timeout: 2000,
+
+            data: {
+                credentials: 0,
+                downloadDir: downloadDir,
+                storeFullPath: v_storeFullPath
+            },
+
+            type: "POST",
+
+            success: function(result) {
+                if(result === 'OK') {
+                    updateStatusBar(t('aletsch', 'Settings saved correctly.'));
+                } else {
+                    updateStatusBar(t('aletsch', 'Settings not saved! Data base error!'));
+                }
+            },
+
+            error: function(xhr, status) {
+                updateStatusBar(t('aletsch', 'Settings not saved! Communication error!'));
+            }
+        });
+    }
+
+    function saveCredentials() {
         var serverLocation = $("#aletsch_serverLocation").val();
         var username = $("#aletsch_username").val();
         var password = $("#aletsch_password").val();		
@@ -38,6 +77,7 @@ $(function() {
                 timeout: 2000,
 
                 data: {
+                    credentials: 1,
                     credid: credID,
                     serverLocation: serverLocation,
                     username: username,
@@ -66,6 +106,6 @@ $(function() {
         $('#notification').slideDown();
         window.setTimeout(function(){
             $('#notification').slideUp();
-        }, 5000);
+        }, 1000);
     }
 });

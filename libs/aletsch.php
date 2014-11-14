@@ -24,7 +24,7 @@ class aletsch {
     private $archiver;
     private $lastCatalog;
 
-    private $offline = FALSE;
+    private $offline = TRUE;
 
     /**
      * Class constructor
@@ -321,7 +321,7 @@ class aletsch {
 
         // Read JSON data
         $inventoryJSON = file_get_contents($tmpFilePath);
-        $inventory = json_decode($inventoryJSON);
+        $inventory = json_decode($inventoryJSON, TRUE);
         unlink($tmpFilePath);
 
         return $inventory;

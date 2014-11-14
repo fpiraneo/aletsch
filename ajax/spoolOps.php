@@ -91,13 +91,75 @@ switch($op) {
         
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileUpload');
+        
+        // As description set the file name or the full path as per preferences
+        $storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
+        $description = $storeFullPath ? $filePath : basename($filePath);
+        
         $jobData = array(
             'filePath' => $filePath,
             'localPath' => $localPath,
-            'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_')
+            'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_'),
+            'description' => $description
         );
         $spoolerHandler->setJobData($jobID, json_encode($jobData));
         
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
+        
+        break;
+    }
+    
+    // Add upload operation to spool
+    case 'addBatchUploadOp': {
+        $jsonPaths = filter_input(INPUT_POST, 'filePath', FILTER_UNSAFE_RAW);
+        $filesPath = json_decode($jsonPaths, TRUE);
+        $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
+        $immediateRelease = filter_input(INPUT_POST, 'immediateRelease', FILTER_SANITIZE_NUMBER_INT);
+
+        // Check if array passed as files path
+        if(!is_array($filesPath)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'File path not set'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+
+        // New instance to spooler handler
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        
+        foreach ($filesPath as $filePath) {
+            $localPath = \OC\Files\Filesystem::getLocalFolder($filePath);
+            $jobID = $spoolerHandler->newJob('fileUpload');
+            
+            // As description set the file name or the full path as per preferences
+            $storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
+            $description = $storeFullPath ? $filePath : basename($filePath);
+
+            $jobData = array(
+                'filePath' => $filePath,
+                'localPath' => $localPath,
+                'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_'),
+                'description' => $description
+            );
+            $spoolerHandler->setJobData($jobID, json_encode($jobData));
+            $spoolerHandler->setVaultARN($jobID, $vaultARN);
+            
+            if($immediateRelease) {
+                $spoolerHandler->setJobStatus($jobID, 'waiting');
+            }
+        }
+
         $result['opResult'] = 'OK';
         $result['opData'] = '';
 
@@ -111,6 +173,9 @@ switch($op) {
         $archiveID = filter_input(INPUT_POST, 'archiveID', FILTER_SANITIZE_URL);
         $glacierJobID = filter_input(INPUT_POST, 'glacierJobID', FILTER_SANITIZE_URL);
         $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
+
+        $downloadDir = OCP\Config::getAppValue('aletsch', 'downloadDir');
+        $storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
         
         if(!isset($archiveID) || !isset($glacierJobID)) {
             $result = array(
@@ -144,13 +209,21 @@ switch($op) {
         // Archive description not found - Assign a random name
         if(is_null($fileName)) {
             $fileName = uniqid('archive_');
+            $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $fileName;
         } else {
             // Check if description can be used as file name - Assign a truncated file name otherwise
+            $destFilePathInfo = pathinfo($fileName);
+            
             // We use maximum 255 characters to maintain a compatibility on all file systems that can be used
-            $fileName = substr($fileName, 0, 255);
+            $fileName = substr($destFilePathInfo['basename'], 0, 255);
+
+            // Check what we have to do if full path is (supposed to be) stored or not
+            if($storeFullPath) {
+                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $destFilePathInfo['dirname'] . '/' . $fileName;
+            } else {
+                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $fileName;
+            }
         }
-        
-        $destPath = \OC_User::getHome($OCUserName) . '/files/' . $fileName;
         
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileDownload');
@@ -232,7 +305,7 @@ switch($op) {
         $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
 
-        $jobIDs = json_decode($jobIDsJSON);
+        $jobIDs = json_decode($jobIDsJSON, TRUE);
         
         // Check for right format of jobid
         if(!is_array($jobIDs)) {
@@ -310,7 +383,7 @@ switch($op) {
     case 'resetJobStatus': {
         $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
 
-        $jobIDs = json_decode($jobIDsJSON);
+        $jobIDs = json_decode($jobIDsJSON, TRUE);
         
         // Check for right format of jobid
         if(!is_array($jobIDs)) {
@@ -378,7 +451,7 @@ switch($op) {
     case 'removeJob': {
         $jobIDsJSON = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
 
-        $jobIDs = json_decode($jobIDsJSON);
+        $jobIDs = json_decode($jobIDsJSON, TRUE);
         
         // Check for right format of jobid
         if(!is_array($jobIDs)) {
