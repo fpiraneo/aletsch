@@ -88,4 +88,7 @@ if($errStatus) {
     $tpl->assign('allVaultsSize', $vaultHandler->getAllVaultSize());
 }
 
+// Retrieve archives list
+$tpl->assign('storedArchivesList', array());
+
 $tpl->printPage();

@@ -564,7 +564,6 @@ class aletsch {
      */
     function cleanupArchiver() {
         $this->archiver = array();
-        unset($this->archiver);
     }
 	
 	/**
@@ -632,6 +631,9 @@ class aletsch {
 	
 	/**
 	 * Execute a new archiver operation
+         * @param String $vaultName Vault name to archive the generated files
+         * @param String $archiveName Name of the archive - Used as prefix of the files
+         * @param Strong $progressFile Path to progress file
 	 */
 	function archive($vaultName, $archiveName, $progressFile = NULL) {
             // Check if we have files on archiver

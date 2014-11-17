@@ -19,9 +19,13 @@
  */
 
 OC::$CLASSPATH['OCA\aletsch\aletsch'] = 'aletsch/libs/aletsch.php';
-OC::$CLASSPATH['OCA\aletsch\credentialsHandler'] = 'aletsch/libs/dataHandler.php';
-OC::$CLASSPATH['OCA\aletsch\inventoryHandler'] = 'aletsch/libs/dataHandler.php';
-OC::$CLASSPATH['OCA\aletsch\spoolerHandler'] = 'aletsch/libs/dataHandler.php';
-OC::$CLASSPATH['OCA\aletsch\vaultHandler'] = 'aletsch/libs/dataHandler.php';
+
+OC::$CLASSPATH['OCA\aletsch\credentialsHandler'] = 'aletsch/libs/credentialsHandler.php';
+OC::$CLASSPATH['OCA\aletsch\inventoryHandler'] = 'aletsch/libs/inventoryHandler.php';
+OC::$CLASSPATH['OCA\aletsch\spoolerHandler'] = 'aletsch/libs/spoolerHandler.php';
+OC::$CLASSPATH['OCA\aletsch\vaultHandler'] = 'aletsch/libs/vaultHandler.php';
+OC::$CLASSPATH['OCA\aletsch\archivesHandler'] = 'aletsch/libs/archivesHandler.php';
+OC::$CLASSPATH['OCA\aletsch\storedArchives'] = 'aletsch/libs/archivesHandler.php';
+
 OC::$CLASSPATH['OCA\aletsch\utilities'] = 'aletsch/libs/utilities.php';
 OC::$CLASSPATH['OCA\aletsch\cron\spooler'] = 'aletsch/cron/spooler.php';

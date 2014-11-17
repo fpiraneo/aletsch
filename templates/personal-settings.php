@@ -58,11 +58,18 @@
             </table>
             
         </form>
-        <div style="padding-bottom: 15px;">
-            <label for="aletsch_downloadDir"><?php p($l->t('Download directory:')) ?></label>
-            <input id="aletsch_downloadDir" name="downloadDir" style="width:300px;" value="<?php p($_['downloadDir']) ?>" />
-        </div>
         
+        <table style="padding-bottom: 15px;">
+            <tr>
+                <td style="padding-right: 5px; text-align: right;"><?php p($l->t('Download directory:')) ?></td>
+                <td><input id="aletsch_downloadDir" name="downloadDir" style="width:300px;" value="<?php p($_['downloadDir']) ?>" /></td>
+            </tr>
+            <tr>
+                <td style="padding-right: 5px; text-align: right;"><?php p($l->t('Archiver directory:')) ?></td>
+                <td><input id="aletsch_archiverDir" name="archiverDir" style="width:300px;" value="<?php p($_['archiverDir']) ?>" /></td>
+            </tr>
+        </table>
+                
         <div>
             <input type="checkbox" id="aletsch_storeFullPath" name="storeFullPath" <?php p($_['storeFullPath']) ?> />
             <label for="aletsch_storeFullPath"><?php p($l->t('Store (and recover!) full path in archive description')) ?></label>

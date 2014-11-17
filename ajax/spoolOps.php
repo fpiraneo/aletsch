@@ -500,6 +500,57 @@ switch($op) {
         break;
     }
     
+    case 'createArchive': {
+        $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
+        $archiveDescr = filter_input(INPUT_POST, 'archiveDescr', FILTER_SANITIZE_STRING);
+        $immediateRelease = filter_input(INPUT_POST, 'immediateRelease', FILTER_SANITIZE_NUMBER_INT);
+        $JSONfilesPath = filter_input(INPUT_POST, 'filesPath', FILTER_UNSAFE_RAW);
+        $filesPath = json_decode($JSONfilesPath, TRUE);
+
+        // Check if array passed as files path
+        if(!is_array($filesPath)) {
+            $result = array(
+                'opResult' => 'KO',
+                'opData' => array(),
+                'errData' => array(
+                    'exCode' => 'AletschParamError',
+                    'exMessage' => 'File path not set'
+                )
+            );
+
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+
+            die(json_encode($result));
+        }
+        
+        // Generate an archive name - The actual date and time
+        $archiveName = date('Ymd-His');
+        
+        $instructions = array(
+            'OCUserName' => $OCUserName,
+            'archiveName' => $archiveName,
+            'archiveDescr' => $archiveDescr,
+            'immediateRelease' => $immediateRelease,
+            'files' => $filesPath
+        );
+        
+        $instructionsFilePath = sys_get_temp_dir() . uniqid('/aletsch_instructions_');
+        file_put_contents($instructionsFilePath, json_encode($instructions));
+
+        // New spooler handler instance
+        $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
+        $jobID = $spoolerHandler->newJob('newArchive');
+        
+        $jobParameters = array(
+            'instructionsFilePath' => $instructionsFilePath,
+            'immediateRelease' => $immediateRelease,
+            'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_')
+        );
+        $spoolerHandler->setJobData($jobID, json_encode($jobParameters));
+        
+        break;
+    }
+    
     // Unrecognised operation fallback
     default: {
         $result['opResult'] = 'KO';

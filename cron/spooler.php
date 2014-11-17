@@ -73,6 +73,7 @@ class spooler {
         
         switch($jobData['jobtype']) {
             case 'fileUpload': {
+                $command = 'startjob';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
                     'username' => $credentials->getUsername(),
@@ -86,6 +87,7 @@ class spooler {
             }
             
             case 'fileDownload': {
+                $command = 'startjob';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
                     'username' => $credentials->getUsername(),
@@ -97,12 +99,22 @@ class spooler {
                 );
                 break;
             }
+            
+            case 'newArchive': {
+                $command = 'createArchive';
+                $parameters = array(
+                    'instructionsFilePath' => $jobDataDetails['instructionsFilePath'],
+                    'statusPath' => $jobDataDetails['statusPath']
+                );
+                
+                break;
+            }
         }
         
         $commandLineArgs = implode(' ', $parameters);
         
-        $command = "php -f " . __DIR__ . sprintf("/startjob.php %s", $commandLineArgs);
-        $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $command));
+        $shellCmd = "php -f " . __DIR__ . sprintf("/%s.php %s", $command, $commandLineArgs);
+        $pid = exec(sprintf('%s > /dev/null 2>&1 & echo $!', $shellCmd));
         
         $spooler->setJobStatus($jobData['jobid'], 'running');
         $spooler->setJobDiagnostic($jobData['jobid'], 'Started');

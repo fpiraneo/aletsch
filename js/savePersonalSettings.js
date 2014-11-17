@@ -29,12 +29,17 @@ $(function() {
         saveParameters();
     });
 
+    $("#aletsch_archiverDir").blur(function() {
+        saveParameters();
+    });
+
     $("#aletsch_storeFullPath").click(function() {
         saveParameters();
     });
 
     function saveParameters() {
         var downloadDir = $("#aletsch_downloadDir").val();
+        var archiverDir = $("#aletsch_archiverDir").val();
         var v_storeFullPath = ($('#aletsch_storeFullPath').is(":checked")) ? 1 : 0;
         
         $.ajax({
@@ -45,6 +50,7 @@ $(function() {
             data: {
                 credentials: 0,
                 downloadDir: downloadDir,
+                archiverDir: archiverDir,
                 storeFullPath: v_storeFullPath
             },
 

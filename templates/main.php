@@ -33,6 +33,7 @@ $l = new \OC_L10N('aletsch');
             <ul>
                 <li><a href="#tabSpooler"><?php p($l->t('Spooler')) ?></a></li>
                 <li><a href="#tabArchiver"><?php p($l->t('Archiver')) ?></a></li>
+                <li><a href="#tabUnarchiver"><?php p($l->t('Unarchiver')) ?></a></li>
                 <li><a href="#tabInventory"><?php p($l->t('Inventory')) ?></a></li>
                 <li><a href="#tabJobList"><?php p($l->t('Jobs list')) ?></a></li>
             </ul>
@@ -56,7 +57,7 @@ $l = new \OC_L10N('aletsch');
             </div>
 
             <div id="tabArchiver" style="text-align: left;">
-                <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px;">
+                <div style="text-align: left; border: 1px solid darkgray; padding-left: 5px; background-color: lightgray; margin-bottom: 1px;">
                     <button id="btnSelectAll"><?php p($l->t('Select all')) ?></button>
                     <button id="btnUnselectAll"><?php p($l->t('Unselect all')) ?></button>
                     <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
@@ -65,12 +66,12 @@ $l = new \OC_L10N('aletsch');
                     <button id="btnSendToVault" disabled="disabled"><?php p($l->t('Send to vault')) ?></button>
                     <div id="aletsch_actualSelection" style="float: right; background-color: lightgray; padding: 5px;">&nbsp;</div>
                 </div>
-                <table id="archiverTree" class="aletsch_resultTable">
+                <table id="archiverTree" class="aletsch_archiverTree">
                     <colgroup>
-                        <col width="30px"></col>
-                        <col width="*"></col>
-                        <col width="*"></col>
-                        <col width="*"></col>
+                        <col style="width:30px;" />
+                        <col />
+                        <col style="width:200px;" />
+                        <col style="width:100px;" />
                     </colgroup>
                     <thead>
                         <tr>
@@ -89,6 +90,63 @@ $l = new \OC_L10N('aletsch');
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div id="tabUnarchiver" style="text-align: left;">
+                <?php
+                    if(count($_['storedArchivesList']) == 0) {
+                            print '<div id="noArchives" class="aletsch_noArchives">';
+                            p($l->t('No archives stored on data base.'));
+                            print '</div>';
+                    } else {
+                ?>
+                            <div style="text-align: left; border: 1px solid darkgray; padding-left: 5px; background-color: lightgray; margin-bottom: 1px;">
+                                <button id="btnUnarchSelectAll" disabled="disabled"><?php p($l->t('Select all')) ?></button>
+                                <button id="btnUnarchUnselectAll" disabled="disabled"><?php p($l->t('Unselect all')) ?></button>
+                                <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
+                                <button id="btnRestore" disabled="disabled"><?php p($l->t('Restore')) ?></button>
+                                <div id="aletsch_actualUnarchSelection" style="float: right; background-color: lightgray; padding: 5px;">&nbsp;</div>
+                            </div>
+                
+                            <div style="width:100%">
+                                <div class="aletsch-archivesList" style="width: 20%;">
+                                    <div id="aletsch-archivesList">
+                                        <div> <?php p($l->t('Stored archives')); ?> </div>
+
+                                        <?php print \OCA\aletsch\utilities::prepareStoredArchivesList(array()); ?>
+                                    </div>
+                                </div>
+
+                                <div style="width: 80%;">
+                                    <table id="unarchiverTree" class="aletsch_archiverTree">
+                                        <colgroup>
+                                            <col style="width:30px;" />
+                                            <col />
+                                            <col style="width:200px;" />
+                                            <col style="width:100px;" />
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th><?php p($l->t('File name')); ?></th>
+                                                <th><?php p($l->t('Mime type')); ?></th>
+                                                <th><?php p($l->t('Size')); ?></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                <?php
+                    }
+                ?>
             </div>
 
             <div id="tabJobList">
@@ -143,4 +201,18 @@ $l = new \OC_L10N('aletsch');
     <p>
         <input type="checkbox" id="aletsch_immediateRelease" /> <label for="aletsch_immediateRelease"><?php p($l->t('Immediate release of file sending')); ?></label>
     </p>
+</div>
+
+<!-- Create a new archive -->
+<div id="aletsch_createArchivesDlog" title="<?php p($l->t('Create new aletsch archive')) ?>">
+    <p>
+        <?php p($l->t('Vault name: ')); print \OCA\aletsch\utilities::prepareVaultSelect('aletsch_sendArchivesToVault', NULL, NULL, '') ?>
+    </p>
+    <p>
+        <input type="checkbox" id="aletsch_immediateArchiveRelease" /> <label for="aletsch_immediateArchiveRelease"><?php p($l->t('Immediate release of archive sending')); ?></label>
+    </p>
+    <div style="margin-top: 10px;">
+        <?php p($l->t('Description: ')); ?><br />
+        <textarea id="aletsch_archiveDescription" style="width:300px; height:100px;"></textarea>
+    </div>
 </div>

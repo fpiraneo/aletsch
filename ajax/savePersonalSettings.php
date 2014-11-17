@@ -45,10 +45,13 @@ if($credentials === 1) {
     $downloadDir = filter_input(INPUT_POST, 'downloadDir', FILTER_SANITIZE_STRING);
     $result[0] = OCP\Config::setAppValue('aletsch', 'downloadDir', $downloadDir);
     
-    $storeFullPath = filter_input(INPUT_POST, 'storeFullPath', FILTER_SANITIZE_STRING);
-    $result[1] = OCP\Config::setAppValue('aletsch', 'storeFullPath', $storeFullPath);
+    $archiverDir = filter_input(INPUT_POST, 'archiverDir', FILTER_SANITIZE_STRING);
+    $result[1] = OCP\Config::setAppValue('aletsch', 'archiverDir', $archiverDir);
     
-    echo $result[0] && $result[1] ? 'OK' : 'KO';
+    $storeFullPath = filter_input(INPUT_POST, 'storeFullPath', FILTER_SANITIZE_STRING);
+    $result[2] = OCP\Config::setAppValue('aletsch', 'storeFullPath', $storeFullPath);
+    
+    echo $result[0] && $result[1] && $result[2] ? 'OK' : 'KO';
 }
 
 

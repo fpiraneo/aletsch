@@ -247,8 +247,15 @@
             </field>
 
             <field>
+                <name>vaultarn</name>
+                <type>text</type>
+                <notnull />
+                <length>255</length>
+            </field>
+
+            <field>
                 <name>archivedate</name>
-                <type>timestamp</type>
+                <type>datetime</type>
             </field>
 
             <field>

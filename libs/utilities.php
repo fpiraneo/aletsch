@@ -329,6 +329,31 @@ class utilities {
     }
     
     /**
+     * Prepare the stored archives accordion list
+     * @param Array $archivesData Stored archives details
+     */
+    public static function prepareStoredArchivesList($archivesData = array()) {
+        // Handle translations
+        $l = new \OC_L10N('aletsch');
+
+        if(count($archivesData) === 0) {
+            $result = '';
+        } else {
+            $result = '';
+            
+            foreach($archivesData as $archiveID => $archiveData) {
+                $result .= '<h3 data-archiveid="' . $archiveID . '">' . $archiveData['archivedate'] . '</h3>';
+                $result .= '<div>';
+                $result .= '<p><strong>' . $l->t('Description') . '</strong></p>';
+                $result .= '<p><textarea id="descr-' . $archiveID . '">' . $archiveData['archivedescr'] . '</textarea>';
+                $result .= '</div>';
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
      * Prepare the html job list for a vault
      * @param Array $jobList
      * @return string
@@ -427,11 +452,11 @@ class utilities {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
             if($insertCheckBoxes) {
-                $result .= '<th><input type=\'checkbox\' id=\'aletsch_selectAllArchives\' /></th>';
+                $result .= '<th style="width: 15px;"><input type=\'checkbox\' id=\'aletsch_selectAllArchives\' /></th>';
             }
             $result .= '<th>' . $l->t('Description') . '</th>';
-            $result .= '<th>' . $l->t('Creation date') . '</th>';
-            $result .= '<th>' . $l->t('Size') . '</th>';
+            $result .= '<th style="width: 200px;">' . $l->t('Creation date') . '</th>';
+            $result .= '<th style="width: 100px;">' . $l->t('Size') . '</th>';
             $result .= '</tr>';
 
             foreach($archivesList as $entry) {
@@ -476,13 +501,12 @@ class utilities {
             $result = '<table class=\'aletsch_resultTable\'>';
             $result .= '<tr>';
             if($insertCheckBoxes) {
-                $result .= '<th><input type=\'checkbox\' id=\'aletsch_selectAllSpoolJobs\' /></th>';
+                $result .= '<th style="width: 15px;"><input type=\'checkbox\' id=\'aletsch_selectAllSpoolJobs\' /></th>';
             }
-            $result .= '<th>' . $l->t('Vault') . '</th>';
-            $result .= '<th>' . $l->t('Type') . '</th>';
-            $result .= '<th>' . $l->t('Status') . '</th>';
-            $result .= '<th>' . $l->t('Data') . '</th>';
-            $result .= '<th>' . $l->t('Diagnostic') . '</th>';
+            $result .= '<th style="width: 200px;">' . $l->t('Vault') . '</th>';
+            $result .= '<th style="width: 100px;">' . $l->t('Type') . '</th>';
+            $result .= '<th style="width: 100px;">' . $l->t('Status') . '</th>';
+            $result .= '<th style="width: 400px;">' . $l->t('Data') . '</th>';
             $result .= '</tr>';
 
             foreach($spooler as $jobid => $jobData) {
@@ -497,20 +521,21 @@ class utilities {
 
                 $action = ($insertCheckBoxes) ? sprintf("<td><input type='checkbox' id='%s' class='spoolJobSelection' data-spooljobid='%s' /></td>", uniqid("aletsch_"), $jobid) : '';
                 
-                // Prepare vaults select
-                $vaultAction = \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']);
-                
                 $filePaths = json_decode($jobData['jobdata'], TRUE);
+                $filePath = wordwrap($filePaths['filePath'], 60, '<br />');
                 $status = ($jobData['jobstatus'] === 'running') ? 'Running ' . $jobData['jobstarted'] : $jobData['jobstatus'];
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $action, $vaultAction, $jobData['jobtype'], $status, $filePaths['filePath'], $jobData['jobdiagnostic']);
+                $hint = $jobData['jobdiagnostic'];
+                $vaultAction = ($status === 'hold') ? \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']) : \OCA\aletsch\aletsch::explodeARN($jobData['vaultarn'], TRUE);
+                
+                $result .= sprintf("<tr title=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $hint, $action, $vaultAction, $jobData['jobtype'], $status, $filePath);
             }
             
-            $result .= '</table>';
+            $result .= '</table></div>';
         }
         
         return $result;
     }
-    
+        
     /**
      * Prepare the vault select with the provided ID
      * @param string $selectID Select ID
