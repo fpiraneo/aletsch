@@ -525,7 +525,7 @@ class utilities {
                 $filePath = wordwrap($filePaths['filePath'], 60, '<br />');
                 $status = ucfirst($jobData['jobstatus']);
                 $hint = $jobData['jobstarted'] . ' - ' . $jobData['jobdiagnostic'];
-                $vaultAction = ($status === 'hold') ? \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']) : \OCA\aletsch\aletsch::explodeARN($jobData['vaultarn'], TRUE);
+                $vaultAction = ($jobData['jobstatus'] === 'hold') ? \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']) : \OCA\aletsch\aletsch::explodeARN($jobData['vaultarn'], TRUE);
                 
                 $result .= sprintf("<tr title=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $hint, $action, $vaultAction, $jobData['jobtype'], $status, $filePath);
             }

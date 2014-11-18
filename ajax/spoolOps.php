@@ -118,6 +118,7 @@ switch($op) {
         $filesPath = json_decode($jsonPaths, TRUE);
         $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
         $immediateRelease = filter_input(INPUT_POST, 'immediateRelease', FILTER_SANITIZE_NUMBER_INT);
+        $compressFile = filter_input(INPUT_POST, 'compression', FILTER_SANITIZE_NUMBER_INT);
 
         // Check if array passed as files path
         if(!is_array($filesPath)) {
@@ -150,6 +151,7 @@ switch($op) {
                 'filePath' => $filePath,
                 'localPath' => $localPath,
                 'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_'),
+                'compressFile' => $compressFile,
                 'description' => $description
             );
             $spoolerHandler->setJobData($jobID, json_encode($jobData));

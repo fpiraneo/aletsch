@@ -74,7 +74,7 @@ class spooler {
         
         switch($jobData['jobtype']) {
             case 'fileUpload': {
-                $command = 'startjob';
+                $command = 'fileuploaddownload';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
                     'username' => escapeshellarg($credentials->getUsername()),
@@ -82,13 +82,14 @@ class spooler {
                     'vaultarn' => escapeshellarg($jobData['vaultarn']),
                     'localPath' => escapeshellarg($jobDataDetails['localPath']),
                     'statusPath' => escapeshellarg($jobDataDetails['statusPath']),
-                    'description' => escapeshellarg($jobDataDetails['description'])
+                    'description' => escapeshellarg($jobDataDetails['description']),
+                    'compressFile' => $jobDataDetails['compressFile']
                 );
                 break;
             }
             
             case 'fileDownload': {
-                $command = 'startjob';
+                $command = 'fileuploaddownload';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
                     'username' => escapeshellarg($credentials->getUsername()),
@@ -98,21 +99,6 @@ class spooler {
                     'destPath' => escapeshellarg($jobDataDetails['destPath']),
                     'statusPath' => escapeshellarg($jobDataDetails['statusPath'])
                 );
-                break;
-            }
-            
-            case 'newArchive': {
-                $command = 'createArchive';
-                $parameters = array(
-                    'jobtype' => $jobData['jobtype'],
-                    'username' => $credentials->getUsername(),
-                    'password' => $credentials->getPassword(),
-                    'vaultarn' => $jobData['vaultarn'],
-                    'instructionsFilePath' => $jobDataDetails['instructionsFilePath'],
-                    'statusPath' => $jobDataDetails['statusPath'],
-                    'immediateUpload' => $jobDataDetails['immediateRelease']
-                );
-                
                 break;
             }
         }
@@ -162,9 +148,6 @@ class spooler {
                     // Close old job
                     $spooler->setJobPID($runningJob['jobid'], 0);
                     
-                    // Check for job type and for additional actions to perform
-                    \OCA\aletsch\cron\spooler::finalizeJob($runningJob, $progress);
-                    
                     // Remove status file
                     unlink($filePaths['statusPath']);
 
@@ -190,20 +173,7 @@ class spooler {
                 \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
             }
         }
-    }
-    
-    public static function finalizeJob($jobData, $statusData) {
-        switch($jobData['jobtype']) {
-            case 'newArchive': {
-                // Get the catalog and store all informations on DB
-                $catalog = $statusData['catalog']['catalog'];
-                
-                //TODO - Save all on DB!! -- Define classes
-                
-                break;
-            }
-        }
-    }
+    }    
 }
 
 

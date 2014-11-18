@@ -53,14 +53,6 @@ if(trim($downloadDir) === '') {
 }
 $tmpl->assign('downloadDir', $downloadDir);
 
-// Default archiver directory - Where archiver will puth it's temp files
-$archiverDir = OCP\Config::getAppValue('aletsch', 'archiverDir');
-if(trim($archiverDir) === '') {
-    $archiverDir = 'aletsch archives';
-    OCP\Config::setAppValue('aletsch', 'archiverDir', $archiverDir);
-}
-$tmpl->assign('archiverDir', $archiverDir);
-
 // Store full path on archive's description
 $storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
 $tmpl->assign('storeFullPath', ($storeFullPath === 1) ? 'checked="checked"' : '');

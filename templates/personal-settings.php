@@ -64,10 +64,6 @@
                 <td style="padding-right: 5px; text-align: right;"><?php p($l->t('Download directory:')) ?></td>
                 <td><input id="aletsch_downloadDir" name="downloadDir" style="width:300px;" value="<?php p($_['downloadDir']) ?>" /></td>
             </tr>
-            <tr>
-                <td style="padding-right: 5px; text-align: right;"><?php p($l->t('Archiver directory:')) ?></td>
-                <td><input id="aletsch_archiverDir" name="archiverDir" style="width:300px;" value="<?php p($_['archiverDir']) ?>" /></td>
-            </tr>
         </table>
                 
         <div>

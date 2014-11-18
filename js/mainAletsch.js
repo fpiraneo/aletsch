@@ -1,7 +1,6 @@
 $('document').ready(function() {
     var selectedArchives = [];
     var selectedArchiverFiles = [];
-    var selectedUnarchiverFiles = [];
 
     refreshSpoolList();
     
@@ -59,62 +58,6 @@ $('document').ready(function() {
         }
     });
     
-    $("#unarchiverTree").fancytree({
-        source: {
-            url: OC.filePath('aletsch', 'ajax', 'getCloudFiles.php')
-        },
-
-        checkbox: true,
-        selectMode: 3,
-        extensions: ["table"],
-        
-        table: {
-            indentation: 20,      // indent 20px per node level
-            nodeColumnIdx: 1,     // render the node title into the 2nd column
-            checkboxColumnIdx: 0  // render the checkboxes into the 1st column
-        },
-        
-        renderColumns: function(event, data) {
-            var node = data.node,
-            tdList = $(node.tr).find(">td");
-            tdList.eq(0).addClass('aletsch_resultTable_center');
-            tdList.eq(1).addClass('aletsch_resultTable_left');
-            tdList.eq(2).text(node.data.mime).addClass('aletsch_resultTable_center');
-            tdList.eq(3).text(node.data.size).addClass('aletsch_resultTable_right');
-        },
-        
-        select: function(event, data) {
-            var selectedNodes = data.tree.getSelectedNodes();
-            var filesNum = 0;
-            var folderNum = 0;
-            var totSize = 0;
-            selectedUnarchiverFiles = [];
-            
-            for(i = 0; i < selectedNodes.length; i++) {
-                if(selectedNodes[i].data.mime.indexOf('directory') === -1) {
-                    filesNum++;
-                    totSize += parseInt(selectedNodes[i].data.rawSize);
-                    selectedUnarchiverFiles.push(selectedNodes[i].key);
-                } else {
-                    folderNum++;
-                }
-            }
-            
-            if(filesNum !== 0 || folderNum !== 0) {
-                var selectionData = t('aletsch', 'Selected: ') + filesNum.toString() + t('aletsch', ' files, ') + folderNum.toString() + t('aletsch', ' folders. Total size: ') + HRFileSize(totSize);
-                $("#aletsch_actualUnarchSelection").html(selectionData);
-                $("#btnUnarchSelectAll").button("option", "disabled", false);
-                $("#btnUnarchUnselectAll").button("option", "disabled", false);
-                $("#btnRestore").button("option", "disabled", false);
-            } else {
-                $("#aletsch_actualUnarchSelection").html('');
-                $("#btnUnarchSelectAll").button("option", "disabled", true);
-                $("#btnUnarchUnselectAll").button("option", "disabled", true);
-                $("#btnRestore").button("option", "disabled", true);
-            }
-        }
-    });
-
     $("#btnSelectAll")
         .button()
         .click(function() {
@@ -135,46 +78,12 @@ $('document').ready(function() {
             return false;
         });
 
-    $("#btnBuildArchive")
-        .button()
-        .click(function() {
-            createArchivesDlog.dialog("open");
-        });
-        
     $("#btnSendToVault")
         .button()
         .click(function() {
             sendArchivesDlog.dialog("open");
         });
         
-    $("#btnUnarchSelectAll")
-        .button()
-        .click(function() {
-            $("#unarchiverTree").fancytree("getTree").visit(function(node){
-                node.setSelected(true);
-            });
-            
-            return false;
-        });
-
-    $("#btnUnarchUnselectAll")
-        .button()
-        .click(function() {
-            $("#unarchiverTree").fancytree("getTree").visit(function(node){
-                node.setSelected(false);
-            });
-
-            return false;
-        });
-
-    $("#aletsch_actualUnarchSelection")
-        .button()
-        .click(function() {
-            window.alert("Restore files");
-        });
-        
-
-
     $("#aletsch_vaults").accordion({
         active: false,
         collapsible: true,
@@ -252,85 +161,7 @@ $('document').ready(function() {
             });
         }
     });
-    
-        $("#aletsch-archivesList").accordion({
-        active: false,
-        collapsible: true,
-        activate: function(event, ui) {
-            var selected = ui.newHeader.attr("data-vaultarn");
-            
-            if(typeof(selected) === "undefined") {
-                $("#inventoryContent").hide();
-                $("#noInventory").show();
-
-                $("#jobContent").hide();
-                $("#noJobs").show();
-
-                return;
-            } else {
-                $("#inventoryContent").show();
-                $("#noInventory").hide();
-
-                $("#jobContent").show();
-                $("#noJobs").hide();
-            }
-            
-            $("#aletsch_tabs").attr("data-actualarn", selected);
-            
-            $.ajax({
-                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
-
-                data: {
-                    op: 'getJobsList',
-                    vault: selected
-                },
-
-                type: "POST",
-
-                success: function(result) {
-                    var resultData = jQuery.parseJSON(result);
-
-                    if(resultData.opResult === 'OK') {
-                        $('#tabJobList').html(resultData.opData);
-                    } else {
-                        updateStatusBar(t('aletsch', 'Unable to get jobs list!'));
-                    }
-                },
-                error: function( xhr, status ) {
-                    updateStatusBar(t('aletsch', 'Unable to get jobs list! Ajax error!'));
-                }
-            });
-            
-            $.ajax({
-                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
-
-                data: {
-                    op: 'getInventory',
-                    vault: selected
-                },
-
-                type: "POST",
-
-                success: function(result) {
-                    var resultData = jQuery.parseJSON(result);
-
-                    if(resultData.opResult === 'OK') {
-                        var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
-                        var outdated = (resultData.opData.outdated === true) ? t('aletsch', 'Outdated') : '';
-                        $('#aletsch_inventoryDate').html(date);
-                        $('#aletsch_inventoryOutdated').html(outdated);
-                        $('#aletsch_archives').html(resultData.opData.archiveList);
-                    } else {
-                        updateStatusBar(t('aletsch', 'Unable to get inventory!'));
-                    }
-                },
-                error: function( xhr, status ) {
-                    updateStatusBar(t('aletsch', 'Unable to get inventory! Ajax error!'));
-                }
-            });
-        }
-    });
-    
+        
     $("#aletsch_tabs").tabs();
     
     $("#btnRefrInventory")
@@ -557,15 +388,16 @@ $('document').ready(function() {
     var sendArchivesDlog = $("#aletsch_sendArchivesDlog").dialog({
         autoOpen: false,
         resizable: false,
-        height: 175,
+        height: 185,
         width: 350,
         modal: true,
         buttons: {
             Ok: function() {
                 var destVault = $("#aletsch_sendToVault").val();
                 var immediateRelease = ($('#aletsch_immediateRelease').is(":checked")) ? 1 : 0;
+                var compressFile = ($('#aletsch_compression').is(":checked")) ? 1 : 0;
                 
-                addArchiverFilesToSpool(destVault, immediateRelease, selectedArchiverFiles);
+                addArchiverFilesToSpool(destVault, immediateRelease, compressFile, selectedArchiverFiles);
                 
                 $(this).dialog("close");
             },
@@ -580,38 +412,6 @@ $('document').ready(function() {
         }
     });
 
-    var createArchivesDlog = $("#aletsch_createArchivesDlog").dialog({
-        autoOpen: false,
-        resizable: false,
-        height: 320,
-        width: 350,
-        modal: true,
-        buttons: {
-            Ok: function() {
-                var destVault = $("#aletsch_sendArchivesToVault").val();
-                var immediateRelease = ($('#aletsch_immediateArchiveRelease').is(":checked")) ? 1 : 0;
-                var archiveDescription = $("#aletsch_archiveDescription").val();
-                
-                if(destVault !== 'EMPTY') {
-                    addCreateArchive(destVault, archiveDescription, immediateRelease, selectedArchiverFiles);
-                    $(this).dialog("close");
-                } else {
-                    window.alert(t('aletsch', 'Set the vault to download the archives to.'));
-                }
-            },
-            Cancel: function() {
-                $(this).dialog("close");
-            }
-        },
-        
-        close: function() {
-            $("#aletsch_sendArchivesToVault").val("EMPTY");
-            $("#aletsch_archiveDescription").val("");
-            $("#aletsch_immediateRelease").attr('checked', false);
-        }
-    });
-
-        
     $("#spoolerContent").on("click", "#aletsch_selectAllSpoolJobs", function(eventData) {
         var selected = eventData.target.checked;
         
@@ -894,7 +694,7 @@ function retrieveArchives(vaultARN, archivesID) {
     });
 }
 
-function addArchiverFilesToSpool(vaultARN, immediateRelease, archives) {
+function addArchiverFilesToSpool(vaultARN, immediateRelease, compressFile, archives) {
     $.ajax({
         url: OC.filePath('aletsch', 'ajax', 'spoolOps.php'),
 
@@ -902,6 +702,7 @@ function addArchiverFilesToSpool(vaultARN, immediateRelease, archives) {
             op: 'addBatchUploadOp',
             vaultARN: vaultARN,
             immediateRelease: immediateRelease,
+            compression: compressFile,
             filePath: JSON.stringify(archives) 
         },
 

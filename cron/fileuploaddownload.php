@@ -21,6 +21,37 @@
     require __DIR__ . '/../libs/aletsch.php';
     require __DIR__ . '/../libs/utilities.php';
 
+    function gzcompressfile($source, $level = FALSE) {
+        $dest = $source . '.gz';
+        $mode = 'wb' . $level;
+        $error = FALSE;
+
+        $fp_out = gzopen($dest, $mode);
+        if($fp_out) {
+            $fp_in = fopen($source,'rb');
+
+            if($fp_in) {
+                while(!feof($fp_in)) {
+                    gzwrite($fp_out, fread($fp_in, 1024 * 512));
+                }
+
+                fclose($fp_in);
+            } else {
+                $error = TRUE;
+            }
+
+            gzclose($fp_out);
+        } else {
+            $error = TRUE;
+        }
+
+        if($error) {
+            return FALSE;
+        } else {
+            return $dest;
+        }
+    }
+    
     // Right parameter combine
     switch($argv[1]) {
         // Upload a file
@@ -34,7 +65,8 @@
                 'vaultarn',
                 'localPath',
                 'statusPath',
-                'description'
+                'description',
+                'compressFile'
             );
 
             // Check for right parameter number
@@ -97,7 +129,12 @@
                 die();
             }
 
-            error_log(sprintf("fileUpload: [DEBUG ] localPath: %s, Description: %s", $clp['localPath'], $clp['description']));
+            error_log(sprintf("fileUpload: [DEBUG] localPath: %s, Description: %s", $clp['localPath'], $clp['description']));
+            
+            if($clp['compressFile']) {
+                error_log('fileUpload: [DEBUG] Compressing file - NOT YET IMPLEMENTED');
+            }
+            
             $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], $clp['description'], $clp['statusPath']);
             
             break;
