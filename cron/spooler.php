@@ -77,12 +77,12 @@ class spooler {
                 $command = 'startjob';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
-                    'username' => $credentials->getUsername(),
-                    'password' => $credentials->getPassword(),
-                    'vaultarn' => $jobData['vaultarn'],
-                    'localPath' => $jobDataDetails['localPath'],
-                    'statusPath' => $jobDataDetails['statusPath'],
-                    'description' => $jobDataDetails['description']
+                    'username' => escapeshellarg($credentials->getUsername()),
+                    'password' => escapeshellarg($credentials->getPassword()),
+                    'vaultarn' => escapeshellarg($jobData['vaultarn']),
+                    'localPath' => escapeshellarg($jobDataDetails['localPath']),
+                    'statusPath' => escapeshellarg($jobDataDetails['statusPath']),
+                    'description' => escapeshellarg($jobDataDetails['description'])
                 );
                 break;
             }
@@ -91,12 +91,12 @@ class spooler {
                 $command = 'startjob';
                 $parameters = array(
                     'jobtype' => $jobData['jobtype'],
-                    'username' => $credentials->getUsername(),
-                    'password' => $credentials->getPassword(),
-                    'vaultarn' => $jobData['vaultarn'],
+                    'username' => escapeshellarg($credentials->getUsername()),
+                    'password' => escapeshellarg($credentials->getPassword()),
+                    'vaultarn' => escapeshellarg($jobData['vaultarn']),
                     'jobid' => $jobDataDetails['jobID'],
-                    'destPath' => $jobDataDetails['destPath'],
-                    'statusPath' => $jobDataDetails['statusPath']
+                    'destPath' => escapeshellarg($jobDataDetails['destPath']),
+                    'statusPath' => escapeshellarg($jobDataDetails['statusPath'])
                 );
                 break;
             }
@@ -166,7 +166,7 @@ class spooler {
                     \OCA\aletsch\cron\spooler::finalizeJob($runningJob, $progress);
                     
                     // Remove status file
-                    //unlink($filePaths['statusPath']);
+                    unlink($filePaths['statusPath']);
 
                     // Check for next operation
                     \OCA\aletsch\cron\spooler::checkForNextOp($spooler);

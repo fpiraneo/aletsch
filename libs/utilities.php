@@ -523,8 +523,8 @@ class utilities {
                 
                 $filePaths = json_decode($jobData['jobdata'], TRUE);
                 $filePath = wordwrap($filePaths['filePath'], 60, '<br />');
-                $status = ($jobData['jobstatus'] === 'running') ? 'Running ' . $jobData['jobstarted'] : $jobData['jobstatus'];
-                $hint = $jobData['jobdiagnostic'];
+                $status = ucfirst($jobData['jobstatus']);
+                $hint = $jobData['jobstarted'] . ' - ' . $jobData['jobdiagnostic'];
                 $vaultAction = ($status === 'hold') ? \OCA\aletsch\utilities::prepareVaultSelect(NULL, 'jobid', $jobid, $jobData['vaultarn']) : \OCA\aletsch\aletsch::explodeARN($jobData['vaultarn'], TRUE);
                 
                 $result .= sprintf("<tr title=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $hint, $action, $vaultAction, $jobData['jobtype'], $status, $filePath);

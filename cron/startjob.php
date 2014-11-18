@@ -86,6 +86,13 @@
         case 'fileUpload': {
             // Check if the file can be accessed
             if(!is_file($clp['localPath'])) {
+                $progress = array(
+                    'status'    => 'error',
+                    'extStatus' => 'fileUpload: Unable to access file'
+                );
+
+                file_put_contents($clp['statusPath'], json_encode($progress));
+
                 error_log('fileUpload: Unable to access file: ' . $clp['localPath']);
                 die();
             }
@@ -104,6 +111,13 @@
             if($success) {
                 mkdir(dirname($clp['destPath']), 0755, TRUE);
                 copy($tempOutFile, $clp['destPath']);
+            } else {
+                $progress = array(
+                    'status'    => 'error',
+                    'extStatus' => 'fileDownload: Unable to download file'
+                );
+
+                file_put_contents($clp['statusPath'], json_encode($progress));                
             }
             
             unlink($tempOutFile);
