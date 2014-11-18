@@ -605,7 +605,7 @@ $('document').ready(function() {
         },
         
         close: function() {
-            $("#aletsch_sendToVault").val("EMPTY");
+            $("#aletsch_sendArchivesToVault").val("EMPTY");
             $("#aletsch_archiveDescription").val("");
             $("#aletsch_immediateRelease").attr('checked', false);
         }

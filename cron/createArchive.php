@@ -1,329 +1,166 @@
 <?php
-/*
- * Copyright 2014 by Francesco PIRANEO G. (fpiraneo@gmail.com)
- * 
- * This file is part of aletsch.
- * 
- * aletsch is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * aletsch is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
- */
+    /*
+     * Copyright 2014 by Francesco PIRANEO G. (fpiraneo@gmail.com)
+     * 
+     * This file is part of aletsch.
+     * 
+     * aletsch is free software: you can redistribute it and/or modify
+     * it under the terms of the GNU General Public License as published by
+     * the Free Software Foundation, either version 3 of the License, or
+     * (at your option) any later version.
+     * 
+     * aletsch is distributed in the hope that it will be useful,
+     * but WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     * GNU General Public License for more details.
+     * 
+     * You should have received a copy of the GNU General Public License
+     * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
+     */
 
-OCP\JSON::checkAppEnabled('aletsch');
-OCP\User::checkLoggedIn();
+    require __DIR__ . '/../libs/aletsch.php';
+    require __DIR__ . '/../libs/utilities.php';
 
-$op = filter_input(INPUT_POST, 'op', FILTER_SANITIZE_STRING);
-$vaultARN = filter_input(INPUT_POST, 'vault', FILTER_SANITIZE_URL);
-$newVaultName = filter_input(INPUT_POST, 'newVaultName', FILTER_SANITIZE_STRING);
+    $progress = array(
+        'pid'		=> getmypid(),
+        'offline'   	=> NULL,
+        'totalRead' 	=> 0,
+        'totalWritten'	=> 0,
+        'processedFiles'    => 0,
+        'fileRead'      => 0,
+        'totalFiles'	=> 1,
+        'thisFilePath'	=> '',
+        'thisFilePerc'	=> ''
+    );
 
-// Prepare result structure
-$result = array(
-    'opResult' => 'KO',
-    'opData' => array(),
-    'errData' => array(
-        'exCode' => '',
-        'exMessage' => ''
-    )
-);
 
-// If vault is not set, forfait
-if(!isset($vaultARN) && !isset($newVaultName)) {
-    $result['opResult'] = 'KO';
-    $result['errData']['exCode'] = 'AletschParamError';
-    $result['errData']['exMessage'] = 'Vault is not set';
-    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-    die(json_encode($result));
-}
+    // Right parameter combine
+    switch($argv[1]) {
+        // Upload a file
+        case 'newArchive': {
+            // Set arguments names
+            $argNames = array(
+                'cmdName',
+                'jobtype',
+                'username',
+                'password',
+                'vaultarn',
+                'instructionsFilePath',
+                'statusPath'
+            );
 
-$vaultName = \OCA\aletsch\aletsch::explodeARN($vaultARN, TRUE);
+            // Check for right parameter number
+            if($argc != count($argNames)) {
+                $progress = array(
+                    'status'    => 'error',
+                    'extStatus' => 'newArchive: Not enough parameters'
+                );
 
-// Open glacier's instance and select right operation
-// Retrieve accounts data
-$OCUserName = \OCP\User::getUser();
-$userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
+                file_put_contents($clp['statusPath'], json_encode($progress));
 
-$serverLocation = $userAccount->getServerLocation();
-$username = $userAccount->getUsername();
-$password = $userAccount->getPassword();
-
-$serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
-
-// Create instance to glacier
-$glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
-
-// Retrieve vaults list
-try {
-    $vaults = $glacier->vaultList();
-}
-catch(Aws\Glacier\Exception\GlacierException $ex) {
-    $result['opResult'] = 'KO';
-    $result['errData']['exCode'] = $ex->getExceptionCode();
-    $result['errData']['exMessage'] = $ex->getMessage();
-    
-    \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-
-    die(json_encode($result));
-}
-
-// Update stored vault data
-$userCredID = $userAccount->getCredID();
-$vaultHandler = new \OCA\aletsch\vaultHandler($userCredID);
-$vaultHandler->update($vaults);
-
-//
-// Action switcher
-//
-switch($op) {
-    // Get vaults list
-    case 'vaultList': {
-        // Retrieve vaults list
-        try {
-            $vaults = $glacier->vaultList();
-        }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $vaults;
-
-        die(json_encode($result));
-        
-        break;
-    }
-    
-    // Create new vault
-    case 'createVault': {
-        try {
-            $createNew = $glacier->createVault($newVaultName);
-        }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $createNew;
-
-        die(json_encode($result));
-        
-        break;
-    }
-    
-    // Create new vault
-    case 'deleteVault': {
-        try {
-            $deleteResult = $glacier->deleteVault($vaultName);
-        }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $deleteResult;
-
-        die(json_encode($result));
-        
-        break;
-    }
-    
-    // Refresh inventory
-    case 'refreshInventory': {
-        try {
-            $inventoryOpRes = $glacier->getInventory($vaultName);
-        }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $inventoryOpRes;
-
-        die(json_encode($result));
-        
-        break;
-    }
-    
-    // Get actual job list
-    case 'getJobsList': {
-        try {
-            $jobs = $glacier->listJobs($vaultName);
-        }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        $jobsTable = \OCA\aletsch\utilities::prepareJobList($jobs);
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $jobsTable;
-
-        die(json_encode($result));
-        break;
-    }
-    
-    // Get inventory from DB
-    case 'getInventory': {
-        $inventory = new \OCA\aletsch\inventoryHandler();
-        $inventoryID = $inventory->loadFromDB($vaultARN);
-        $lastGlacierInventoryDate = $vaultHandler->getLastInventory($vaultARN);
-        $lastDBInventoryDate = $inventory->getInventoryDate();
-        $inventoryDetails = array(
-            'date' => $inventory->getInventoryDate(),
-            'outdated' => ($lastGlacierInventoryDate !== $lastDBInventoryDate) && $lastDBInventoryDate !== NULL,
-            'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
-        );            
-
-        $result['opResult'] = 'OK';
-        $result['opData'] = $inventoryDetails;
-
-        die(json_encode($result));
-
-        break;
-    }
-    
-    // Get inventory from glacier
-    case 'getInventoryResult': {
-        $jobID = filter_input(INPUT_POST, 'jobid', FILTER_SANITIZE_STRING);
-
-        // If jobid is not set, forfait
-        if(!isset($jobID)) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = 'AletschParamError';
-            $result['errData']['exMessage'] = 'Job ID is not set';
-
-            die(json_encode($result));
-        }        
-        
-        try {
-            $tmpFilePath = tempnam(sys_get_temp_dir(), uniqid('/aletsch_'));
-            $inventoryData = $glacier->getInventoryResult($vaultName, $jobID, $tmpFilePath);
-        }
-        catch (Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
-
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
-        }
-        
-        // Get credentials ID of this user
-        $OCUserName = \OCP\User::getUser();
-        $credentials = new \OCA\aletsch\credentialsHandler($OCUserName);
-        $credentials->load();
-        $credID = $credentials->getCredID();
-        
-        // Save this inventory on DB
-        $inventory = new \OCA\aletsch\inventoryHandler();
-        $inventory->setDataFromInventory($inventoryData);
-        $inventory->saveOnDB($credID);
-        
-        $inventoryDetails = array(
-            'date' => $inventory->getInventoryDate(),
-            'archives' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
-        );
-
-        $result['opResult'] = 'OK';
-        $result['opData'] = $inventoryDetails;
-
-        die(json_encode($result));
-    }
-    
-    // Delete archives
-    case 'deleteArchives': {
-        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);
-        
-        foreach($archives as $archiveID) {
-            $result = $glacier->deleteArchive($vaultName, $archiveID);
-        }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = '';
-
-        die(json_encode($result));
-
-        break;
-    }
-    
-    // Retrieve archives
-    case 'retrieveArchives': {
-        $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);
-
-        try {
-            foreach($archives as $archiveID) {
-                $retrieveOpRes = $glacier->retrieveArchive($vaultName, $archiveID);
+                error_log('newArchive: Not enough parameters - Passed:' . $argc . ', required: ' . count($argNames) . ' - List: ' . implode(',', $argv));
+                die();
             }
+
+            break;
         }
-        catch(Aws\Glacier\Exception\GlacierException $ex) {
-            $result['opResult'] = 'KO';
-            $result['errData']['exCode'] = $ex->getExceptionCode();
-            $result['errData']['exMessage'] = $ex->getMessage();
 
-            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
-    
-            die(json_encode($result));
+        default: {
+            $progress = array(
+                'status'    => 'error',
+                'extStatus' => 'Invalid option for jobType: ' . $argv[1]
+            );
+
+            file_put_contents($clp['statusPath'], json_encode($progress));
+
+            error_log('Invalid option for jobType: ' . $argv[1]);
+            die();
+            break;
         }
-        
-        $result['opResult'] = 'OK';
-        $result['opData'] = $retrieveOpRes;
-
-        die(json_encode($result));
-        
-        break;
     }
-    
-    // Unrecognised operation fallback
-    default: {
-        $result['opResult'] = 'KO';
-        $result['errData']['exCode'] = 'AletschParamError';
-        $result['errData']['exMessage'] = 'Unrecognized operation';
 
-        \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'] . ': ' . $op, 0);
-    
-        die(json_encode($result));
+    $clp = array_combine($argNames, $argv);
 
-        break;
+    // Instance to aletsch
+    $vaultData = \OCA\aletsch\aletsch::explodeARN($clp['vaultarn']);
+    $glacier = new \OCA\aletsch\aletsch($vaultData['serverLocation'], $clp['username'], $clp['password']);
+    
+    switch($clp['jobtype']) {
+        // Upload a file
+        case 'newArchive': {
+            // Check if the file can be accessed
+            if(!is_file($clp['instructionsFilePath'])) {
+                $progress = array(
+                    'status'    => 'error',
+                    'extStatus' => 'newArchive: Unable to access file: ' . $clp['instructionsFilePath']
+                );
+                
+                file_put_contents($clp['statusPath'], json_encode($progress));
+                
+                error_log('newArchive: Unable to access file: ' . $clp['instructionsFilePath']);
+                die();
+            }
+
+            // Reverts parameters from instruction file
+            $instructionsJSON = file_get_contents($clp['instructionsFilePath']);
+            $instructions = json_decode($instructionsJSON, TRUE);
+            
+            // Create a new archiver and add all files
+            $vaultData = \OCA\aletsch\aletsch::explodeARN($clp['vaultarn']);
+            $glacier = new \OCA\aletsch\aletsch($vaultData['serverLocation'], $clp['username'], $clp['password']);
+            
+            $glacier->cleanupArchiver();
+            
+            foreach($instructions['files'] as $pathToAdd) {
+                $fileID = $glacier->addFileToArchiver($pathToAdd);
+                
+                if($fileID === FALSE) {
+                    $progress = array(
+                        'status'            => 'error',
+                        'extStatus'         => 'Unable to access file ' . $pathToAdd . ' while addFileToArchiver.'
+                    );
+
+                    file_put_contents($clp['statusPath'], json_encode($progress));
+
+                    // We are compelled to log to php log because we don't have the ownCloud context
+                    error_log('aletsch - ' . $progress['extStatus']);
+                    
+                    die();
+                }
+            }
+            
+            // Create the archive
+            try {
+                $summary = $glacier->archive($vaultData['vaultName'], $instructions['archiveName'], $clp['statusPath']);
+            }
+            catch(Aws\Glacier\Exception\GlacierException $ex) {
+                $progress = array(
+                    'status'            => 'error',
+                    'extStatus'         => $ex->getExceptionCode() . ' - ' . $ex->getMessage()
+                );
+                
+                file_put_contents($clp['statusPath'], json_encode($progress));
+
+                // We are compelled to log to php log because we don't have the ownCloud context
+                error_log('aletsch - ' . $exCode . ' - ' . $exMessage);
+
+                die();
+            }
+            
+            // Check for good result
+            if($summary === FALSE) {
+                die();
+            }
+
+            // Unlink instruction file
+            unlink($clp['instructionsFilePath']);
+            
+            // Save summary in status file
+            $statusJSON = file_get_contents($clp['statusPath']);
+            $status = json_decode($statusJSON, TRUE);
+            $status['summary'] = $summary;
+            file_put_contents($clp['statusPath'], json_encode($summary));
+
+            break;
+        }
     }
-}
-

@@ -20,7 +20,8 @@
 
 namespace OCA\aletsch\cron;
 
-include __DIR__ . '/../libs/dataHandler.php';
+include __DIR__ . '/../libs/spoolerHandler.php';
+include __DIR__ . '/../libs/credentialsHandler.php';
 
 class spooler {
     public static function run() {
@@ -103,6 +104,10 @@ class spooler {
             case 'newArchive': {
                 $command = 'createArchive';
                 $parameters = array(
+                    'jobtype' => $jobData['jobtype'],
+                    'username' => $credentials->getUsername(),
+                    'password' => $credentials->getPassword(),
+                    'vaultarn' => $jobData['vaultarn'],
                     'instructionsFilePath' => $jobDataDetails['instructionsFilePath'],
                     'statusPath' => $jobDataDetails['statusPath']
                 );
@@ -140,7 +145,18 @@ class spooler {
                     break;
                 }
                 
-                case 'abort':
+                case 'error': {
+                    // Close old job
+                    $spooler->setJobPID($runningJob['jobid'], 0);
+                    
+                    // Remove status file
+                    unlink($filePaths['statusPath']);
+
+                    // Check for next operation
+                    \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+
+                    break;
+                }
                 case 'completed': {
                     // Close old job
                     $spooler->setJobPID($runningJob['jobid'], 0);
@@ -164,7 +180,7 @@ class spooler {
                 // Close old job
                 $spooler->setJobStatus($runningJob['jobid'], 'completed');
                 $spooler->setJobPID($runningJob['jobid'], 0);
-                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Job ended at ' . date('c'));
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE [' . $filePaths['statusPath'] . '] ! Job ended at ' . date('c'));
 
                 // Check for next operation
                 \OCA\aletsch\cron\spooler::checkForNextOp($spooler);

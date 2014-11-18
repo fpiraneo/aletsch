@@ -526,12 +526,19 @@ switch($op) {
         // Generate an archive name - The actual date and time
         $archiveName = date('Ymd-His');
         
+        // Get local path names
+        $localPaths = array();
+        foreach($filesPath as $OCPath) {
+            $localPaths[] = \OC\Files\Filesystem::getLocalFolder($OCPath);            
+        }
+        
+        // Generates instructions file
         $instructions = array(
             'OCUserName' => $OCUserName,
             'archiveName' => $archiveName,
             'archiveDescr' => $archiveDescr,
             'immediateRelease' => $immediateRelease,
-            'files' => $filesPath
+            'files' => $localPaths
         );
         
         $instructionsFilePath = sys_get_temp_dir() . uniqid('/aletsch_instructions_');
@@ -541,12 +548,27 @@ switch($op) {
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('newArchive');
         
+        if($jobID === FALSE) {
+            $result['opResult'] = 'KO';
+            $result['opData'] = 'Unable to create new job';
+            \OCP\Util::writeLog('aletsch', $result['errData']['exCode'] . ' - ' . $result['errData']['exMessage'], 0);
+            
+            die(json_encode($result));
+        }
+        
         $jobParameters = array(
             'instructionsFilePath' => $instructionsFilePath,
             'immediateRelease' => $immediateRelease,
             'statusPath' => sys_get_temp_dir() . uniqid('/aletsch_sts_')
         );
         $spoolerHandler->setJobData($jobID, json_encode($jobParameters));
+        $spoolerHandler->setVaultARN($jobID, $vaultARN);
+        $spoolerHandler->setJobStatus($jobID, 'waiting');
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = '';
+
+        die(json_encode($result));
         
         break;
     }

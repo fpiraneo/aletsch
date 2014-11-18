@@ -23,7 +23,7 @@ namespace OCA\aletsch;
 class spoolerHandler {
     private $OCUserName = NULL;
     private $operations = array();
-    private $jobtype = array('fileUpload', 'fileDownload');
+    private $jobtype = array('fileUpload', 'fileDownload', 'newArchive');
     private $jobStatus = array('hold', 'waiting', 'running', 'completed', 'error');
 
     function __construct($OCUserName) {
