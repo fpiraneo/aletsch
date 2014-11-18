@@ -633,14 +633,13 @@ class aletsch {
      * Execute a new archiver operation
      * @param String $vaultName Vault name to archive the generated files
      * @param String $archiveName Name of the archive - Used as prefix of the files
-     * @param Boolean $workOffline Save file on directory instead of uploading immediately
      * @param Strong $progressFile Path to progress file
      */
-    function archive($vaultName, $archiveName, $workOffline, $progressFile = NULL) {
+    function archive($vaultName, $archiveName, $progressFile = NULL) {
         // Keeps track of working parameters
         $progress = array(
             'pid'		=> getmypid(),
-            'offline'           => $workOffline,
+            'offline'           => $this->offline,
             'totalRead' 	=> 0,
             'totalWritten'	=> 0,
             'processedFiles'    => 0,
@@ -719,7 +718,7 @@ class aletsch {
 
                     // Upload last reel
                     $outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
-                    if($workOffline) {
+                    if($this->offline) {
                         $reelID = $tempDir . '/' . $outFileName;
                         rename($tempFileName, $reelID);
                     } else {
@@ -795,11 +794,12 @@ class aletsch {
         fclose($tempFile);
         $outFileName = sprintf("%s.reel-%d", $archiveName, $reelNo);
 
-        if($workOffline) {
+        if($this->offline) {
             $reelID = $tempDir . '/' . $outFileName;
             rename($tempFileName, $reelID);
         } else {
             $reelID = $this->uploadArchive($vaultName, $tempFileName, $outFileName);
+            unlink($tempFileName);
         }
 
         // Assign reel ID to last processed files
@@ -813,16 +813,14 @@ class aletsch {
 
         // Save on glacier the full catalog
         $catalog2upload = gzcompress(json_encode($catalog));
-        if($workOffline) {
+        if($this->offline) {
             $catalogID = $tempDir . '/' . $archiveName . '.catalog';
             file_put_contents($catalogID, $catalog2upload);
         } else {
             file_put_contents($tempFileName, $catalog2upload);
             $catalogID = $this->uploadArchive($vaultName, $tempFileName, $archiveName . '.catalog');
+            unlink($tempFileName);
         }
-
-        // Cleanup temp file
-        unlink($tempFileName);
 
         // Return operation's data
         $summary = array(
@@ -839,11 +837,14 @@ class aletsch {
             'catalog'   => $catalog
         );
 
-        if($workOffline) {
+        if($this->offline) {
             $summaryID = $tempDir . '/' . $archiveName . '.summary';
             file_put_contents($summaryID, json_encode($result));
         }
 
+        // Save a copy of the catalog on progress file
+        $progress['catalog'] = $result;
+        
         // Send "done" to progress file
         $progress['status'] = 'completed';
         if(!is_null($progressFile)) {

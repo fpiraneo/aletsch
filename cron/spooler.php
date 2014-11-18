@@ -109,7 +109,8 @@ class spooler {
                     'password' => $credentials->getPassword(),
                     'vaultarn' => $jobData['vaultarn'],
                     'instructionsFilePath' => $jobDataDetails['instructionsFilePath'],
-                    'statusPath' => $jobDataDetails['statusPath']
+                    'statusPath' => $jobDataDetails['statusPath'],
+                    'immediateUpload' => $jobDataDetails['immediateRelease']
                 );
                 
                 break;
@@ -161,8 +162,11 @@ class spooler {
                     // Close old job
                     $spooler->setJobPID($runningJob['jobid'], 0);
                     
+                    // Check for job type and for additional actions to perform
+                    \OCA\aletsch\cron\spooler::finalizeJob($runningJob, $progress);
+                    
                     // Remove status file
-                    unlink($filePaths['statusPath']);
+                    //unlink($filePaths['statusPath']);
 
                     // Check for next operation
                     \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
@@ -180,10 +184,23 @@ class spooler {
                 // Close old job
                 $spooler->setJobStatus($runningJob['jobid'], 'completed');
                 $spooler->setJobPID($runningJob['jobid'], 0);
-                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE [' . $filePaths['statusPath'] . '] ! Job ended at ' . date('c'));
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Job ended at ' . date('c'));
 
                 // Check for next operation
                 \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
+            }
+        }
+    }
+    
+    public static function finalizeJob($jobData, $statusData) {
+        switch($jobData['jobtype']) {
+            case 'newArchive': {
+                // Get the catalog and store all informations on DB
+                $catalog = $statusData['catalog']['catalog'];
+                
+                //TODO - Save all on DB!! -- Define classes
+                
+                break;
             }
         }
     }

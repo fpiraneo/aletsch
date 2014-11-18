@@ -46,7 +46,8 @@
                 'password',
                 'vaultarn',
                 'instructionsFilePath',
-                'statusPath'
+                'statusPath',
+                'immediateUpload'
             );
 
             // Check for right parameter number
@@ -149,18 +150,13 @@
             
             // Check for good result
             if($summary === FALSE) {
+                error_log('aletsch - No summary, something went wrong while archive.');
                 die();
             }
 
             // Unlink instruction file
             unlink($clp['instructionsFilePath']);
             
-            // Save summary in status file
-            $statusJSON = file_get_contents($clp['statusPath']);
-            $status = json_decode($statusJSON, TRUE);
-            $status['summary'] = $summary;
-            file_put_contents($clp['statusPath'], json_encode($summary));
-
             break;
         }
     }
