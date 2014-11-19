@@ -39,7 +39,7 @@ $l = new \OC_L10N('aletsch');
 
             <div id="tabInventory">
                 <div id="inventoryContent" style="display: none;">
-                    <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px;">
+                    <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px; border: 1px solid darkgray;">
                         <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
                         <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
                         <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Updated on')) ?>: 

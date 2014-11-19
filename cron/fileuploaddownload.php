@@ -21,12 +21,11 @@
     require __DIR__ . '/../libs/aletsch.php';
     require __DIR__ . '/../libs/utilities.php';
 
-    function gzcompressfile($source, $level = FALSE) {
-        $dest = $source . '.gz';
+    function gzcompressfile($source, $dest, $level = FALSE) {
         $mode = 'wb' . $level;
         $error = FALSE;
 
-        $fp_out = gzopen($dest, $mode);
+        $fp_out = gzopen64($dest, $mode);
         if($fp_out) {
             $fp_in = fopen($source,'rb');
 
@@ -41,6 +40,35 @@
             }
 
             gzclose($fp_out);
+        } else {
+            $error = TRUE;
+        }
+
+        if($error) {
+            return FALSE;
+        } else {
+            return $dest;
+        }
+    }
+    
+    function gzuncompressfile($source, $dest) {
+        $error = FALSE;
+
+        $fp_out = fopen($dest,'wb');
+        if($fp_out) {
+            $fp_in = gzopen64($source, 'rb');
+
+            if($fp_in) {
+                while(!gzeof($fp_in)) {
+                    fwrite($fp_out, gzread($fp_in, 1024 * 512));
+                }
+
+                gzclose($fp_in);
+            } else {
+                $error = TRUE;
+            }
+
+            fclose($fp_out);
         } else {
             $error = TRUE;
         }
@@ -132,11 +160,28 @@
             error_log(sprintf("fileUpload: [DEBUG] localPath: %s, Description: %s", $clp['localPath'], $clp['description']));
             
             if($clp['compressFile']) {
-                error_log('fileUpload: [DEBUG] Compressing file - NOT YET IMPLEMENTED');
+                $sourceFileName = pathinfo($clp['localPath'], PATHINFO_BASENAME);
+                $destFileName = $sourceFileName . '.gz';
+                $zippedFilePath = sys_get_temp_dir() . '/' . $destFileName;
+                
+                $compressionResult = gzcompressfile($clp['localPath'], $zippedFilePath);
+                if($compressionResult === FALSE) {
+                    $progress = array(
+                        'status'    => 'error',
+                        'extStatus' => 'fileUpload: Unable to compress file'
+                    );
+
+                    file_put_contents($clp['statusPath'], json_encode($progress));
+
+                    error_log('fileUpload: Unable to compress file: ' . $clp['localPath']);
+                    die();
+                }
+                
+                $success = $glacier->uploadArchive($vaultData['vaultName'], $zippedFilePath, '[gz]' . $clp['description'], $clp['statusPath']);
+            } else {
+                $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], $clp['description'], $clp['statusPath']);
             }
-            
-            $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], $clp['description'], $clp['statusPath']);
-            
+
             break;
         }
         
@@ -147,7 +192,15 @@
             
             if($success) {
                 mkdir(dirname($clp['destPath']), 0755, TRUE);
-                copy($tempOutFile, $clp['destPath']);
+                
+                if(substr($clp['destPath'], 0, 4) === '[gz]') {
+                    $tempUnzippedFile = sys_get_temp_dir() . uniqid('/aletsch_out_');
+                    gzuncompressfile($tempOutFile, $tempUnzippedFile);
+                    $destFilePath = substr($clp['destPath'], 4);
+                    copy($tempUnzippedFile, $destFilePath);
+                } else {
+                    copy($tempOutFile, $clp['destPath']);                    
+                }
             } else {
                 $progress = array(
                     'status'    => 'error',

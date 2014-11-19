@@ -329,31 +329,6 @@ class utilities {
     }
     
     /**
-     * Prepare the stored archives accordion list
-     * @param Array $archivesData Stored archives details
-     */
-    public static function prepareStoredArchivesList($archivesData = array()) {
-        // Handle translations
-        $l = new \OC_L10N('aletsch');
-
-        if(count($archivesData) === 0) {
-            $result = '';
-        } else {
-            $result = '';
-            
-            foreach($archivesData as $archiveID => $archiveData) {
-                $result .= '<h3 data-archiveid="' . $archiveID . '">' . $archiveData['archivedate'] . '</h3>';
-                $result .= '<div>';
-                $result .= '<p><strong>' . $l->t('Description') . '</strong></p>';
-                $result .= '<p><textarea id="descr-' . $archiveID . '">' . $archiveData['archivedescr'] . '</textarea>';
-                $result .= '</div>';
-            }
-        }
-        
-        return $result;
-    }
-    
-    /**
      * Prepare the html job list for a vault
      * @param Array $jobList
      * @return string
@@ -474,8 +449,8 @@ class utilities {
                     $action = '';
                 }
                 $size = \OCA\aletsch\utilities::formatBytes($entry['Size']);
-                                
-                $result .= sprintf("<tr>%s<td>%s</td><td>%s</td><td>%s</td></tr>", $action, $entry['ArchiveDescription'], $entry['CreationDate'], $size);
+                $treeHash = sprintf("TreeHash: %s", $entry['SHA256TreeHash']);
+                $result .= sprintf("<tr title=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td></tr>", $treeHash, $action, $entry['ArchiveDescription'], $entry['CreationDate'], $size);
             }
             
             $result .= '</table>';

@@ -36,3 +36,17 @@ Array (
 [StatusCode] => InProgress
 [StatusMessage] =>
 [VaultARN] => arn:aws:glacier:eu-west-1:000000000000:vaults/VaultName
+
+
+// These rows can be used to generate a SHA256TreeHash of a local file
+
+include __DIR__ . './../libs/aws.phar';
+use \Aws\Common\Hash\TreeHash;
+
+$localPath = \OC\Files\Filesystem::getLocalFolder(substr($filePath, 5));
+
+$fileRes = fopen($localPath, 'r');
+$checksum = \Aws\Common\Hash\TreeHash::fromContent($fileRes);
+
+error_log(sprintf("Localpath: %s -- Checksum: %s", $localPath, $checksum->getHash()));
+                
