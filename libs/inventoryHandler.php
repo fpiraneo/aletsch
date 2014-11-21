@@ -21,8 +21,24 @@
 namespace OCA\aletsch;
 
 class inventoryHandler {
+    /**
+     * @var Integer Actually loaded inventory ID; NULL means new inventory
+     */
+    private $inventoryID = NULL;
+
+    /**
+     * @var datetime Date and time of the actual inventory
+     */
     private $inventoryDate = NULL;
+    
+    /**
+     * @var String Vault ARN the inventory belongs to
+     */    
     private $vaultArn = NULL;
+    
+    /**
+     * @var Array Archives data with the following fields: ArchiveId, ArchiveDescription, CreationDate, Size, SHA256TreeHash
+     */
     private $archives = array();
     
     function setDataFromInventory($inventoryData) {
@@ -33,7 +49,7 @@ class inventoryHandler {
         $this->vaultArn = $inventoryData['VaultARN'];
         
         // Set archives data
-        $this->archives = $inventoryData['ArchiveList'];
+        $this->archives = json_decode($inventoryData['ArchiveList'], TRUE);
     }
 
     /**
@@ -70,30 +86,95 @@ class inventoryHandler {
             return FALSE;
         }
         
-        // Build and compress archives data
-        $archives = json_encode($this->archives);
-        $comprArchives = gzcompress($archives);
-        
-        // Remove old data
-        $sql = "DELETE FROM *PREFIX*aletsch_inventories WHERE credid=? AND vaultarn=?";
-        $args = array($credID, $this->vaultArn);
+        // If this inventory already has an ID, perform an update; perform an insert otherwise
+        if($this->inventoryID) {
+            // Insert new inventory
+            $sql = 'UPDATE `*PREFIX*aletsch_inventories` SET `credid`=?, `vaultarn`=?, `inventorydate`=? WHERE `inventoryid`=?';
+            $args = array(
+                $credID,
+                $this->vaultArn,
+                $this->inventoryDate,
+                $this->inventoryID
+            );
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);            
+        } else {
+            // Insert new inventory
+            $sql = 'INSERT INTO `*PREFIX*aletsch_inventories` (`credid`, `vaultarn`, `inventorydate`) VALUES (?,?,?)';
+            $args = array(
+                $credID,
+                $this->vaultArn,
+                $this->inventoryDate
+            );
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);
+            
+            $this->inventoryID = \OCP\DB::insertid();
+        }
 
-        $query = \OCP\DB::prepare($sql);
-        $query->execute($args);                
-        
-        // Insert new inventory
-        $sql = "INSERT INTO *PREFIX*aletsch_inventories (credid, vaultarn, inventorydate, inventorydata) VALUES (?,?,?,?)";
+        // Update archives data
+        // - Remove old archives data
+        $sql = 'DELETE FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
         $args = array(
-            $credID,
-            $this->vaultArn,
-            $this->inventoryDate,
-            $comprArchives
+            $this->inventoryID
         );
         $query = \OCP\DB::prepare($sql);
-        $query->execute($args);
+        $query->execute($args);            
+        
+        // - Insert new archives data
+        foreach($this->archives as $archiveData) {
+            $this->updateArchiveData($archiveData['ArchiveId'], $archiveData['ArchiveDescription'], $archiveData['CreationDate'], $archiveData['Size'], $archiveData['SHA256TreeHash']);
+        }
         
         // Return last inserted inventory ID
-        return \OCP\DB::insertid();
+        return $this->inventoryID;
+    }
+    
+    /**
+     * Update / create an archive's entry on local DB
+     * @param String $ArchiveID Amazon's archive ID
+     * @param type $ArchiveDescription Archive description provided during upload
+     * @param type $CreationDate Creation date of archive
+     * @param type $Size Archive size in bytes
+     * @param type $SHA256TreeHash Hash of archive
+     * @return type Inserted/modified archive's ID on local data base
+     */
+    function updateArchiveData($ArchiveID, $ArchiveDescription, $CreationDate, $Size, $SHA256TreeHash) {
+        // Search if archive with such index already exists;
+        $actualArchivesIds = array_column($this->archives, 'ArchiveId');
+        if(array_search($ArchiveID, $actualArchivesIds) === FALSE) {
+            $sql = 'INSERT INTO `*PREFIX*aletsch_inventoryData` (`inventoryid`, `ArchiveId`, `ArchiveDescription`, `CreationDate`, `Size`, `SHA256TreeHash`) VALUES (?,?,?,?,?,?)';
+            $args = array(
+                $this->inventoryID,
+                $ArchiveID,
+                $ArchiveDescription,
+                $CreationDate,
+                $Size,
+                $SHA256TreeHash
+            );
+            
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);
+            
+            $lastArchiveID = \OCP\DB::insertid();
+        } else {
+            $sql = 'UPDATE `*PREFIX*aletsch_inventoryData` SET `ArchiveDescription`=?, `CreationDate`=?, `Size`=?, `SHA256TreeHash`=? WHERE `ArchiveId`=?';
+            $args = array(
+                $ArchiveDescription,
+                $CreationDate,
+                $Size,
+                $SHA256TreeHash,
+                $ArchiveID
+            );
+
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);
+
+            $lastArchiveID = $ArchiveID;
+        }
+        
+        $this->loadArchivesData();
+        return $lastArchiveID;
     }
     
     /**
@@ -109,11 +190,10 @@ class inventoryHandler {
         // Clear old data
         $this->inventoryDate = NULL;
         $this->vaultArn = NULL;
-        $this->archives = NULL;
-        $inventoryID = NULL;
+        $this->inventoryID = NULL;
         
         // Get stored data
-        $sql = "SELECT inventoryid, inventorydate, inventorydata FROM *PREFIX*aletsch_inventories WHERE vaultarn=?";
+        $sql = 'SELECT `inventoryid`, `inventorydate`, `inventorydata` FROM `*PREFIX*aletsch_inventories` WHERE `vaultarn`=?';
         $args = array(
             $vaultARN
         );
@@ -124,26 +204,73 @@ class inventoryHandler {
         while($row = $resRsrc->fetchRow()) {
             $this->inventoryDate = $row['inventorydate'];
             $this->vaultArn = $vaultARN;
-
-            $jsonArchives = gzuncompress($row['inventorydata']);
-            $this->archives = json_decode($jsonArchives, TRUE);
-            
-            $inventoryID = $row['inventoryid'];
+            $this->inventoryID = $row['inventoryid'];
+            $this->loadArchivesData();
         }
         
         // Return reverted inventory ID
-        return $inventoryID;
+        return $this->inventoryID;
+    }
+
+    /**
+     * Load archives data staring from stored inventoryID
+     */
+    private function loadArchivesData() {
+        $this->archives = NULL;
+
+        // Query for archives data
+        $sql = 'SELECT * FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
+        $args = array(
+            $this->inventoryID
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);
+
+        while($archive = $resRsrc->fetchRow()) {
+            $this->archives[] = $archive;
+        }
     }
     
     /**
      * Delete all inventories belonging to a vault
      * @param Integer $credID Credentials ID
-     * @param String $VaultARN Vault ARN to remove the inventories
+     * @param String $vaultARN Vault ARN to remove the inventories
      * @return boolean TRUE on success
      */
-    public static function removeInventories($VaultARN) {
-        $sql = 'DELETE FROM oc_aletsch_inventories WHERE vaultarn=?';
-        $args = array($VaultARN);
+    public static function removeInventories($vaultARN) {
+        // Get stored data
+        $sql = "SELECT `inventoryid` FROM `*PREFIX*aletsch_inventories` WHERE `vaultarn`=?";
+        $args = array(
+            $vaultARN
+        );
+
+        $query = \OCP\DB::prepare($sql);
+        $resRsrc = $query->execute($args);
+        
+        while($row = $resRsrc->fetchRow()) {
+            // Remove vault entry
+            $sql = 'DELETE FROM `*PREFIX*oc_aletsch_inventories` WHERE `vaultarn`=?';
+            $args = array($vaultARN);
+
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);                
+
+            // Remove archives entry
+            \OCA\aletsch\inventoryHandler::removeArchivesData($row['inventoryid']);
+        }
+        
+        return TRUE;
+    }
+    
+    /**
+     * Removes all archives data from data base
+     * @param Integer $inventoryID Inventory ID
+     * @return boolean
+     */
+    private static function removeArchivesData($inventoryID) {
+        $sql = 'DELETE FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
+        $args = array($inventoryID);
 
         $query = \OCP\DB::prepare($sql);
         $query->execute($args);                

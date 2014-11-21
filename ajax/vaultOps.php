@@ -211,7 +211,13 @@ switch($op) {
             'date' => $inventory->getInventoryDate(),
             'outdated' => ($lastGlacierInventoryDate !== $lastDBInventoryDate) && $lastDBInventoryDate !== NULL,
             'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
-        );            
+        );
+        
+        /// -- TEMP to export data to systempdir
+        $tempOutFile = sys_get_temp_dir() . '/' . \OCA\aletsch\aletsch::explodeARN($vaultARN, TRUE);
+        $tempFileContent = json_encode($inventory->getArchives());
+        file_put_contents($tempOutFile, $tempFileContent);
+        /// -- END TEMP
 
         $result['opResult'] = 'OK';
         $result['opData'] = $inventoryDetails;

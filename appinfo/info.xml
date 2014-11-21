@@ -3,7 +3,7 @@
 	<id>aletsch</id>
 	<name>Aletsch</name>
 	<description>Backup and manage your data on Amazon Glacier</description>
-	<version>0.0.12</version>
+	<version>0.0.13</version>
 	<licence>GNU GPL Version 3</licence>
 	<author>Francesco PIRANEO G. (fpiraneo@gmail.com)</author>
 	<require>6</require>
