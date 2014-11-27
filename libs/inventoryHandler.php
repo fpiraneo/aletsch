@@ -17,7 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with aletsch.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+
+// TODO - Da rivedere!!!
+
 namespace OCA\aletsch;
 
 class inventoryHandler {
@@ -37,7 +40,7 @@ class inventoryHandler {
     private $vaultArn = NULL;
     
     /**
-     * @var Array Archives data with the following fields: ArchiveId, ArchiveDescription, CreationDate, Size, SHA256TreeHash
+     * @var Array Archives objects with the following fields: ArchiveId, ArchiveDescription, CreationDate, Size, SHA256TreeHash
      */
     private $archives = array();
     
@@ -49,7 +52,14 @@ class inventoryHandler {
         $this->vaultArn = $inventoryData['VaultARN'];
         
         // Set archives data
-        $this->archives = json_decode($inventoryData['ArchiveList'], TRUE);
+        $archivesData = json_decode($inventoryData['ArchiveList'], TRUE);
+        
+        $this->archives = array();
+        foreach($archivesData as $archiveData) {
+            $archive = new \OCA\aletsch\archive($archiveData['ArchiveId']);
+            $archive->setStandardProp($archiveData);
+            $this->archives[$archiveData['ArchiveId']] = $archive;
+        }
     }
 
     /**
@@ -65,7 +75,11 @@ class inventoryHandler {
      * @return Array
      */
     function getArchives() {
-        return $this->archives;
+        $archives = array();
+        foreach($this->archives as $archiveData) {
+            $archives[] = $archiveData->getPropArray();
+        }
+        return $archives;
     }
     
     /**
@@ -112,69 +126,18 @@ class inventoryHandler {
             $this->inventoryID = \OCP\DB::insertid();
         }
 
+        /* Può essere da rimuovere da qui in poi - Dichiarare un constructor che crea un inventory! */
         // Update archives data
         // - Remove old archives data
-        $sql = 'DELETE FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
-        $args = array(
-            $this->inventoryID
-        );
-        $query = \OCP\DB::prepare($sql);
-        $query->execute($args);            
+        \OCA\aletsch\archive::removeAllArchivesData($this->inventoryID);
         
         // - Insert new archives data
         foreach($this->archives as $archiveData) {
-            $this->updateArchiveData($archiveData['ArchiveId'], $archiveData['ArchiveDescription'], $archiveData['CreationDate'], $archiveData['Size'], $archiveData['SHA256TreeHash']);
+            $archiveData->updateArchiveData($this->inventoryID);
         }
         
         // Return last inserted inventory ID
         return $this->inventoryID;
-    }
-    
-    /**
-     * Update / create an archive's entry on local DB
-     * @param String $ArchiveID Amazon's archive ID
-     * @param type $ArchiveDescription Archive description provided during upload
-     * @param type $CreationDate Creation date of archive
-     * @param type $Size Archive size in bytes
-     * @param type $SHA256TreeHash Hash of archive
-     * @return type Inserted/modified archive's ID on local data base
-     */
-    function updateArchiveData($ArchiveID, $ArchiveDescription, $CreationDate, $Size, $SHA256TreeHash) {
-        // Search if archive with such index already exists;
-        $actualArchivesIds = array_column($this->archives, 'ArchiveId');
-        if(array_search($ArchiveID, $actualArchivesIds) === FALSE) {
-            $sql = 'INSERT INTO `*PREFIX*aletsch_inventoryData` (`inventoryid`, `ArchiveId`, `ArchiveDescription`, `CreationDate`, `Size`, `SHA256TreeHash`) VALUES (?,?,?,?,?,?)';
-            $args = array(
-                $this->inventoryID,
-                $ArchiveID,
-                $ArchiveDescription,
-                $CreationDate,
-                $Size,
-                $SHA256TreeHash
-            );
-            
-            $query = \OCP\DB::prepare($sql);
-            $query->execute($args);
-            
-            $lastArchiveID = \OCP\DB::insertid();
-        } else {
-            $sql = 'UPDATE `*PREFIX*aletsch_inventoryData` SET `ArchiveDescription`=?, `CreationDate`=?, `Size`=?, `SHA256TreeHash`=? WHERE `ArchiveId`=?';
-            $args = array(
-                $ArchiveDescription,
-                $CreationDate,
-                $Size,
-                $SHA256TreeHash,
-                $ArchiveID
-            );
-
-            $query = \OCP\DB::prepare($sql);
-            $query->execute($args);
-
-            $lastArchiveID = $ArchiveID;
-        }
-        
-        $this->loadArchivesData();
-        return $lastArchiveID;
     }
     
     /**
@@ -205,33 +168,13 @@ class inventoryHandler {
             $this->inventoryDate = $row['inventorydate'];
             $this->vaultArn = $vaultARN;
             $this->inventoryID = $row['inventoryid'];
-            $this->loadArchivesData();
+            $this->loadArchivesData($this->inventoryID);
         }
         
         // Return reverted inventory ID
         return $this->inventoryID;
     }
 
-    /**
-     * Load archives data staring from stored inventoryID
-     */
-    private function loadArchivesData() {
-        $this->archives = NULL;
-
-        // Query for archives data
-        $sql = 'SELECT * FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
-        $args = array(
-            $this->inventoryID
-        );
-
-        $query = \OCP\DB::prepare($sql);
-        $resRsrc = $query->execute($args);
-
-        while($archive = $resRsrc->fetchRow()) {
-            $this->archives[] = $archive;
-        }
-    }
-    
     /**
      * Delete all inventories belonging to a vault
      * @param Integer $credID Credentials ID
@@ -257,24 +200,9 @@ class inventoryHandler {
             $query->execute($args);                
 
             // Remove archives entry
-            \OCA\aletsch\inventoryHandler::removeArchivesData($row['inventoryid']);
+            \OCA\aletsch\archive::removeAllArchivesData($row['inventoryid']);
         }
         
         return TRUE;
-    }
-    
-    /**
-     * Removes all archives data from data base
-     * @param Integer $inventoryID Inventory ID
-     * @return boolean
-     */
-    private static function removeArchivesData($inventoryID) {
-        $sql = 'DELETE FROM `*PREFIX*aletsch_inventoryData` WHERE `inventoryid`=?';
-        $args = array($inventoryID);
-
-        $query = \OCP\DB::prepare($sql);
-        $query->execute($args);                
-        
-        return TRUE;
-    }
+    }    
 }

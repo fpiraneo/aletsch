@@ -192,6 +192,12 @@
                 <type>text</type>
                 <length>64</length>
             </field>
+            
+            <field>
+                <name>localPath</name>
+                <type>text</type>
+                <length>4096</length>
+            </field>
         </declaration>
     </table>
 
