@@ -25,6 +25,11 @@ namespace OCA\aletsch;
 
 class inventoryHandler {
     /**
+     * @var Integer User's credentials id where the inventory belongs to
+     */
+    private $credentialsID = NULL;
+    
+    /**
      * @var Integer Actually loaded inventory ID; NULL means new inventory
      */
     private $inventoryID = NULL;
@@ -44,6 +49,25 @@ class inventoryHandler {
      */
     private $archives = array();
     
+    /**
+     * Class constructor - Load an inventory or create a new one if not exists
+     * @param Integer $credID User's credentials ID
+     * @param String $vaultARN Vault ARN the inventory belongs to
+     */
+    public function __construct($credID, $vaultARN) {
+        $this->credentialsID = $credID;
+        
+        if(is_null($this->loadFromDB($vaultARN))) {
+            $this->vaultArn = $vaultARN;
+            $this->saveOnDB();
+        }
+    }
+    
+    /**
+     * This is a reconciliation function; take a JSON inventory coming from Glacier
+     * and reconcile data on DB
+     * @param Array $inventoryData Array with inventory data
+     */
     function setDataFromInventory($inventoryData) {
         // Set the date
         $this->inventoryDate = $inventoryData['InventoryDate'];
@@ -51,15 +75,11 @@ class inventoryHandler {
         // Save vault's ARN
         $this->vaultArn = $inventoryData['VaultARN'];
         
-        // Set archives data
-        $archivesData = json_decode($inventoryData['ArchiveList'], TRUE);
+        // Save modifications on DB
+        $this->saveOnDB();
         
-        $this->archives = array();
-        foreach($archivesData as $archiveData) {
-            $archive = new \OCA\aletsch\archive($archiveData['ArchiveId']);
-            $archive->setStandardProp($archiveData);
-            $this->archives[$archiveData['ArchiveId']] = $archive;
-        }
+        // Reconcile stored data with actual inventory data
+        \OCA\aletsch\archive::archivesReconcile($inventoryData['ArchiveList'], $this->inventoryID);        
     }
 
     /**
@@ -91,12 +111,62 @@ class inventoryHandler {
     }
     
     /**
-     * Save actual inventory on DB
-     * @param Integer $credID Credentials under to store the actual inventory
+     * Set an attribute for an archive
+     * @param String $archiveID Glacier's archive ID
+     * @param String $attributeName Attribute name - See "archive->setAttribute()" function for more
+     * @param Any $attributeValue Attribute value
      */
-    function saveOnDB($credID=NULL) {
+    function setArchiveAttribute($archiveID, $attributeName, $attributeValue) {
+        // Check if archive id is valid
+        if(!isset($this->archives[$archiveID])) {
+            return FALSE;
+        }
+        
+        // Set attribute value
+        $this->archives[$archiveID]->setAttribute($attributeName, $attributeValue);
+    }
+    
+    /**
+     * Get an attribute value for an archive
+     * @param String $archiveID Glacier's archive ID
+     * @param String $attributeName Attribute name - See "archive->setAttribute()" function for more
+     */
+    function getArchiveAttribute($archiveID, $attributeName) {
+        // Check if archive id is valid
+        if(!isset($this->archives[$archiveID])) {
+            return FALSE;
+        }
+
+        // Get all attributes values
+        $allAttrs = $this->getArchiveAttributes($archiveID);
+        
+        if(!isset($allAttrs[$attributeName])) {
+            return FALSE;
+        } else {
+            return $allAttrs[$attributeName];
+        }
+    }
+    
+    /**
+     * Get all attributes for an archive
+     * @param String $archiveID Glacier's archive ID
+     */
+    function getArchiveAttributes($archiveID) {
+        // Check if archive id is valid
+        if(!isset($this->archives[$archiveID])) {
+            return FALSE;
+        }
+
+        // Get attributes value
+        return $this->archives[$archiveID]->getAttributes();
+    }
+    
+    /**
+     * Save actual inventory on DB
+     */
+    private function saveOnDB() {
         // If credential is not provided, forfait
-        if(is_null($credID)) {
+        if(is_null($this->credID)) {
             return FALSE;
         }
         
@@ -105,7 +175,7 @@ class inventoryHandler {
             // Insert new inventory
             $sql = 'UPDATE `*PREFIX*aletsch_inventories` SET `credid`=?, `vaultarn`=?, `inventorydate`=? WHERE `inventoryid`=?';
             $args = array(
-                $credID,
+                $this->credID,
                 $this->vaultArn,
                 $this->inventoryDate,
                 $this->inventoryID
@@ -116,7 +186,7 @@ class inventoryHandler {
             // Insert new inventory
             $sql = 'INSERT INTO `*PREFIX*aletsch_inventories` (`credid`, `vaultarn`, `inventorydate`) VALUES (?,?,?)';
             $args = array(
-                $credID,
+                $this->credID,
                 $this->vaultArn,
                 $this->inventoryDate
             );
@@ -126,16 +196,6 @@ class inventoryHandler {
             $this->inventoryID = \OCP\DB::insertid();
         }
 
-        /* Può essere da rimuovere da qui in poi - Dichiarare un constructor che crea un inventory! */
-        // Update archives data
-        // - Remove old archives data
-        \OCA\aletsch\archive::removeAllArchivesData($this->inventoryID);
-        
-        // - Insert new archives data
-        foreach($this->archives as $archiveData) {
-            $archiveData->updateArchiveData($this->inventoryID);
-        }
-        
         // Return last inserted inventory ID
         return $this->inventoryID;
     }
@@ -144,7 +204,7 @@ class inventoryHandler {
      * Load last saved inventory from DB
      * @param String $vaultARN
      */
-    function loadFromDB($vaultARN) {
+    private function loadFromDB($vaultARN) {
         // If provided vault ARN not valid forfait
         if(trim($vaultARN) === '' || is_null($vaultARN)) {
             return FALSE;
@@ -156,7 +216,7 @@ class inventoryHandler {
         $this->inventoryID = NULL;
         
         // Get stored data
-        $sql = 'SELECT `inventoryid`, `inventorydate`, `inventorydata` FROM `*PREFIX*aletsch_inventories` WHERE `vaultarn`=?';
+        $sql = 'SELECT `inventoryid`, `inventorydate` FROM `*PREFIX*aletsch_inventories` WHERE `vaultarn`=?';
         $args = array(
             $vaultARN
         );
@@ -168,7 +228,7 @@ class inventoryHandler {
             $this->inventoryDate = $row['inventorydate'];
             $this->vaultArn = $vaultARN;
             $this->inventoryID = $row['inventoryid'];
-            $this->loadArchivesData($this->inventoryID);
+            $this->archives = \OCA\aletsch\archive::loadArchivesData($this->inventoryID);
         }
         
         // Return reverted inventory ID

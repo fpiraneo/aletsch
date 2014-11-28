@@ -203,8 +203,7 @@ switch($op) {
     
     // Get inventory from DB
     case 'getInventory': {
-        $inventory = new \OCA\aletsch\inventoryHandler();
-        $inventoryID = $inventory->loadFromDB($vaultARN);
+        $inventory = new \OCA\aletsch\inventoryHandler($userCredID, $vaultARN);
         $lastGlacierInventoryDate = $vaultHandler->getLastInventory($vaultARN);
         $lastDBInventoryDate = $inventory->getInventoryDate();
         $inventoryDetails = array(
@@ -213,12 +212,6 @@ switch($op) {
             'archiveList' => \OCA\aletsch\utilities::prepareArchivesList($inventory->getArchives(), TRUE)
         );
         
-        /// -- TEMP to export data to systempdir
-        $tempOutFile = sys_get_temp_dir() . '/' . \OCA\aletsch\aletsch::explodeARN($vaultARN, TRUE);
-        $tempFileContent = json_encode($inventory->getArchives());
-        file_put_contents($tempOutFile, $tempFileContent);
-        /// -- END TEMP
-
         $result['opResult'] = 'OK';
         $result['opData'] = $inventoryDetails;
 

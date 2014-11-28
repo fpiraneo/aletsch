@@ -32,6 +32,10 @@ class archive {
     private $fileid;
     private $inventoryID;
     private $localPath;
+    private $attributes;
+    
+    // Constants
+    private $validAttributes = array('gz');
     
     public function __construct($ArchiveId) {
         $this->ArchiveId = $ArchiveId;
@@ -63,7 +67,8 @@ class archive {
             'CreationDate' => $this->CreationDate,
             'Size' => $this->Size,
             'SHA256TreeHash' => $this->SHA256TreeHash,
-            'localPath' => $this->localPath
+            'localPath' => $this->localPath,
+            'attributes' => $this->attributes
         );
         
         return $result;
@@ -130,7 +135,39 @@ class archive {
         $this->localPath = $localPath;
         $this->saveArchiveData();
     }
+    
+    /**
+     * Get attributes set and their values for this archive
+     * @return Array
+     */
+    function getAttributes() {
+        return $this->attributes;
+    }
 
+    /**
+     * Set attribute(s) for the archive; handled attributes are:
+     * - gz : File is gzipped => BOOLEAN
+     * @param String $attrName Attribute name
+     * @param Any $attrValue Attribute value; NULL clears the attribute
+     * @return boolean
+     */
+    function setAttribute($attrName = NULL, $attrValue = NULL) {
+        if(is_null($attrName) || trim($attrName === '') || array_search($attrName, $this->validAttributes) === FALSE) {
+            return FALSE;
+        }
+        
+        // If $attrValue is null clear attribute from array
+        if(is_null($attrValue)) {
+            unset($this->attributes[$attrName]);
+        }
+        
+        // Set it otherwise
+        $this->attributes[$attrName] = $attrValue;
+        
+        // Attribute set
+        return TRUE;
+    }
+    
     /**
      * Load archives data staring from stored inventoryID
      */
@@ -152,6 +189,7 @@ class archive {
             $this->fileid = $archive['fileid'];
             $this->inventoryID = $archive['inventoryID'];
             $this->localPath = $archive['localPath'];
+            $this->attributes = json_decode($archive['attributes'], TRUE);
         }
     }
     
@@ -160,23 +198,7 @@ class archive {
      */
     private function saveArchiveData() {
         if(is_null($this->fileid)) {
-            $sql = 'INSERT INTO `*PREFIX*aletsch_inventoryData` (`inventoryid`, `ArchiveId`, `ArchiveDescription`, `CreationDate`, `Size`, `SHA256TreeHash`, `localPath`) VALUES (?,?,?,?,?,?,?)';
-            $args = array(
-                $this->inventoryID,
-                $this->ArchiveID,
-                $this->ArchiveDescription,
-                $this->CreationDate,
-                $this->Size,
-                $this->SHA256TreeHash,
-                $this->localPath
-            );
-            
-            $query = \OCP\DB::prepare($sql);
-            $query->execute($args);
-            
-            $this->fileid = \OCP\DB::insertid();
-        } else {
-            $sql = 'UPDATE `*PREFIX*aletsch_inventoryData` SET `inventoryid`=?, `ArchiveId`=?, `ArchiveDescription`=?, `CreationDate`=?, `Size`=?, `SHA256TreeHash`=?, `localPath`=? WHERE `fileid`=?';
+            $sql = 'INSERT INTO `*PREFIX*aletsch_inventoryData` (`inventoryid`, `ArchiveId`, `ArchiveDescription`, `CreationDate`, `Size`, `SHA256TreeHash`, `localPath`, `attributes`) VALUES (?,?,?,?,?,?,?,?)';
             $args = array(
                 $this->inventoryID,
                 $this->ArchiveID,
@@ -185,6 +207,24 @@ class archive {
                 $this->Size,
                 $this->SHA256TreeHash,
                 $this->localPath,
+                json_encode($this->attributes)
+            );
+            
+            $query = \OCP\DB::prepare($sql);
+            $query->execute($args);
+            
+            $this->fileid = \OCP\DB::insertid();
+        } else {
+            $sql = 'UPDATE `*PREFIX*aletsch_inventoryData` SET `inventoryid`=?, `ArchiveId`=?, `ArchiveDescription`=?, `CreationDate`=?, `Size`=?, `SHA256TreeHash`=?, `localPath`=?, `attributes`=? WHERE `fileid`=?';
+            $args = array(
+                $this->inventoryID,
+                $this->ArchiveID,
+                $this->ArchiveDescription,
+                $this->CreationDate,
+                $this->Size,
+                $this->SHA256TreeHash,
+                $this->localPath,
+                json_encode($this->attributes),
                 $this->fileid
             );
 
@@ -206,6 +246,19 @@ class archive {
         $query->execute($args);
     }
     
+    /**
+     * Remove a single archive from local DB
+     * @param String $archiveID ID of the archive to be removed
+     */
+    public static function removeArchiveData($archiveID) {
+        $sql = 'DELETE FROM `*PREFIX*aletsch_inventoryData` WHERE `ArchiveId`=?';
+        $args = array(
+            $archiveID
+        );
+        $query = \OCP\DB::prepare($sql);
+        $query->execute($args);
+    }
+
     /**
      * Load archives data staring from stored inventoryID
      * @param Integer $inventoryID Inventory ID where the archives belongs from
@@ -230,4 +283,37 @@ class archive {
         return $archives;
     }
 
+    /**
+     * Reconcile stored archives data on DB with provided Glacier inventory
+     * @param String $JSONInventoryData JSON inventory data coming from Glacier
+     * @param Integer $inventoryID ID of inventory
+     */
+    public static function archivesReconcile($JSONInventoryData, $inventoryID) {
+        $onlineInventoryData = json_decode($JSONInventoryData, TRUE);
+        $onlineInventoryIDs = array_column($onlineInventoryData, 'ArchiveId');
+        
+        $storedInventory = \OCA\aletsch\archive::loadArchivesData($inventoryID);
+        $storedInventoryIDs = array_keys($storedInventory);
+        
+        // Contains the keys of the items not presents on our DB that should be added!
+        $newItems = array_diff($onlineInventoryIDs, $storedInventoryIDs);
+        
+        // Contains the keys of the items removed from the vault that should also be removed from our DB!
+        $removedItems = array_diff($storedInventoryIDs, $onlineInventoryIDs);
+        
+        // Insert new items
+        foreach($newItems as $itemIdToCreate) {
+            foreach ($onlineInventoryData as $onlineItem) {
+                if($onlineItem['ArchiveId'] === $itemIdToCreate) {
+                    $archive = new \OCA\aletsch\archive($itemIdToCreate);
+                    $archive->setStandardProp($onlineItem);
+                }
+            }
+        }
+        
+        // Remove items from local DB
+        foreach ($removedItems as $itemIdToRemove) {
+            \OCA\aletsch\archive::removeArchiveData($itemIdToRemove);
+        }
+    }
 }

@@ -130,14 +130,6 @@
                 <name>inventorydate</name>
                 <type>datetime</type>
             </field>
-
-            <field>
-                <name>inventorydata</name>
-                <type>blob</type>
-                <default>0</default>
-                <notnull>true</notnull>
-                <length>16777216</length>
-            </field>
         </declaration>
     </table>
     
@@ -197,6 +189,12 @@
                 <name>localPath</name>
                 <type>text</type>
                 <length>4096</length>
+            </field>
+            
+            <field>
+                <name>attributes</name>
+                <type>text</type>
+                <length>2048</length>
             </field>
         </declaration>
     </table>
