@@ -19,8 +19,6 @@
  */
 
 
-// TODO - Da rivedere!!!
-
 namespace OCA\aletsch;
 
 class inventoryHandler {
@@ -108,6 +106,45 @@ class inventoryHandler {
      */
     function getVaultArn() {
         return $this->vaultArn;
+    }
+    
+    /**
+     * Add an archive to the current inventory
+     * @param String $archiveID Glacier's archive ID
+     * @param Date $creationDate Archive's creation date - NULL set actual date and time
+     * @param String $description Archive description
+     * @param Integer $size Archive size
+     * @param String $SHA256TreeHash Archive's hash
+     * @param Array $attributes - Attribute name - See "archive->setAttribute()" function for more
+     */
+    function addArchive($archiveID, $creationDate = NULL, $description = '', $size = 0, $SHA256TreeHash = NULL, $localPath = NULL, $attributes = array()) {
+        if(is_null($creationDate)) {
+            $dateToSet = date('c');
+        } else {
+            $dateToSet = $creationDate;
+        }
+        
+        $newArchive = new \OCA\aletsch\archive($archiveID);
+        $newArchive->setInventoryID($this->inventoryID);
+        
+        $stdData = array(
+            'ArchiveDescription' => $description,
+            'CreationDate' => $dateToSet,
+            'Size' => $size,
+            'SHA256TreeHash' => $SHA256TreeHash
+        );
+        
+        $newArchive->setStandardProp($stdData);
+        
+        if(!is_null($localPath)) {
+            $newArchive->setLocalPath($localPath);
+        }
+        
+        foreach($attributes as $attrName => $attrValue) {
+            $newArchive->setAttribute($attrName, $attrValue);
+        }
+        
+        $this->archives = \OCA\aletsch\archive::loadArchivesData($this->inventoryID);
     }
     
     /**

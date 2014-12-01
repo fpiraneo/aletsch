@@ -144,3 +144,15 @@ div.aletsch_noArchives {
     font-weight: bold;
     padding: 50px;
 }
+
+tr.invarchive_gz {
+    color: green;
+}
+
+tr.invarchive_deleted {
+    text-decoration: line-through;
+}
+
+tr.invarchive_uploaded {
+    font-style: italic;
+}

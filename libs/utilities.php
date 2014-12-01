@@ -435,14 +435,7 @@ class utilities {
             $result .= '</tr>';
 
             foreach($archivesList as $entry) {
-                /*
-                    [ArchiveId]
-                    [ArchiveDescription]
-                    [CreationDate] => 2014-10-29T13:46:07.973Z
-                    [Size]
-                    [SHA256TreeHash]
-                 */
-
+                // 'ArchiveId', 'ArchiveDescription', 'CreationDate' => '2014-10-29T13:46:07.973Z', 'Size', 'SHA256TreeHash'
                 if($insertCheckBoxes) {
                     $action = sprintf("<td><input type='checkbox' id='%s' class='archiveSelection' data-archiveid='%s' /></td>", uniqid('aletsch_'), $entry['ArchiveId']);
                 } else {
@@ -450,7 +443,13 @@ class utilities {
                 }
                 $size = \OCA\aletsch\utilities::formatBytes($entry['Size']);
                 $treeHash = sprintf("TreeHash: %s", $entry['SHA256TreeHash']);
-                $result .= sprintf("<tr title=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td></tr>", $treeHash, $action, $entry['ArchiveDescription'], $entry['CreationDate'], $size);
+                
+                $classes = '';
+                foreach($entry['attributes'] as $attrName => $attrValue) {
+                    $classes .= 'invarchive_' . $attrName . ' ';
+                }
+                
+                $result .= sprintf("<tr title=\"%s\" class=\"%s\">%s<td>%s</td><td>%s</td><td>%s</td></tr>", $treeHash, trim($classes), $action, $entry['ArchiveDescription'], $entry['CreationDate'], $size);
             }
             
             $result .= '</table>';

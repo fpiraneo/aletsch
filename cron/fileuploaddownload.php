@@ -177,7 +177,7 @@
                     die();
                 }
                 
-                $success = $glacier->uploadArchive($vaultData['vaultName'], $zippedFilePath, '[gz]' . $clp['description'], $clp['statusPath']);
+                $success = $glacier->uploadArchive($vaultData['vaultName'], $zippedFilePath, $clp['description'], $clp['statusPath']);
             } else {
                 $success = $glacier->uploadArchive($vaultData['vaultName'], $clp['localPath'], $clp['description'], $clp['statusPath']);
             }
@@ -193,7 +193,7 @@
             if($success) {
                 mkdir(dirname($clp['destPath']), 0755, TRUE);
                 
-                if(substr($clp['destPath'], 0, 4) === '[gz]') {
+                if(substr($clp['destPath'], -3) === '.gz') {
                     $tempUnzippedFile = sys_get_temp_dir() . uniqid('/aletsch_out_');
                     gzuncompressfile($tempOutFile, $tempUnzippedFile);
                     $destFilePath = substr($clp['destPath'], 4);

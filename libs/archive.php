@@ -35,7 +35,7 @@ class archive {
     private $attributes;
     
     // Constants
-    private $validAttributes = array('gz');
+    private $validAttributes = array('gz', 'deleted', 'uploaded');
     
     public function __construct($ArchiveId) {
         $this->ArchiveId = $ArchiveId;
@@ -44,7 +44,7 @@ class archive {
     
     /**
      * Set standard Glacier's data starting from an array with the following:
-     * ArchiveId, ArchiveDescription, CreationDate, Size, SHA256TreeHash
+     * ArchiveDescription, CreationDate, Size, SHA256TreeHash
      * @param Array $stdData
      */
     function setStandardProp($stdData) {
@@ -116,8 +116,12 @@ class archive {
         $this->saveArchiveData();
     }
 
-    function setCreationDate($CreationDate) {
-        $this->CreationDate = $CreationDate;
+    function setCreationDate($CreationDate = NULL) {
+        if(is_null($CreationDate)) {
+            $this->CreationDate = date('c');
+        } else {
+            $this->CreationDate = $CreationDate;
+        }
         $this->saveArchiveData();
     }
 
@@ -298,17 +302,32 @@ class archive {
         // Contains the keys of the items not presents on our DB that should be added!
         $newItems = array_diff($onlineInventoryIDs, $storedInventoryIDs);
         
+        // Contains already presents items on our DB
+        $presItems = array_intersect($onlineInventoryIDs, $storedInventoryIDs);
+        
         // Contains the keys of the items removed from the vault that should also be removed from our DB!
         $removedItems = array_diff($storedInventoryIDs, $onlineInventoryIDs);
         
+        // Prepare an indexed array containing the online inventory
+        // Each item will be indexed with it's own ArchiveID
+        $onlineInventory = array();
+        foreach($onlineInventoryData as $onlineItem) {
+            $onlineInventory[$onlineItem['ArchiveId']] = $onlineItem;
+        }
+        
         // Insert new items
         foreach($newItems as $itemIdToCreate) {
-            foreach ($onlineInventoryData as $onlineItem) {
-                if($onlineItem['ArchiveId'] === $itemIdToCreate) {
-                    $archive = new \OCA\aletsch\archive($itemIdToCreate);
-                    $archive->setStandardProp($onlineItem);
-                }
-            }
+            $archive = new \OCA\aletsch\archive($itemIdToCreate);
+            $archive->setStandardProp($onlineInventory[$itemIdToCreate]);            
+        }
+        
+        // Update already presents items
+        foreach($presItems as $itemToUpdate) {
+            $archive = new \OCA\aletsch\archive($itemToUpdate);
+            $archive->setAttribute('uploaded', NULL);
+            $archive->setSHA256TreeHash($onlineInventory[$itemToUpdate]['SHA256TreeHash']);
+            $archive->setSize($onlineInventory[$itemToUpdate]['Size']);
+            $archive->setCreationDate($onlineInventory[$itemToUpdate]['CreationDate']);
         }
         
         // Remove items from local DB

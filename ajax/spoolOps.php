@@ -175,6 +175,7 @@ switch($op) {
         $archiveID = filter_input(INPUT_POST, 'archiveID', FILTER_SANITIZE_URL);
         $glacierJobID = filter_input(INPUT_POST, 'glacierJobID', FILTER_SANITIZE_URL);
         $vaultARN = filter_input(INPUT_POST, 'vaultARN', FILTER_SANITIZE_STRING);
+        $credentials = new \OCA\aletsch\credentialsHandler($OCUserName);
 
         $downloadDir = OCP\Config::getAppValue('aletsch', 'downloadDir');
         $storeFullPath = intval(OCP\Config::getAppValue('aletsch', 'storeFullPath'));
@@ -196,8 +197,7 @@ switch($op) {
         
         // Recover archive's description and try to use it as destination file name
         // Obviously the file name should be plausible
-        $inventory = new \OCA\aletsch\inventoryHandler();
-        $inventory->loadFromDB($vaultARN);
+        $inventory = new \OCA\aletsch\inventoryHandler($credentials->getCredID(), $vaultARN);
         $archives = $inventory->getArchives();
         $fileName = NULL;
         

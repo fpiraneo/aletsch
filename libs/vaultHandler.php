@@ -141,7 +141,7 @@ class vaultHandler {
                 $resRsrc = $query->execute($args);
                 
                 // Delete all stored inventories
-                \OCA\aletsch\inventoryHandler::removeInventories($arn);
+                \OCA\aletsch\inventoryHandler::removeInventories($this->credID, $arn);
             }
         }
         

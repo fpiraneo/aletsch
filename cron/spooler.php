@@ -118,10 +118,10 @@ class spooler {
     
     public static function refreshJobStatus(\OCA\aletsch\spoolerHandler $spooler) {
         $runningJob = $spooler->getRunningJob();
-        $filePaths = json_decode($runningJob['jobdata'], TRUE);
+        $jobDetails = json_decode($runningJob['jobdata'], TRUE);
         
-        if(file_exists($filePaths['statusPath'])) {
-            $status = file_get_contents($filePaths['statusPath']);
+        if(file_exists($jobDetails['statusPath'])) {
+            $status = file_get_contents($jobDetails['statusPath']);
             $progress = json_decode($status, TRUE);
 
             $spooler->setJobStatus($runningJob['jobid'], $progress['status']);
@@ -137,7 +137,7 @@ class spooler {
                     $spooler->setJobPID($runningJob['jobid'], 0);
                     
                     // Remove status file
-                    unlink($filePaths['statusPath']);
+                    unlink($jobDetails['statusPath']);
 
                     // Check for next operation
                     \OCA\aletsch\cron\spooler::checkForNextOp($spooler);
@@ -145,11 +145,23 @@ class spooler {
                     break;
                 }
                 case 'completed': {
+                    // If uploading a file, save the uploaded file ID as returned by Glacier
+                    if($runningJob['jobtype'] === 'fileUpload') {
+                        $credentials = new \OCA\aletsch\credentialsHandler($runningJob['ocusername']);
+                        $inventory = new \OCA\aletsch\inventoryHandler($credentials->getCredID(), $runningJob['vaultarn']);
+                        $archiveAttrs = array(
+                            'uploaded' => TRUE,
+                            'gz' => ($jobDetails['compressFile']) ? TRUE : NULL
+                        );
+
+                        $inventory->addArchive($progress['extStatus'], NULL, $jobDetails['description'], filesize($jobDetails['localPath']), NULL, $jobDetails['filePath'], $archiveAttrs);
+                    }
+                    
                     // Close old job
                     $spooler->setJobPID($runningJob['jobid'], 0);
                     
                     // Remove status file
-                    unlink($filePaths['statusPath']);
+                    unlink($jobDetails['statusPath']);
 
                     // Check for next operation
                     \OCA\aletsch\cron\spooler::checkForNextOp($spooler);

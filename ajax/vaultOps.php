@@ -247,16 +247,9 @@ switch($op) {
             die(json_encode($result));
         }
         
-        // Get credentials ID of this user
-        $OCUserName = \OCP\User::getUser();
-        $credentials = new \OCA\aletsch\credentialsHandler($OCUserName);
-        $credentials->load();
-        $credID = $credentials->getCredID();
-        
         // Save this inventory on DB
-        $inventory = new \OCA\aletsch\inventoryHandler();
+        $inventory = new \OCA\aletsch\inventoryHandler($userCredID, $vaultARN);
         $inventory->setDataFromInventory($inventoryData);
-        $inventory->saveOnDB($credID);
         
         $inventoryDetails = array(
             'date' => $inventory->getInventoryDate(),
@@ -274,7 +267,12 @@ switch($op) {
         $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);
         
         foreach($archives as $archiveID) {
+            // Delete on Glacier
             $result = $glacier->deleteArchive($vaultName, $archiveID);
+            
+            // Mark as deleted on local DB
+            $inventory = new \OCA\aletsch\inventoryHandler($userCredID, $vaultARN);
+            $inventory->setArchiveAttribute($archiveID, 'deleted', TRUE);
         }
         
         $result['opResult'] = 'OK';
@@ -312,7 +310,7 @@ switch($op) {
         break;
     }
     
-    // Unrecognised operation fallback
+    // Unrecognized operation fallback
     default: {
         $result['opResult'] = 'KO';
         $result['errData']['exCode'] = 'AletschParamError';
