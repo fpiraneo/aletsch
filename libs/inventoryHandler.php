@@ -115,6 +115,7 @@ class inventoryHandler {
      * @param String $description Archive description
      * @param Integer $size Archive size
      * @param String $SHA256TreeHash Archive's hash
+     * @param String $localPath System wide pathname of the file
      * @param Array $attributes - Attribute name - See "archive->setAttribute()" function for more
      */
     function addArchive($archiveID, $creationDate = NULL, $description = '', $size = 0, $SHA256TreeHash = NULL, $localPath = NULL, $attributes = array()) {
@@ -133,7 +134,6 @@ class inventoryHandler {
             'Size' => $size,
             'SHA256TreeHash' => $SHA256TreeHash
         );
-        
         $newArchive->setStandardProp($stdData);
         
         if(!is_null($localPath)) {
@@ -203,16 +203,16 @@ class inventoryHandler {
      */
     private function saveOnDB() {
         // If credential is not provided, forfait
-        if(is_null($this->credID)) {
+        if(is_null($this->credentialsID)) {
             return FALSE;
         }
         
         // If this inventory already has an ID, perform an update; perform an insert otherwise
-        if($this->inventoryID) {
+        if(!is_null($this->inventoryID)) {
             // Insert new inventory
             $sql = 'UPDATE `*PREFIX*aletsch_inventories` SET `credid`=?, `vaultarn`=?, `inventorydate`=? WHERE `inventoryid`=?';
             $args = array(
-                $this->credID,
+                $this->credentialsID,
                 $this->vaultArn,
                 $this->inventoryDate,
                 $this->inventoryID
@@ -223,7 +223,7 @@ class inventoryHandler {
             // Insert new inventory
             $sql = 'INSERT INTO `*PREFIX*aletsch_inventories` (`credid`, `vaultarn`, `inventorydate`) VALUES (?,?,?)';
             $args = array(
-                $this->credID,
+                $this->credentialsID,
                 $this->vaultArn,
                 $this->inventoryDate
             );

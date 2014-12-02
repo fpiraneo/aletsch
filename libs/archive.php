@@ -160,14 +160,18 @@ class archive {
             return FALSE;
         }
         
+        error_log("setting attribute $attrName as $attrValue");
+        
         // If $attrValue is null clear attribute from array
         if(is_null($attrValue)) {
             unset($this->attributes[$attrName]);
+        } else {
+            // Set it otherwise
+            $this->attributes[$attrName] = $attrValue;
         }
         
-        // Set it otherwise
-        $this->attributes[$attrName] = $attrValue;
-        
+        $this->saveArchiveData();
+
         // Attribute set
         return TRUE;
     }
@@ -201,11 +205,17 @@ class archive {
      * Update / create an archive's entry on local DB
      */
     private function saveArchiveData() {
+        // Check if all the compulsory fields are valid before saving the data
+        if(is_null($this->inventoryID) || is_null($this->ArchiveId) || is_null($this->Size)) {
+            return;
+        }
+        
+        // Execute data save
         if(is_null($this->fileid)) {
             $sql = 'INSERT INTO `*PREFIX*aletsch_inventoryData` (`inventoryid`, `ArchiveId`, `ArchiveDescription`, `CreationDate`, `Size`, `SHA256TreeHash`, `localPath`, `attributes`) VALUES (?,?,?,?,?,?,?,?)';
             $args = array(
                 $this->inventoryID,
-                $this->ArchiveID,
+                $this->ArchiveId,
                 $this->ArchiveDescription,
                 $this->CreationDate,
                 $this->Size,
@@ -216,13 +226,12 @@ class archive {
             
             $query = \OCP\DB::prepare($sql);
             $query->execute($args);
-            
             $this->fileid = \OCP\DB::insertid();
         } else {
             $sql = 'UPDATE `*PREFIX*aletsch_inventoryData` SET `inventoryid`=?, `ArchiveId`=?, `ArchiveDescription`=?, `CreationDate`=?, `Size`=?, `SHA256TreeHash`=?, `localPath`=?, `attributes`=? WHERE `fileid`=?';
             $args = array(
                 $this->inventoryID,
-                $this->ArchiveID,
+                $this->ArchiveId,
                 $this->ArchiveDescription,
                 $this->CreationDate,
                 $this->Size,
@@ -289,11 +298,10 @@ class archive {
 
     /**
      * Reconcile stored archives data on DB with provided Glacier inventory
-     * @param String $JSONInventoryData JSON inventory data coming from Glacier
+     * @param String $onlineInventoryData Inventory data coming from Glacier
      * @param Integer $inventoryID ID of inventory
      */
-    public static function archivesReconcile($JSONInventoryData, $inventoryID) {
-        $onlineInventoryData = json_decode($JSONInventoryData, TRUE);
+    public static function archivesReconcile($onlineInventoryData, $inventoryID) {
         $onlineInventoryIDs = array_column($onlineInventoryData, 'ArchiveId');
         
         $storedInventory = \OCA\aletsch\archive::loadArchivesData($inventoryID);
@@ -318,6 +326,7 @@ class archive {
         // Insert new items
         foreach($newItems as $itemIdToCreate) {
             $archive = new \OCA\aletsch\archive($itemIdToCreate);
+            $archive->setInventoryID($inventoryID);
             $archive->setStandardProp($onlineInventory[$itemIdToCreate]);            
         }
         

@@ -24,7 +24,7 @@ class aletsch {
     private $archiver;
     private $lastCatalog;
 
-    private $offline = FALSE;
+    private $offline = TRUE;
 
     /**
      * Class constructor

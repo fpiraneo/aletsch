@@ -22,6 +22,8 @@ namespace OCA\aletsch\cron;
 
 include __DIR__ . '/../libs/spoolerHandler.php';
 include __DIR__ . '/../libs/credentialsHandler.php';
+include __DIR__ . '/../libs/inventoryHandler.php';
+include __DIR__ . '/../libs/archive.php';
 
 class spooler {
     public static function run() {
@@ -149,6 +151,7 @@ class spooler {
                     if($runningJob['jobtype'] === 'fileUpload') {
                         $credentials = new \OCA\aletsch\credentialsHandler($runningJob['ocusername']);
                         $inventory = new \OCA\aletsch\inventoryHandler($credentials->getCredID(), $runningJob['vaultarn']);
+
                         $archiveAttrs = array(
                             'uploaded' => TRUE,
                             'gz' => ($jobDetails['compressFile']) ? TRUE : NULL
