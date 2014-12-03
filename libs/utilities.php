@@ -442,7 +442,7 @@ class utilities {
                     $action = '';
                 }
                 $size = \OCA\aletsch\utilities::formatBytes($entry['Size']);
-                $treeHash = sprintf("TreeHash: %s", $entry['SHA256TreeHash']);
+                $treeHash = ($entry['SHA256TreeHash'] === NULL) ? $l->t('TreeHash not available') : sprintf("TreeHash: %s", $entry['SHA256TreeHash']);
                 
                 $classes = '';
                 foreach($entry['attributes'] as $attrName => $attrValue) {

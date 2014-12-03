@@ -57,7 +57,14 @@ class archive {
     }
     
     /**
-     * Get all properties into an associative array
+     * Get all properties into an associative array containing:
+     * - ArchiveId
+     * - ArchiveDescription
+     * - CreationDate
+     * - Size
+     * - SHA256TreeHash
+     * - localPath
+     * - attributes
      * @return Array 
      */
     function getPropArray() {

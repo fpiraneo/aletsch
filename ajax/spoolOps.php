@@ -199,34 +199,42 @@ switch($op) {
         // Obviously the file name should be plausible
         $inventory = new \OCA\aletsch\inventoryHandler($credentials->getCredID(), $vaultARN);
         $archives = $inventory->getArchives();
-        $fileName = NULL;
         
-        foreach($archives as $entry) {
-            if($entry['ArchiveId'] === $archiveID) {
-                $fileName = $entry['ArchiveDescription'];
-                break;
-            }
-        }
-
-        // Archive description not found - Assign a random name
-        if(is_null($fileName)) {
-            $fileName = uniqid('archive_');
-            $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $fileName;
-        } else {
-            // Check if description can be used as file name - Assign a truncated file name otherwise
-            $destFilePathInfo = pathinfo($fileName);
-            
-            // We use maximum 255 characters to maintain a compatibility on all file systems that can be used
-            $fileName = substr($destFilePathInfo['basename'], 0, 255);
-
-            // Check what we have to do if full path is (supposed to be) stored or not
-            if($storeFullPath) {
-                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $destFilePathInfo['dirname'] . '/' . $fileName;
+        // Decide where to store the recovered archive
+        // Check if we have to use archive descriprion as full path;
+        // Try to use the 'localPath' attribute if is set or generate a random file name otherwise
+        // and store the archive on the $downloadDir
+        $archiveDescr = isset($archives[$archiveID]['ArchiveDescription']) ? trim($archives[$archiveID]['ArchiveDescription']) : '';
+        
+        // As Valid path we simply assume an $archiveDescr beginning with slash ('/')
+        $isValidPath = substr($archiveDescr, 0, 1) === '/';
+        
+        if($storeFullPath) {
+            if($isValidPath) {
+                // Check if description can be used as file name - Assign a truncated file name otherwise
+                // We use maximum 255 characters to maintain a compatibility on all file systems that can be used
+                $destFilePathInfo = pathinfo($archiveDescr);
+                $fileName = substr($destFilePathInfo['basename'], 0, 255);
+                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $destFilePathInfo['dirname'] . '/' . $fileName;
             } else {
-                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . $fileName;
+                if($archiveDescr !== '') {
+                    $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . substr($archiveDescr, 0, 255);                
+                } else {
+                    $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . uniqid('archive_');
+                }
+            }
+        } else {
+            if($archives[$archiveID]['localPath'] === '') {
+                if($archiveDescr !== '') {
+                    $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . substr($archiveDescr, 0, 255);                
+                } else {
+                    $destPath = \OC_User::getHome($OCUserName) . '/files/' . $downloadDir . '/' . uniqid('archive_');
+                }
+            } else {
+                $destPath = \OC_User::getHome($OCUserName) . '/files/' . $archives[$archiveID]['localPath'];
             }
         }
-        
+
         $spoolerHandler = new \OCA\aletsch\spoolerHandler($OCUserName);
         $jobID = $spoolerHandler->newJob('fileDownload');
         $spoolerHandler->setVaultARN($jobID, $vaultARN);

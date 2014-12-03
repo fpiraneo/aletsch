@@ -69,6 +69,13 @@
         <div>
             <input type="checkbox" id="aletsch_storeFullPath" name="storeFullPath" <?php p($_['storeFullPath']) ?> />
             <label for="aletsch_storeFullPath"><?php p($l->t('Store (and recover!) full path in archive description')) ?></label>
+            <p style="font-size: 0.9em;"><?php p($l->t('If this checkbox is disabled Aletsch will use the stored path on it\'s database if it\'s available.')) ?></p>
+            <p style="font-size: 0.9em;">
+                <?php
+                    p($l->t('If the stored path is not available, files will be stored on "Download directory" with a random file name'));
+                    p($l->t(' (if the description is empty) or with a truncated description.'));
+                ?>
+            </p>
         </div>
 </fieldset>
 

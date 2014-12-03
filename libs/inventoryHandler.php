@@ -89,13 +89,14 @@ class inventoryHandler {
     }
 
     /**
-     * Get actual inventory
+     * Get actual inventory as an indexed array; array index is the Glacier's ArchiveId
      * @return Array
      */
     function getArchives() {
         $archives = array();
         foreach($this->archives as $archiveData) {
-            $archives[] = $archiveData->getPropArray();
+            $archiveProperty = $archiveData->getPropArray();
+            $archives[$archiveProperty['ArchiveId']] = $archiveProperty;
         }
         return $archives;
     }
