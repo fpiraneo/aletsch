@@ -88,14 +88,14 @@ $(function() {
 
                 success: function(result) {
                     if(result === 'OK') {
-                        updateStatusBar(t('aletsch', 'Settings saved correctly.'));
+                        updateStatusBar(t('aletsch', 'Credentials saved correctly.'));
                     } else {
-                        updateStatusBar(t('aletsch', 'Settings not saved! Data base error!'));
+                        updateStatusBar(t('aletsch', 'Credentials not saved! Data base error!'));
                     }
                 },
 
                 error: function(xhr, status) {
-                    updateStatusBar(t('aletsch', 'Settings not saved! Communication error!'));
+                    updateStatusBar(t('aletsch', 'Credentials not saved! Communication error!'));
                 }
             });
         }

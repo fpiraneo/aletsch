@@ -42,6 +42,7 @@ OCP\App::setActiveNavigationEntry('aletsch');
 \OCP\Util::addScript('aletsch', 'mainAletsch');
 
 // Retrieve accounts data
+$errStatus = FALSE;
 $OCUserName = \OCP\User::getUser();
 $userAccount = new \OCA\aletsch\credentialsHandler($OCUserName);
 
@@ -49,11 +50,22 @@ $serverLocation = $userAccount->getServerLocation();
 $username = $userAccount->getUsername();
 $password = $userAccount->getPassword();
 
+if(is_null($serverLocation) || is_null($username) || is_null($password)) {
+    $exCode = 'Incomplete user\'s credentials';
+    $exMessage = 'Please revise yours Glacier credentials in your preferences.';
+    
+    $tpl = new OCP\Template("aletsch", "svcerr", "user");
+
+    $tpl->assign('errCode', $exCode);
+    $tpl->assign('errMessage', $exMessage);
+    $tpl->printPage();
+    die();
+}
+
 $serverAvailableLocations = \OCA\aletsch\aletsch::getServersLocation();
 
 // Create instance to glacier
 $glacier = new \OCA\aletsch\aletsch($serverLocation, $username, $password);
-$errStatus = FALSE;
 
 // Retrieve vaults list
 try {

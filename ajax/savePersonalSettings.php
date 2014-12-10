@@ -25,7 +25,7 @@ $OCUserName = \OCP\User::getUser();
 
 $credentials = filter_input(INPUT_POST, 'credentials', FILTER_SANITIZE_NUMBER_INT);
 
-if($credentials === 1) {
+if($credentials === '1') {
     // Save just credentials here
     $credID = filter_input(INPUT_POST, 'credid', FILTER_SANITIZE_NUMBER_INT);
     $serverLocation = filter_input(INPUT_POST, 'serverLocation', FILTER_SANITIZE_STRING);
@@ -36,7 +36,7 @@ if($credentials === 1) {
     $userAccount->setServerLocation($serverLocation);
     $userAccount->setUsername($username);
     $userAccount->setPassword($password);
-
+    error_log($userAccount->getCredID());
     print 'OK';
 } else {
     $result = array();

@@ -21,7 +21,7 @@
 namespace OCA\aletsch;
 
 class credentialsHandler {
-	private $OCUserName = NULL;	
+	private $OCUserName = '';	
 	private $credID = NULL;
 	private $serverLocation = NULL;
 	private $username = NULL;
