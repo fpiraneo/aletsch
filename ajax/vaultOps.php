@@ -262,6 +262,20 @@ switch($op) {
         die(json_encode($result));
     }
     
+    case 'exportInventory': {
+        $inventory = new \OCA\aletsch\inventoryHandler($userCredID, $vaultARN);
+        
+        $inventoryJSON = $inventory->exportInventory();
+        
+        $exportFileName = \OCA\aletsch\aletsch::explodeARN($vaultARN, TRUE);
+        $destPath = \OC_User::getHome($OCUserName) . '/files/' . $exportFileName . '.json';
+        file_put_contents($destPath, $inventoryJSON);
+        
+        $result['opResult'] = 'OK';
+        $result['opData'] = $exportFileName;
+        die(json_encode($result));
+    }
+    
     // Delete archives
     case 'deleteArchives': {
         $archives = json_decode(filter_input(INPUT_POST, 'archives', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES), TRUE);

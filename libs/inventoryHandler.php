@@ -81,6 +81,20 @@ class inventoryHandler {
     }
 
     /**
+     * Export current inventory into a JSON string
+     * Note: Just basic data are exported, like vaultARN, inventoryDate and archives;
+     * other data will be recreated once the structure is re-imported
+     * @return string JSON inventory data
+     */
+    function exportInventory() {
+        $toExport['vaultArn'] = $this->vaultArn;
+        $toExport['inventoryDate'] = $this->inventoryDate;
+        $toExport['archives'] = $this->getArchives();
+        
+        return json_encode($toExport);
+    }
+    
+    /**
      * Get actual inventory date
      * @return String
      */

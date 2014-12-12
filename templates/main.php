@@ -42,6 +42,9 @@ $l = new \OC_L10N('aletsch');
                     <div style="text-align: left; padding-left: 5px; background-color: lightgray; margin-bottom: 5px; border: 1px solid darkgray;">
                         <button id="btnDownloadArchive"><?php p($l->t('Download archive')) ?></button>
                         <button id="btnDeleteArchive"><?php p($l->t('Delete archive')) ?></button>
+                        <span style="margin: 0px 5px 0px 0px;">&nbsp;</span>
+                        <button id="btnExportInventory"><?php p($l->t('Export inventory')) ?></button>
+                        <button id="btnImportInventory"><?php p($l->t('Import inventory')) ?></button>
                         <div style="float: right; background-color: lightgray; padding: 5px;"><?php p($l->t('Updated on')) ?>: 
                             <span id="aletsch_inventoryDate">&nbsp;</span>
                             <span id="aletsch_inventoryOutdated" style="font-weight: bold; color: red;">&nbsp;</span>

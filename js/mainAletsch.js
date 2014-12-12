@@ -294,6 +294,19 @@ $('document').ready(function() {
         }
     });
     
+    $("#btnExportInventory")
+    .button()
+    .click(function() {
+        var expVaultName = $("#aletsch_tabs").attr("data-actualarn");
+        exportInventory(expVaultName);
+    });
+
+    $("#btnImportInventory")
+    .button()
+    .click(function() {
+        importDlog.dialog("open");
+    });
+    
     $("#btnDeleteVault")
         .button()
         .click(function(){
@@ -584,6 +597,32 @@ function refreshSpoolList() {
             $('#spoolerContent').html(t('aletsch', 'Unable to get spooler content! Ajax error'));
         }
     });        
+}
+
+function exportInventory(vaultName) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'exportInventory',
+            vault: vaultName
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                updateStatusBar(t('aletsch', 'Inventory of ' + resultData.opData + ' exported successfully!'));
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to export inventory!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to export inventory! Ajax error!'));
+        }
+    });
 }
 
 function createVault(vaultName) {
