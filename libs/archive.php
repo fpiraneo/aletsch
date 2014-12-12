@@ -202,7 +202,7 @@ class archive {
             $this->Size = $archive['Size'];
             $this->SHA256TreeHash = $archive['SHA256TreeHash'];
             $this->fileid = $archive['fileid'];
-            $this->inventoryID = $archive['inventoryID'];
+            $this->inventoryID = $archive['inventoryid'];
             $this->localPath = $archive['localPath'];
             $this->attributes = json_decode($archive['attributes'], TRUE);
         }

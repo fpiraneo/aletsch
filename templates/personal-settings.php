@@ -34,19 +34,19 @@
 
                             <tr>
                                 <td style="text-align: right; padding-right: 10px;">
-                                    <?php p($l->t('Username:')) ?>
+                                    <?php p($l->t('Key:')) ?>
                                 </td>
                                 <td>
-                                    <input id="aletsch_username" name="username" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['username']) ?>" />
+                                    <input type="text" id="aletsch_username" name="username" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['username']) ?>" />
                                 </td>
                             </tr>
 
                             <tr>
                                 <td style="text-align: right; padding-right: 10px;">
-                                    <?php p($l->t('Password:')) ?>
+                                    <?php p($l->t('Secret:')) ?>
                                 </td>
                                 <td>
-                                    <input id="aletsch_password" name="password" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['password']) ?>" />
+                                    <input type="text" id="aletsch_password" name="password" style="width:500px;" data-credid="<?php p($_['credID']) ?>" value="<?php p($_['password']) ?>" />
                                 </td>
                             </tr>
                         </table>
@@ -62,7 +62,7 @@
         <table style="padding-bottom: 15px;">
             <tr>
                 <td style="padding-right: 5px; text-align: right;"><?php p($l->t('Download directory:')) ?></td>
-                <td><input id="aletsch_downloadDir" name="downloadDir" style="width:300px;" value="<?php p($_['downloadDir']) ?>" /></td>
+                <td><input type="text" id="aletsch_downloadDir" name="downloadDir" style="width:300px;" value="<?php p($_['downloadDir']) ?>" /></td>
             </tr>
         </table>
                 
