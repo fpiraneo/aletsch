@@ -132,36 +132,10 @@ $('document').ready(function() {
                 }
             });
             
-            $.ajax({
-                url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
-
-                data: {
-                    op: 'getInventory',
-                    vault: selected
-                },
-
-                type: "POST",
-
-                success: function(result) {
-                    var resultData = jQuery.parseJSON(result);
-
-                    if(resultData.opResult === 'OK') {
-                        var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
-                        var outdated = (resultData.opData.outdated === true) ? t('aletsch', 'Outdated') : '';
-                        $('#aletsch_inventoryDate').html(date);
-                        $('#aletsch_inventoryOutdated').html(outdated);
-                        $('#aletsch_archives').html(resultData.opData.archiveList);
-                    } else {
-                        updateStatusBar(t('aletsch', 'Unable to get inventory!'));
-                    }
-                },
-                error: function( xhr, status ) {
-                    updateStatusBar(t('aletsch', 'Unable to get inventory! Ajax error!'));
-                }
-            });
+            refreshInventory(selected);            
         }
     });
-        
+
     $("#aletsch_tabs").tabs();
     
     $("#btnRefrInventory")
@@ -215,7 +189,7 @@ $('document').ready(function() {
                 if(resultData.opResult === 'OK') {
                     var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
                     $('#aletsch_inventoryDate').html(date);
-                    $('#aletsch_archives').html(resultData.opData.archiveList);
+                    $('#aletsch_archives').html(resultData.opData.archives);
 
                     updateStatusBar(t('aletsch', 'Got inventory!'));
                 } else {
@@ -359,6 +333,7 @@ $('document').ready(function() {
                 var actVaultARN = $("#aletsch_tabs").attr("data-actualarn");
                 removeArchives(actVaultARN, selectedArchives);
                 $(this).dialog("close");
+                refreshInventory(actVaultARN);
             },
             Cancel: function() {
                 $(this).dialog("close");
@@ -804,4 +779,34 @@ function updateStatusBar(t) {
 function HRFileSize(size) {
     var i = Math.floor(Math.log(size) / Math.log(1024));
     return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+}
+
+function refreshInventory(vault) {
+    $.ajax({
+        url: OC.filePath('aletsch', 'ajax', 'vaultOps.php'),
+
+        data: {
+            op: 'getInventory',
+            vault: vault
+        },
+
+        type: "POST",
+
+        success: function(result) {
+            var resultData = jQuery.parseJSON(result);
+
+            if(resultData.opResult === 'OK') {
+                var date = (resultData.opData.date === null) ? t('aletsch', 'Not available') : resultData.opData.date;
+                var outdated = (resultData.opData.outdated === true) ? t('aletsch', 'Outdated') : '';
+                $('#aletsch_inventoryDate').html(date);
+                $('#aletsch_inventoryOutdated').html(outdated);
+                $('#aletsch_archives').html(resultData.opData.archiveList);
+            } else {
+                updateStatusBar(t('aletsch', 'Unable to get inventory!'));
+            }
+        },
+        error: function( xhr, status ) {
+            updateStatusBar(t('aletsch', 'Unable to get inventory! Ajax error!'));
+        }
+    });
 }

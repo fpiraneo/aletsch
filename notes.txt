@@ -49,4 +49,3 @@ $fileRes = fopen($localPath, 'r');
 $checksum = \Aws\Common\Hash\TreeHash::fromContent($fileRes);
 
 error_log(sprintf("Localpath: %s -- Checksum: %s", $localPath, $checksum->getHash()));
-                

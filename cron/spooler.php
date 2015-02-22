@@ -113,9 +113,9 @@ class spooler {
         $spooler->setJobStatus($jobData['jobid'], 'running');
         $spooler->setJobDiagnostic($jobData['jobid'], 'Started');
         $spooler->setJobPID($jobData['jobid'], $pid);
-        $spooler->setJobStartDate($jobData['jobid'], date('c'));
+        $spooler->setJobStartDate($jobData['jobid'], date('Y-m-d H:i:s'));
 
-        \OCP\Util::writeLog('aletsch', 'Job ' . $jobData['jobid'] . ' started at ' . date('c') . ' - PID:' . $pid, 0);
+        \OCP\Util::writeLog('aletsch', 'Job ' . $jobData['jobid'] . ' started at ' . date('Y-m-d H:i:s') . ' - PID:' . $pid, 0);
     }
     
     public static function refreshJobStatus(\OCA\aletsch\spoolerHandler $spooler) {
@@ -127,7 +127,7 @@ class spooler {
             $progress = json_decode($status, TRUE);
 
             $spooler->setJobStatus($runningJob['jobid'], $progress['status']);
-            $spooler->setJobDiagnostic($runningJob['jobid'], date('c') . ' - ' . $progress['extStatus']);
+            $spooler->setJobDiagnostic($runningJob['jobid'], date('Y-m-d H:i:s') . ' - ' . $progress['extStatus']);
 
             switch($progress['status']) {
                 case 'running': {
@@ -177,12 +177,12 @@ class spooler {
 
             if(file_exists('/proc/' . $pid)){
                 $spooler->setJobStatus($runningJob['jobid'], 'running');
-                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Last refresh at ' . date('c'));
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Last refresh at ' . date('Y-m-d H:i:s'));
             } else {
                 // Close old job
                 $spooler->setJobStatus($runningJob['jobid'], 'completed');
                 $spooler->setJobPID($runningJob['jobid'], 0);
-                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Job ended at ' . date('c'));
+                $spooler->setJobDiagnostic($runningJob['jobid'], 'NO STATUS FILE! Job ended at ' . date('Y-m-d H:i:s'));
 
                 // Check for next operation
                 \OCA\aletsch\cron\spooler::checkForNextOp($spooler);

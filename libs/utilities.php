@@ -45,6 +45,17 @@ class utilities {
     }
     
     /**
+     * Convert an ISO 8601 date coming from Amazon Glacier to a MySQL suitable format
+     * @param String $isoDate Date to convert
+     * @return String Converted SQL format date
+     */
+    public static function iso2sqlDate($isoDate) {
+        $datetime = new \DateTime($isoDate);
+        $mysqlDateTime = $datetime->format('Y-m-d H:i:s');
+        return $mysqlDateTime;
+    }
+    
+    /**
     * Get all files ID of the indicated user
     * TODO: Check if this function gives back only the files the user can access.
     * @param string $user Username
@@ -180,10 +191,10 @@ class utilities {
         $dirContent = $dirView->getDirectoryContent($path);
         
         foreach($dirContent as $item) {
-            $fileMime = $item->getMimetype();
-            $fileName = $item->getName();
-            $fileSize = $item->getSize();
-            $filePath = substr($item->getPath(), strlen($user) + 2);
+            $fileMime = $item['mimetype'];
+            $fileName = $item['name'];
+            $fileSize = $item['size'];
+            $filePath = substr($item['path'], 6);
             
             if(strpos($item['mimetype'], 'directory') === FALSE) {
                 $fileData = array(

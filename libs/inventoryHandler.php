@@ -68,7 +68,7 @@ class inventoryHandler {
      */
     function setDataFromInventory($inventoryData) {
         // Set the date
-        $this->inventoryDate = $inventoryData['InventoryDate'];
+        $this->inventoryDate = \OCA\aletsch\utilities::iso2sqlDate($inventoryData['InventoryDate']);
         
         // Save vault's ARN
         $this->vaultArn = $inventoryData['VaultARN'];
@@ -77,7 +77,10 @@ class inventoryHandler {
         $this->saveOnDB();
         
         // Reconcile stored data with actual inventory data
-        \OCA\aletsch\archive::archivesReconcile($inventoryData['ArchiveList'], $this->inventoryID);        
+        \OCA\aletsch\archive::archivesReconcile($inventoryData['ArchiveList'], $this->inventoryID);
+        
+        // After archive reconciliation, refresh local data
+        $this->loadFromDB($this->vaultArn);
     }
 
     /**
@@ -135,7 +138,7 @@ class inventoryHandler {
      */
     function addArchive($archiveID, $creationDate = NULL, $description = '', $size = 0, $SHA256TreeHash = NULL, $localPath = NULL, $attributes = array()) {
         if(is_null($creationDate)) {
-            $dateToSet = date('c');
+            $dateToSet = date('Y-m-d H:i:s');
         } else {
             $dateToSet = $creationDate;
         }

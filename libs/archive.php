@@ -49,7 +49,7 @@ class archive {
      */
     function setStandardProp($stdData) {
         $this->ArchiveDescription = $stdData['ArchiveDescription'];
-        $this->CreationDate = $stdData['CreationDate'];
+        $this->CreationDate = \OCA\aletsch\utilities::iso2sqlDate($stdData['CreationDate']);
         $this->Size = $stdData['Size'];
         $this->SHA256TreeHash = $stdData['SHA256TreeHash'];
         
@@ -125,7 +125,7 @@ class archive {
 
     function setCreationDate($CreationDate = NULL) {
         if(is_null($CreationDate)) {
-            $this->CreationDate = date('c');
+            $this->CreationDate = date('Y-m-d H:i:s');
         } else {
             $this->CreationDate = $CreationDate;
         }
@@ -343,7 +343,7 @@ class archive {
             $archive->setAttribute('uploaded', NULL);
             $archive->setSHA256TreeHash($onlineInventory[$itemToUpdate]['SHA256TreeHash']);
             $archive->setSize($onlineInventory[$itemToUpdate]['Size']);
-            $archive->setCreationDate($onlineInventory[$itemToUpdate]['CreationDate']);
+            $archive->setCreationDate(\OCA\aletsch\utilities::iso2sqlDate($onlineInventory[$itemToUpdate]['CreationDate']));
         }
         
         // Remove items from local DB

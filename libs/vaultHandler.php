@@ -106,7 +106,7 @@ class vaultHandler {
                 // Update just `lastinventory`, `numberofarchives` and `sizeinbytes`
                 $sql = 'UPDATE *PREFIX*aletsch_vaults SET lastinventory=?, numberofarchives=?, sizeinbytes=? WHERE vaultid=?';
                 $args = array(
-                    isset($vault['LastInventoryDate']) ? $vault['LastInventoryDate'] : NULL,
+                    isset($vault['LastInventoryDate']) ? \OCA\aletsch\utilities::iso2sqlDate($vault['LastInventoryDate']) : NULL,
                     $vault['NumberOfArchives'],
                     $vault['SizeInBytes'],
                     $this->vaults[$vault['VaultARN']]['vaultid']
@@ -119,8 +119,8 @@ class vaultHandler {
                 $args = array(
                     $this->credID,
                     $vault['VaultARN'],
-                    $vault['CreationDate'],
-                    $vault['LastInventoryDate'],
+                    \OCA\aletsch\utilities::iso2sqlDate($vault['CreationDate']),
+                    \OCA\aletsch\utilities::iso2sqlDate($vault['LastInventoryDate']),
                     $vault['NumberOfArchives'],
                     $vault['SizeInBytes']
                 );

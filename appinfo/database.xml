@@ -129,6 +129,7 @@
             <field>
                 <name>inventorydate</name>
                 <type>datetime</type>
+                <notnull>false</notnull>                
             </field>
         </declaration>
     </table>
@@ -188,12 +189,14 @@
             <field>
                 <name>localPath</name>
                 <type>text</type>
+                <notnull>false</notnull>
                 <length>4096</length>
             </field>
             
             <field>
                 <name>attributes</name>
                 <type>text</type>
+                <notnull>false</notnull>
                 <length>2048</length>
             </field>
         </declaration>
