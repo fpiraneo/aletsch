@@ -311,6 +311,7 @@ $('document').ready(function() {
     $("#btnDeleteArchive")
     .button()
     .click(function() {
+        selectedArchives = [];
         $(".archiveSelection").each(function() {
             if($(this).prop("checked")) {
                 selectedArchives[selectedArchives.length] = $(this).data('archiveid');
