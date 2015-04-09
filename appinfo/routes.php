@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright 2014 by Francesco PIRANEO G. (fpiraneo@gmail.com)
+ * Copyright 2015 by Francesco PIRANEO G. (fpiraneo@gmail.com)
  * 
  * This file is part of aletsch.
  * 
@@ -24,3 +24,9 @@ $this->create('aletsch_index', '/')->action(
         require __DIR__ . '/../index.php';
     }
 );
+
+// Following routes for ajax 
+$this->create('get_cloud_files', 'ajax/getCloudFiles.php')->actionInclude('aletsch/ajax/getCloudFiles.php');
+$this->create('save_personal_settings', 'ajax/savePersonalSettings.php')->actionInclude('aletsch/ajax/savePersonalSettings.php');
+$this->create('spool_operations', 'ajax/spoolOps.php')->actionInclude('aletsch/ajax/spoolOps.php');
+$this->create('vault_operations', 'ajax/vaultOps.php')->actionInclude('aletsch/ajax/vaultOps.php');

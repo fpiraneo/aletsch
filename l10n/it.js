@@ -1,0 +1,6 @@
+OC.L10N.register("aletsch",{
+    "Variable value": "Valore della variabile",
+    "Document ready": "Documento pronto",
+    "Admin settings page": "Pagina impostazioni amministratore",
+    "Personal settings page": "Pagina impostazioni personale"
+})

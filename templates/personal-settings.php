@@ -1,5 +1,5 @@
 <?php
-    if($_SESSION['OC_Version'][0] === 7) {
+    if($_SESSION['OC_Version'][0] >= 7) {
         print '<div class="section">';
     }
 ?>
@@ -80,6 +80,6 @@
 </fieldset>
 
 <?php
-    if($_SESSION['OC_Version'][0] === 7) {
+    if($_SESSION['OC_Version'][0] >= 7) {
         print '</div>';
     }
