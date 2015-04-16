@@ -1,7 +1,7 @@
 <?php
 namespace OCA\aletsch;
 
-include __DIR__ . '/aws.phar';
+require __DIR__ . '/aws/aws-autoloader.php';
 use Aws\Glacier\GlacierClient;
 use Aws\Glacier\Model\MultipartUpload\UploadPartGenerator;
 
